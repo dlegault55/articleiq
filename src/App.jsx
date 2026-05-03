@@ -9,6 +9,7 @@ import ConnectorPage from './pages/ConnectorPage'
 import SettingsPage from './pages/SettingsPage'
 import AdminPage from './pages/AdminPage'
 import BillingPage from './pages/BillingPage'
+import AuthCallbackPage from './pages/AuthCallbackPage'
 import LoadingScreen from './components/ui/LoadingScreen'
 
 const PrivateRoute = ({ children }) => {
@@ -37,6 +38,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+      <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
