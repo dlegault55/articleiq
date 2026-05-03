@@ -4,8 +4,97 @@ import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import { getArticleLimit } from '@/lib/stripe'
 import { runScan } from '@/lib/scanner'
-import { Scan, Plug, AlertTriangle, Loader, ChevronRight, Clock, CheckCircle, XCircle } from 'lucide-react'
+import { Scan, Plug, AlertTriangle, Loader, ChevronRight, Clock, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+
+// ─── Inline connector form ────────────────────────────────────
+function ConnectorInline({ onConnected }) {
+  const { profile } = useAuth()
+  const [form, setForm] = useState({ subdomain: '', apiKey: '' })
+  const [showKey, setShowKey] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState(null)
+  const [error, setError] = useState(null)
+
+  const testConnection = async () => {
+    if (!form.subdomain || !form.apiKey) return
+    setTesting(true)
+    setTestResult(null)
+    try {
+      const res = await fetch(`https://${form.subdomain}.zendesk.com/api/v2/help_center/categories.json?per_page=1`, {
+        headers: { Authorization: `Basic ${btoa(`${form.apiKey}/token:`)}` }
+      })
+      setTestResult({ success: res.ok, message: res.ok ? 'Connected! Zendesk is responding.' : `Error ${res.status} — check your subdomain and token.` })
+    } catch {
+      setTestResult({ success: false, message: 'Could not reach Zendesk. Check your subdomain.' })
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  const save = async () => {
+    if (!form.subdomain || !form.apiKey) { setError('Both fields are required.'); return }
+    setSaving(true)
+    setError(null)
+    const { error: dbErr } = await supabase.from('zendesk_connectors').upsert({
+      user_id: profile.id,
+      subdomain: form.subdomain.trim().toLowerCase(),
+      api_key_encrypted: form.apiKey,
+      api_key_hint: `...${form.apiKey.slice(-6)}`,
+      label: 'Default',
+      last_verified_at: testResult?.success ? new Date().toISOString() : null,
+    }, { onConflict: 'user_id,subdomain' })
+    if (dbErr) { setError(dbErr.message); setSaving(false); return }
+    onConnected()
+  }
+
+  return (
+    <div className="space-y-4 max-w-lg">
+      <div>
+        <label className="label">Zendesk Subdomain</label>
+        <div className="flex items-center">
+          <input className="input rounded-r-none" placeholder="yourcompany"
+            value={form.subdomain} onChange={e => setForm(f => ({ ...f, subdomain: e.target.value }))} />
+          <div className="px-3 py-2 text-sm rounded-r-md border border-l-0 border-border flex-shrink-0"
+            style={{ background: 'var(--surface-3)', color: 'var(--text-muted)' }}>.zendesk.com</div>
+        </div>
+      </div>
+      <div>
+        <label className="label">API Token</label>
+        <div className="relative">
+          <input className="input pr-10" type={showKey ? 'text' : 'password'}
+            placeholder="your-zendesk-api-token"
+            value={form.apiKey} onChange={e => setForm(f => ({ ...f, apiKey: e.target.value }))} />
+          <button onClick={() => setShowKey(!showKey)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}>
+            {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
+          </button>
+        </div>
+        <p className="text-xs mt-1.5" style={{ color: 'var(--text-muted)' }}>
+          Zendesk Admin → Apps & Integrations → APIs → Zendesk API → API Tokens
+        </p>
+      </div>
+      {testResult && (
+        <div className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm"
+          style={{ background: testResult.success ? 'rgba(16,124,16,0.1)' : 'rgba(239,68,68,0.1)', border: `1px solid ${testResult.success ? 'rgba(16,124,16,0.3)' : 'rgba(239,68,68,0.3)'}`, color: testResult.success ? 'var(--xbox-light)' : '#FC8181' }}>
+          {testResult.success ? <CheckCircle size={14} /> : <AlertTriangle size={14} />}
+          {testResult.message}
+        </div>
+      )}
+      {error && <p className="text-sm" style={{ color: '#FC8181' }}>{error}</p>}
+      <div className="flex items-center gap-3 pt-1">
+        <button onClick={testConnection} disabled={testing || !form.subdomain || !form.apiKey} className="btn-secondary">
+          {testing ? <Loader size={13} className="animate-spin" /> : null}
+          {testing ? 'Testing...' : 'Test Connection'}
+        </button>
+        <button onClick={save} disabled={saving} className="btn-primary">
+          {saving ? <Loader size={13} className="animate-spin" /> : <Plug size={13} />}
+          {saving ? 'Saving...' : 'Connect & Continue'}
+        </button>
+      </div>
+    </div>
+  )
+}
 
 export default function ScannerPage() {
   const { profile } = useAuth()
@@ -87,15 +176,25 @@ export default function ScannerPage() {
         </p>
       </div>
 
-      {/* No connector */}
+      {/* No connector — inline setup, don't make them hunt */}
       {!loading && connectors.length === 0 && (
-        <div className="card p-10 text-center">
-          <Plug size={36} className="mx-auto mb-4" style={{ color: 'var(--text-muted)' }} />
-          <p className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>No Zendesk connector configured</p>
-          <p className="text-sm mb-5" style={{ color: 'var(--text-secondary)' }}>Connect your Zendesk account before running a scan.</p>
-          <Link to="/connector" className="btn-primary">
-            <Plug size={14} /> Set Up Connector
-          </Link>
+        <div className="card-glow p-8">
+          <div className="flex items-start gap-5">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(16,124,16,0.15)', border: '1px solid rgba(16,124,16,0.3)' }}>
+              <Plug size={22} style={{ color: 'var(--xbox)' }} />
+            </div>
+            <div className="flex-1">
+              <p className="section-header mb-1">Step 1 of 2 — Connect Zendesk</p>
+              <h2 className="font-display font-bold text-2xl mb-2" style={{ color: 'var(--text-primary)' }}>
+                Connect your Zendesk account
+              </h2>
+              <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
+                Enter your Zendesk subdomain and API token to start scanning. Read-only access — we never modify anything without your say-so.
+              </p>
+              <ConnectorInline onConnected={() => window.location.reload()} />
+            </div>
+          </div>
         </div>
       )}
 
