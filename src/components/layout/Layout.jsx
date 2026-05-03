@@ -28,11 +28,6 @@ export default function Layout() {
     { to: '/settings',  icon: Settings,        label: 'Settings',   locked: false },
   ]
 
-  const handleSignOut = async () => {
-    await signOut()
-    navigate('/login')
-  }
-
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: 'var(--bg-base)' }}>
       {/* Sidebar */}
