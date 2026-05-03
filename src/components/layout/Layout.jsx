@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/hooks/useTheme'
+import { useConnector } from '@/hooks/useConnector'
 import { signOut } from '@/lib/supabase'
 import {
   LayoutDashboard, Scan, Plug, CreditCard, Settings,
@@ -8,18 +9,24 @@ import {
 } from 'lucide-react'
 import clsx from 'clsx'
 
-const navItems = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/scanner',   icon: Scan,            label: 'Scanner'   },
-  { to: '/connector', icon: Plug,            label: 'Connector' },
-  { to: '/billing',   icon: CreditCard,      label: 'Billing'   },
-  { to: '/settings',  icon: Settings,        label: 'Settings'  },
-]
-
 export default function Layout() {
   const { profile } = useAuth()
   const { isDark, toggleTheme } = useTheme()
+  const { hasConnector } = useConnector()
   const navigate = useNavigate()
+
+  const handleSignOut = async () => {
+    await signOut()
+    navigate('/login')
+  }
+
+  const navItems = [
+    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard',  locked: false },
+    { to: '/scanner',   icon: Scan,            label: 'Scanner',    locked: !hasConnector },
+    { to: '/connector', icon: Plug,            label: 'Connector',  locked: false },
+    { to: '/billing',   icon: CreditCard,      label: 'Billing',    locked: false },
+    { to: '/settings',  icon: Settings,        label: 'Settings',   locked: false },
+  ]
 
   const handleSignOut = async () => {
     await signOut()
@@ -62,15 +69,17 @@ export default function Layout() {
         {/* Nav */}
         <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
           <p className="section-header px-2 mb-2" style={{ fontSize: 9 }}>Navigation</p>
-          {navItems.map(({ to, icon: Icon, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) => clsx('nav-item', isActive && 'active')}
-            >
-              <Icon size={15} className="nav-icon flex-shrink-0" />
-              {label}
-            </NavLink>
+          {navItems.map(({ to, icon: Icon, label, locked }) => (
+            locked
+              ? <div key={to} className="nav-item" style={{ opacity: 0.4, cursor: 'not-allowed' }} title="Connect Zendesk first">
+                  <Icon size={15} className="flex-shrink-0" />
+                  {label}
+                  <span style={{ marginLeft: 'auto', fontSize: 9, fontFamily: 'Fira Code, monospace', background: 'var(--bg-overlay)', color: 'var(--text-muted)', padding: '1px 5px', borderRadius: 3 }}>SETUP</span>
+                </div>
+              : <NavLink key={to} to={to} className={({ isActive }) => clsx('nav-item', isActive && 'active')}>
+                  <Icon size={15} className="nav-icon flex-shrink-0" />
+                  {label}
+                </NavLink>
           ))}
 
           {profile?.is_admin && (

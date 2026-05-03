@@ -105,10 +105,9 @@ export default function DashboardPage() {
             Welcome back, {profile?.full_name?.split(' ')[0] || 'there'}.
           </p>
         </div>
-        <Link to="/scanner" className="btn-primary">
-          <Scan size={15} />
-          New Scan
-        </Link>
+        {hasConnector
+          ? <Link to="/scanner" className="btn-primary"><Scan size={15} />New Scan</Link>
+          : <Link to="/connector" className="btn-primary"><Plug size={15} />Connect Zendesk</Link>}
       </div>
 
       {/* Setup prompt if no connector */}
@@ -195,7 +194,9 @@ export default function DashboardPage() {
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <Scan size={32} style={{ color: 'var(--text-muted)' }} />
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No scans yet</p>
-            <Link to="/scanner" className="btn-primary text-xs">Start your first scan</Link>
+            {hasConnector
+              ? <Link to="/scanner" className="btn-primary text-xs">Start your first scan</Link>
+              : <Link to="/connector" className="btn-primary text-xs"><Plug size={13} />Connect Zendesk first</Link>}
           </div>
         ) : (
           <div className="divide-y divide-border">
