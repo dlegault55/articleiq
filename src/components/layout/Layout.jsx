@@ -5,7 +5,7 @@ import { useConnector } from '@/hooks/useConnector'
 import { signOut } from '@/lib/supabase'
 import {
   LayoutDashboard, Scan, Plug, CreditCard, Settings,
-  ShieldCheck, LogOut, Zap, Sun, Moon
+  ShieldCheck, LogOut, Zap
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -95,24 +95,6 @@ export default function Layout() {
 
         {/* Theme toggle + user */}
         <div className="px-2 py-3" style={{ borderTop: '1px solid var(--border)' }}>
-          {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-md mb-2 text-xs transition-all"
-            style={{ background: 'var(--bg-sunken)', border: '1px solid var(--border)', color: 'var(--text-secondary)', cursor: 'pointer' }}
-          >
-            <span style={{ fontFamily: 'Fira Code, monospace', fontSize: 10 }}>{isDark ? 'DARK MODE' : 'LIGHT MODE'}</span>
-            <div className="flex items-center gap-1">
-              <Sun size={11} style={{ color: isDark ? 'var(--text-muted)' : 'var(--xbox)', transition: 'color 0.2s' }} />
-              <div className="relative w-7 h-4 rounded-full transition-all"
-                style={{ background: isDark ? 'var(--xbox)' : 'var(--border-bright)' }}>
-                <div className="absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all"
-                  style={{ left: isDark ? '14px' : '2px', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }} />
-              </div>
-              <Moon size={11} style={{ color: isDark ? 'var(--xbox)' : 'var(--text-muted)', transition: 'color 0.2s' }} />
-            </div>
-          </button>
-
           {/* User */}
           <div className="flex items-center gap-2 px-2 py-1.5 mb-1">
             {profile?.avatar_url
