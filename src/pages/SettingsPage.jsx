@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { useTheme } from '@/hooks/useTheme'
 import { supabase } from '@/lib/supabase'
 import { signOut } from '@/lib/supabase'
 import { useNavigate } from 'react-router-dom'
-import { Save, LogOut, Loader, CheckCircle } from 'lucide-react'
+import { Save, LogOut, Loader, CheckCircle, Sun, Moon, Monitor } from 'lucide-react'
 
 export default function SettingsPage() {
   const { profile, refreshProfile } = useAuth()
+  const { theme, setTheme } = useTheme()
   const navigate = useNavigate()
   const [name, setName] = useState(profile?.full_name || '')
   const [saving, setSaving] = useState(false)
@@ -58,6 +60,39 @@ export default function SettingsPage() {
           {saving ? <Loader size={14} className="animate-spin" /> : saved ? <CheckCircle size={14} /> : <Save size={14} />}
           {saved ? 'Saved!' : 'Save Changes'}
         </button>
+      </div>
+
+      {/* Theme */}
+      <div className="card p-6 mb-4">
+        <p className="section-header mb-4">Appearance</p>
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { value: 'light', icon: Sun,     label: 'Light' },
+            { value: 'dark',  icon: Moon,    label: 'Dark'  },
+            { value: 'system',icon: Monitor, label: 'System'},
+          ].map(({ value, icon: Icon, label }) => (
+            <button
+              key={value}
+              onClick={() => {
+                if (value === 'system') {
+                  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+                  setTheme(prefersDark ? 'dark' : 'light')
+                } else {
+                  setTheme(value)
+                }
+              }}
+              className="flex flex-col items-center gap-2 py-4 rounded-lg border transition-all cursor-pointer"
+              style={{
+                background: theme === value || (value === 'system') ? 'var(--xbox-subtle)' : 'var(--bg-sunken)',
+                borderColor: theme === value ? 'var(--xbox-border)' : 'var(--border)',
+                color: theme === value ? 'var(--xbox)' : 'var(--text-secondary)',
+              }}
+            >
+              <Icon size={18} />
+              <span className="text-xs font-medium">{label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Account info */}
