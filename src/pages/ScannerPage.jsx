@@ -35,7 +35,8 @@ function ConnectorInline({ onConnected }) {
     setSaving(true)
     setError(null)
     try {
-      const { error: dbErr } = await supabase.from('zendesk_connectors').upsert({
+      console.log('Saving connector...', { userId, subdomain: form.subdomain })
+      const result = await supabase.from('zendesk_connectors').upsert({
         user_id: userId,
         subdomain: form.subdomain.trim().toLowerCase(),
         api_key_encrypted: `${form.email}/token:${form.token}`,
@@ -44,10 +45,12 @@ function ConnectorInline({ onConnected }) {
         sync_frequency: form.frequency,
         next_sync_at: calculateNextSync(form.frequency),
       }, { onConflict: 'user_id,subdomain' })
-      if (dbErr) throw new Error(dbErr.message)
+      console.log('Upsert result:', JSON.stringify(result))
+      if (result.error) throw new Error(result.error.message || result.error.details || JSON.stringify(result.error))
       onConnected()
     } catch (e) {
-      setError(e.message)
+      console.error('Save failed:', e)
+      setError(e.message || 'Unknown error — check browser console')
     } finally {
       setSaving(false)
     }
