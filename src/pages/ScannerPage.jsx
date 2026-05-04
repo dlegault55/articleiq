@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useConnector } from '@/hooks/useConnector'
@@ -115,9 +115,14 @@ export default function ScannerPage() {
   const [connectors, setConnectors] = useState([])
   const [selectedConnector, setSelectedConnector] = useState(null)
   const [scanPreset, setScanPreset] = useState('standard')
-  const [scanning, setScanning] = useState(false)
-  const [progress, setProgress] = useState({ phase: '', scanned: 0, total: 0 })
-    const [error, setError] = useState(null)
+  const [error, setError] = useState(null)
+  const prevActiveScan = useRef(null)
+
+  // Derive from global context — no local copy needed
+  const scanning = !!activeScan
+  const progress = activeScan
+    ? { phase: 'analyzing', scanned: activeScan.scanned_articles || 0, total: activeScan.total_articles || 0 }
+    : { phase: '', scanned: 0, total: 0 }
   const [loading, setLoading] = useState(true)
 
   const articleLimit = Infinity
@@ -137,57 +142,16 @@ export default function ScannerPage() {
       setConnectors(allConns)
       if (allConns.length) setSelectedConnector(allConns[0])
 
-      // Active scan state comes from global ScanContext
-      if (activeScan) {
-        setScanning(true)
-        setProgress({ phase: 'analyzing', scanned: activeScan.scanned_articles || 0, total: activeScan.total_articles || 0 })
-      }
-
       setLoading(false)
     }
     load()
   }, [profile, user, contextConnector])
 
-  // Poll for scan progress when scanning
-  useEffect(() => {
-    if (!scanning) return
-    const uid = profile?.id || user?.id
-    if (!uid) return
-
-    const interval = setInterval(async () => {
-      const { data: scans } = await supabase
-        .from('scan_jobs')
-        .select('*')
-        .eq('user_id', uid)
-        .order('created_at', { ascending: false })
-        .limit(10)
-      
-      if (!scans?.length) return
-      setPastScans(scans)
-
-      const active = scans.find(s => s.status === 'running' || s.status === 'pending')
-      if (active) {
-        setProgress({ phase: 'analyzing', scanned: active.scanned_articles || 0, total: active.total_articles || 0 })
-      } else {
-        // Scan finished
-        setScanning(false)
-        const completed = scans.find(s => s.status === 'completed' || s.status === 'failed')
-        if (completed?.status === 'completed') {
-          navigate(`/scanner/results/${completed.id}`)
-        }
-      }
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [scanning, profile, user])
-
   const startScan = async () => {
     const uid = profile?.id || user?.id
     if (!selectedConnector) return
     if (!uid) { setError('Not signed in — please refresh and try again.'); return }
-    setScanning(true)
     setError(null)
-    setProgress({ phase: 'starting', scanned: 0, total: 0 })
 
     try {
       const { data: job, error: jobErr } = await supabase
@@ -203,14 +167,14 @@ export default function ScannerPage() {
         connector: selectedConnector,
         articleLimit,
         preset: scanPreset,
-        onProgress: (p) => setProgress(p),
+        onProgress: (p) => loadScans(),
       })
 
       loadScans()
       navigate(`/scanner/results/${job.id}`)
     } catch (e) {
       setError(e.message)
-      setScanning(false)
+      loadScans()
     }
   }
 
