@@ -277,65 +277,20 @@ export default function ScanResultsPage() {
         </span>
       </div>
 
-      {/* Legend */}
-      <div className="card p-4 mb-4">
-        <div className="flex items-start gap-6 flex-wrap">
-          {/* Severity */}
-          <div className="flex-1 min-w-48">
-            <p className="section-header mb-2" style={{ fontSize: 9 }}>Severity levels</p>
-            <div className="space-y-1.5">
-              {[
-                { badge: 'critical', label: 'Critical', desc: 'Needs immediate attention — significantly impacts readers' },
-                { badge: 'warning',  label: 'Warning',  desc: 'Should be reviewed — may degrade article quality' },
-                { badge: 'info',     label: 'Info',     desc: 'Nice to fix — minor improvements available' },
-              ].map(({ badge, label, desc }) => (
-                <div key={label} className="flex items-start gap-2">
-                  <span className={`badge-${badge} flex-shrink-0 mt-0.5`}>{label}</span>
-                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{desc}</span>
-                </div>
-              ))}
-            </div>
+      {/* Compact readability legend */}
+      <div className="flex items-center gap-3 mb-4 px-1 flex-wrap">
+        <span className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'Fira Code, monospace' }}>Readability:</span>
+        {[
+          { range: '70–100', label: 'Easy',      color: 'var(--xbox)' },
+          { range: '50–69',  label: 'Moderate',  color: 'var(--badge-warning-color)' },
+          { range: '30–49',  label: 'Difficult', color: '#f97316' },
+          { range: '0–29',   label: 'Very hard', color: 'var(--badge-critical-color)' },
+        ].map(({ range, label, color }) => (
+          <div key={range} className="flex items-center gap-1.5">
+            <span className="text-xs font-mono" style={{ color }}>{range}</span>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</span>
           </div>
-
-          {/* Readability */}
-          <div className="flex-1 min-w-48">
-            <p className="section-header mb-2" style={{ fontSize: 9 }}>Readability score (Flesch-Kincaid)</p>
-            <div className="space-y-1.5">
-              {[
-                { range: '70 – 100', label: 'Easy',        color: 'var(--xbox)',                desc: 'Clear, accessible to most readers' },
-                { range: '50 – 69',  label: 'Moderate',    color: 'var(--badge-warning-color)', desc: 'Some complexity, may need simplification' },
-                { range: '30 – 49',  label: 'Difficult',   color: '#f97316',                   desc: 'Complex language, consider rewriting' },
-                { range: '0 – 29',   label: 'Very hard',   color: 'var(--badge-critical-color)',desc: 'Very dense — likely to confuse readers' },
-              ].map(({ range, label, color, desc }) => (
-                <div key={range} className="flex items-center gap-2">
-                  <span className="text-xs font-mono w-16 flex-shrink-0" style={{ color }}>{range}</span>
-                  <span className="text-xs font-medium flex-shrink-0 w-16" style={{ color }}>{label}</span>
-                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{desc}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Issue types */}
-          <div className="flex-1 min-w-48">
-            <p className="section-header mb-2" style={{ fontSize: 9 }}>Issue types</p>
-            <div className="space-y-1.5">
-              {[
-                { type: 'low_readability',  label: 'Low readability',  desc: 'Flesch-Kincaid score below 50' },
-                { type: 'low_word_count',   label: 'Low word count',   desc: 'Under 150 words' },
-                { type: 'outdated',         label: 'Outdated',         desc: 'Not updated in 180+ days' },
-                { type: 'missing_labels',   label: 'Missing labels',   desc: 'No tags or labels assigned' },
-                { type: 'missing_metadata', label: 'No section',       desc: 'Not assigned to a section' },
-                { type: 'broken_link',      label: 'Broken link',      desc: 'One or more dead hyperlinks' },
-              ].map(({ type, label, desc }) => (
-                <div key={type} className="flex items-start gap-2">
-                  <span className="text-xs font-mono flex-shrink-0 w-32" style={{ color: 'var(--text-secondary)' }}>{label}</span>
-                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{desc}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Articles table */}

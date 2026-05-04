@@ -49,26 +49,18 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!profile) return
-    const load = async () => {
-      try {
-        // Aggregate stats from shared context
-        if (recentScans?.length) {
-          const totals = recentScans.reduce((acc, s) => ({
-            articles: acc.articles + (s.scanned_articles || 0),
-            issues: acc.issues + (s.issues_found || 0),
-            critical: acc.critical + (s.critical_count || 0),
-            warning: acc.warning + (s.warning_count || 0),
-            info: acc.info + (s.info_count || 0),
-          }), { articles: 0, issues: 0, critical: 0, warning: 0, info: 0 })
-          setStats({ scans: recentScans.length, ...totals })
-        }
-      } finally {
-        setLoading(false)
-      }
+    if (recentScans?.length) {
+      const totals = recentScans.reduce((acc, s) => ({
+        articles: acc.articles + (s.scanned_articles || 0),
+        issues:   acc.issues   + (s.issues_found   || 0),
+        critical: acc.critical + (s.critical_count || 0),
+        warning:  acc.warning  + (s.warning_count  || 0),
+        info:     acc.info     + (s.info_count     || 0),
+      }), { articles: 0, issues: 0, critical: 0, warning: 0, info: 0 })
+      setStats({ scans: recentScans.length, ...totals })
     }
-    load()
-  }, [profile])
+    setLoading(false)
+  }, [recentScans])
 
   const planLimits = PLANS[profile?.plan || 'free']
   const chartData = recentScans.slice().reverse().map((s, i) => ({
