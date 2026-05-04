@@ -43,12 +43,27 @@ export const AuthProvider = ({ children }) => {
         await loadProfile(session.user.id)
       } else {
         setProfile(null)
+        // Session expired or signed out — redirect to login
+        if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !session) {
+          window.location.href = '/login'
+        }
       }
     })
+
+    // Check session every 2 minutes — catch expiry proactively
+    const sessionCheck = setInterval(async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setUser(null)
+        setProfile(null)
+        window.location.href = '/login'
+      }
+    }, 2 * 60 * 1000)
 
     return () => {
       subscription.unsubscribe()
       clearTimeout(timeout)
+      clearInterval(sessionCheck)
     }
   }, [])
 
