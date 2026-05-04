@@ -143,32 +143,23 @@ export const analyzeArticle = (article) => {
 
 // ─── Zendesk API: Fetch all articles ─────────────────────────
 export const fetchZendeskArticles = async (subdomain, apiKey, onProgress) => {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-  // Get current session token for auth
-  const { supabase } = await import('./supabase')
-  const { data: { session } } = await supabase.auth.getSession()
-  const authToken = session?.access_token || supabaseKey
+  // apiKey is stored as "email/token:token" format
+  const authHeader = `Basic ${btoa(apiKey)}`
+  const baseUrl = `https://${subdomain}.zendesk.com/api/v2/help_center`
 
   let page = 1
   let allArticles = []
   let hasMore = true
 
   while (hasMore) {
-    const res = await fetch(`${supabaseUrl}/functions/v1/zendesk-proxy`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`,
-        'apikey': supabaseKey,
-      },
-      body: JSON.stringify({ subdomain, apiKey, page }),
-    })
+    const res = await fetch(
+      `${baseUrl}/articles?per_page=100&page=${page}&include=sections`,
+      { mode: 'cors', headers: { Authorization: authHeader, 'Content-Type': 'application/json' } }
+    )
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      throw new Error(err.error || `Proxy error ${res.status}`)
+      throw new Error(err.description || `Zendesk error ${res.status} — check your subdomain and API token`)
     }
 
     const data = await res.json()
