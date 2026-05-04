@@ -8,7 +8,8 @@ import { formatDistanceToNow } from 'date-fns'
 
 // ─── Inline connector form ────────────────────────────────────
 function ConnectorInline({ onConnected }) {
-  const { profile } = useAuth()
+  const { profile, user } = useAuth()
+  const userId = profile?.id || user?.id
   const [form, setForm] = useState({ subdomain: '', email: '', token: '' })
   const [showKey, setShowKey] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -33,11 +34,12 @@ function ConnectorInline({ onConnected }) {
   }
 
   const save = async () => {
+    if (!userId) { setError('Not signed in — please refresh and try again.'); return }
     if (!form.subdomain || !form.email || !form.token) { setError('All fields are required.'); return }
     setSaving(true)
     setError(null)
     const { error: dbErr } = await supabase.from('zendesk_connectors').upsert({
-      user_id: profile.id,
+      user_id: userId,
       subdomain: form.subdomain.trim().toLowerCase(),
       api_key_encrypted: `${form.email}/token:${form.token}`,
       api_key_hint: `...${form.token.slice(-6)}`,

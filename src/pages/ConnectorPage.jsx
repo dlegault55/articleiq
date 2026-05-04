@@ -4,7 +4,8 @@ import { supabase } from '@/lib/supabase'
 import { Plug, Eye, EyeOff, Trash2, CheckCircle, AlertCircle, Loader, Plus } from 'lucide-react'
 
 export default function ConnectorPage() {
-  const { profile } = useAuth()
+  const { profile, user } = useAuth()
+  const userId = profile?.id || user?.id
   const [connectors, setConnectors] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -19,7 +20,7 @@ export default function ConnectorPage() {
     const { data } = await supabase
       .from('zendesk_connectors')
       .select('*')
-      .eq('user_id', profile.id)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
     setConnectors(data || [])
     setLoading(false)
@@ -61,7 +62,7 @@ export default function ConnectorPage() {
       // Here we store with a hint for display.
       const hint = `...${form.token.slice(-6)}`
       const { error: dbErr } = await supabase.from('zendesk_connectors').upsert({
-        user_id: profile.id,
+        user_id: userId,
         subdomain: form.subdomain.trim().toLowerCase(),
         api_key_encrypted: `${form.email}/token:${form.token}`, // TODO: encrypt via Edge Function
         api_key_hint: hint,
