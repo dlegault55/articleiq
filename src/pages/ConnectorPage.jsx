@@ -19,74 +19,74 @@ const FREQUENCIES = [
 
 export default function ConnectorPage() {
   const { profile, user } = useAuth()
-  const userId = profile?.id || user?.id
   const [connectors, setConnectors] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showKey, setShowKey] = useState(false)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ subdomain: '', email: '', token: '', frequency: 'weekly' })
   const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(false)
+  const [form, setForm] = useState({ subdomain: '', email: '', token: '', frequency: 'weekly' })
+
+  const userId = profile?.id || user?.id
 
   const loadConnectors = async () => {
+    const uid = profile?.id || user?.id
+    if (!uid) return
     const { data } = await supabase
       .from('zendesk_connectors')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', uid)
       .order('created_at', { ascending: false })
     setConnectors(data || [])
     setLoading(false)
   }
 
-  useEffect(() => { if (profile) loadConnectors() }, [profile])
-
-
+  useEffect(() => {
+    if (profile?.id || user?.id) loadConnectors()
+  }, [profile, user])
 
   const saveConnector = async () => {
-    // DEBUG — remove after fixing
-    const { data: { session } } = await supabase.auth.getSession()
-    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.slice(0, 20)
-    console.log('DEBUG', { 
-      session: !!session, 
-      userId: session?.user?.id,
-      anonKeyStart: anonKey,
-      profileId: profile?.id,
-      userId_derived: profile?.id || user?.id
-    })
-    
-    if (!form.subdomain || !form.email || !form.token) {
-      setError('All fields are required.')
+    const uid = profile?.id || user?.id
+    setError(null)
+    setSuccess(false)
+
+    if (!uid)             { setError('Not signed in. Please refresh.'); return }
+    if (!form.subdomain)  { setError('Subdomain is required.'); return }
+    if (!form.email)      { setError('Email is required.'); return }
+    if (!form.token)      { setError('API token is required.'); return }
+
+    setSaving(true)
+
+    const payload = {
+      user_id: uid,
+      subdomain: form.subdomain.trim().toLowerCase(),
+      api_key_encrypted: `${form.email}/token:${form.token}`,
+      api_key_hint: `...${form.token.slice(-6)}`,
+      label: 'Zendesk',
+      sync_frequency: form.frequency,
+      next_sync_at: calculateNextSync(form.frequency),
+    }
+
+    const { error: dbErr } = await supabase
+      .from('zendesk_connectors')
+      .upsert(payload, { onConflict: 'user_id,subdomain' })
+
+    setSaving(false)
+
+    if (dbErr) {
+      setError(dbErr.message || dbErr.details || JSON.stringify(dbErr))
       return
     }
-    const uid = profile?.id || user?.id
-    if (!uid) { setError('Not signed in. Please refresh and try again.'); return }
-    setSaving(true)
-    setError(null)
-    try {
-      const hint = `...${form.token.slice(-6)}`
-      const { data, error: dbErr } = await supabase.from('zendesk_connectors').upsert({
-        user_id: uid,
-        subdomain: form.subdomain.trim().toLowerCase(),
-        api_key_encrypted: `${form.email}/token:${form.token}`,
-        api_key_hint: hint,
-        label: 'Zendesk',
-        sync_frequency: form.frequency,
-        next_sync_at: calculateNextSync(form.frequency),
-        last_verified_at: null,
-      }, { onConflict: 'user_id,subdomain' }).select()
-      if (dbErr) throw new Error(dbErr.message || dbErr.details || JSON.stringify(dbErr))
-      await loadConnectors(uid)
-      setShowForm(false)
-      setForm({ subdomain: '', email: '', token: '', frequency: 'weekly' })
-    } catch (e) {
-      setError(e.message || 'Save failed — check your connection and try again')
-    } finally {
-      setSaving(false)
-    }
+
+    setSuccess(true)
+    setShowForm(false)
+    setForm({ subdomain: '', email: '', token: '', frequency: 'weekly' })
+    await loadConnectors()
   }
 
   const deleteConnector = async (id) => {
-    if (!confirm('Remove this Zendesk connector? Scan history will be preserved.')) return
+    if (!confirm('Remove this connector?')) return
     await supabase.from('zendesk_connectors').delete().eq('id', id)
     loadConnectors()
   }
@@ -96,12 +96,8 @@ export default function ConnectorPage() {
       <div className="flex items-start justify-between mb-8">
         <div>
           <p className="section-header">Integrations</p>
-          <h1 className="font-display font-bold text-3xl" style={{ color: 'var(--text-primary)' }}>
-            Zendesk Connector
-          </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-            Connect your Zendesk account to start scanning your knowledge base.
-          </p>
+          <h1 className="font-display font-bold text-3xl" style={{ color: 'var(--text-primary)' }}>Zendesk Connector</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Connect your Zendesk account to start scanning.</p>
         </div>
         {connectors.length > 0 && (
           <button onClick={() => setShowForm(true)} className="btn-primary">
@@ -110,6 +106,13 @@ export default function ConnectorPage() {
         )}
       </div>
 
+      {success && (
+        <div className="mb-4 px-4 py-3 rounded-md text-sm"
+          style={{ background: 'rgba(16,124,16,0.1)', border: '1px solid rgba(16,124,16,0.3)', color: 'var(--xbox)' }}>
+          ✓ Connector saved successfully!
+        </div>
+      )}
+
       {/* Existing connectors */}
       {!loading && connectors.length > 0 && (
         <div className="space-y-3 mb-6">
@@ -117,24 +120,21 @@ export default function ConnectorPage() {
             <div key={c.id} className="card p-4 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-md flex items-center justify-center"
-                  style={{ background: 'rgba(16,124,16,0.15)', border: '1px solid rgba(16,124,16,0.3)' }}>
+                  style={{ background: 'var(--xbox-subtle)', border: '1px solid var(--xbox-border)' }}>
                   <Plug size={16} style={{ color: 'var(--xbox)' }} />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
-                      {c.subdomain}.zendesk.com
-                    </span>
-                    <span className={`w-2 h-2 rounded-full ${c.is_active ? 'bg-xbox' : 'bg-gray-500'}`} />
+                  <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
+                    {c.subdomain}.zendesk.com
+                    <span className="ml-2 inline-block w-2 h-2 rounded-full" style={{ background: c.is_active ? 'var(--xbox)' : '#9ca3af', verticalAlign: 'middle' }} />
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
                     Key: {c.api_key_hint || '••••••'} · {c.sync_frequency || 'weekly'}
                     {c.next_sync_at && ` · Next sync ${new Date(c.next_sync_at).toLocaleDateString()}`}
-                    {c.last_synced_at && ` · Last synced ${new Date(c.last_synced_at).toLocaleDateString()}`}
                   </div>
                 </div>
               </div>
-              <button onClick={() => deleteConnector(c.id)} className="btn-ghost p-2 text-red-400 hover:text-red-300">
+              <button onClick={() => deleteConnector(c.id)} className="btn-ghost p-2" style={{ color: '#ef4444' }}>
                 <Trash2 size={14} />
               </button>
             </div>
@@ -142,84 +142,63 @@ export default function ConnectorPage() {
         </div>
       )}
 
-      {/* Add form */}
+      {/* Form */}
       {(showForm || connectors.length === 0) && (
         <div className="card-glow p-6">
           <p className="section-header mb-5">Add Zendesk Connector</p>
 
           <div className="space-y-4">
-<div>
+            <div>
               <label className="label">Zendesk Subdomain</label>
-              <div className="flex items-center">
+              <div className="flex">
                 <input className="input rounded-r-none" placeholder="yourcompany"
                   value={form.subdomain}
                   onChange={(e) => setForm(f => ({ ...f, subdomain: e.target.value }))} />
-                <div className="px-3 py-2 text-sm rounded-r-md border border-l-0 border-border flex-shrink-0"
-                  style={{ background: 'var(--surface-3)', color: 'var(--text-muted)' }}>
+                <div className="px-3 py-2 text-sm border border-l-0 rounded-r-md flex-shrink-0"
+                  style={{ background: 'var(--bg-sunken)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
                   .zendesk.com
                 </div>
               </div>
-              <p className="text-xs mt-1.5" style={{ color: 'var(--text-muted)' }}>
-                The subdomain from your Zendesk URL: <span className="font-mono text-xbox-light">https://yourcompany.zendesk.com</span>
-              </p>
             </div>
 
             <div>
               <label className="label">Zendesk Email</label>
-              <input
-                className="input mb-3"
-                type="email"
-                placeholder="you@yourcompany.com"
+              <input className="input" type="email" placeholder="you@yourcompany.com"
                 value={form.email}
-                onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
-              />
+                onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
+            </div>
 
+            <div>
               <label className="label">API Token</label>
               <div className="relative">
-                <input
-                  className="input pr-10"
-                  type={showKey ? 'text' : 'password'}
+                <input className="input pr-10" type={showKey ? 'text' : 'password'}
                   placeholder="your-zendesk-api-token"
                   value={form.token}
-                  onChange={(e) => setForm(f => ({ ...f, token: e.target.value }))}
-                />
+                  onChange={(e) => setForm(f => ({ ...f, token: e.target.value }))} />
                 <button onClick={() => setShowKey(!showKey)}
                   className="absolute right-3 top-1/2 -translate-y-1/2"
-                  style={{ color: 'var(--text-muted)' }}>
+                  style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>
                   {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
               <p className="text-xs mt-1.5" style={{ color: 'var(--text-muted)' }}>
-                Find your token in Zendesk Admin → Apps & Integrations → APIs → Zendesk API → API Tokens
+                Zendesk Admin → Apps & Integrations → APIs → Zendesk API → API Tokens
               </p>
             </div>
 
-            {/* Test result */}
-
-
-            {error && (
-              <div className="px-3 py-2.5 rounded-md text-sm"
-                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#FC8181' }}>
-                {error}
-              </div>
-            )}
-
-            <div className="mb-2">
+            <div>
               <label className="label">Sync Frequency</label>
               <div className="grid grid-cols-3 gap-2">
                 {FREQUENCIES.map(({ value, label, desc }) => (
-                  <button
-                    key={value}
-                    type="button"
+                  <button key={value} type="button"
                     onClick={() => setForm(f => ({ ...f, frequency: value }))}
                     style={{
-                      padding: '10px 8px', borderRadius: 7, cursor: 'pointer',
-                      textAlign: 'center', transition: 'all 0.15s ease',
+                      padding: '10px 8px', borderRadius: 7, cursor: 'pointer', textAlign: 'center',
                       background: form.frequency === value ? 'var(--xbox-subtle)' : 'var(--bg-sunken)',
                       border: `1px solid ${form.frequency === value ? 'var(--xbox-border)' : 'var(--border)'}`,
                       color: form.frequency === value ? 'var(--xbox)' : 'var(--text-secondary)',
-                    }}
-                  >
+                      transition: 'all 0.15s',
+                    }}>
                     <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>{label}</div>
                     <div style={{ fontSize: 11, opacity: 0.7 }}>{desc}</div>
                   </button>
@@ -227,27 +206,31 @@ export default function ConnectorPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 pt-2">
+            {error && (
+              <div className="px-3 py-2.5 rounded-md text-sm"
+                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444' }}>
+                {error}
+              </div>
+            )}
 
+            <div className="flex items-center gap-3 pt-2">
               <button onClick={saveConnector} disabled={saving} className="btn-primary">
                 {saving ? <Loader size={14} className="animate-spin" /> : <Plug size={14} />}
                 {saving ? 'Saving...' : 'Save Connector'}
               </button>
               {connectors.length > 0 && (
-                <button onClick={() => setShowForm(false)} className="btn-ghost">Cancel</button>
+                <button onClick={() => { setShowForm(false); setError(null) }} className="btn-ghost">Cancel</button>
               )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Security note */}
       <div className="mt-6 px-4 py-3 rounded-md flex items-start gap-2.5"
-        style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
-        <div className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--xbox)' }}>🔒</div>
+        style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+        <span>🔒</span>
         <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-          Your API key is stored securely in your private Supabase database with row-level security.
-          Only you can access it. We recommend using a dedicated Zendesk API token with read-only permissions.
+          Your API token is stored securely with row-level security. Only you can access it.
         </p>
       </div>
     </div>
