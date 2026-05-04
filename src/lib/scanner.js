@@ -173,7 +173,49 @@ export const fetchZendeskArticles = async (subdomain, apiKey, onProgress) => {
 }
 
 // ─── Run a full scan job ──────────────────────────────────────
-export const runScan = async ({ scanJobId, userId, connector, articleLimit, onProgress }) => {
+export const PRESETS = {
+  fast:     { outdated: true,  wordCount: true,  readability: false, missingMeta: false, brokenLinks: false },
+  standard: { outdated: true,  wordCount: true,  readability: true,  missingMeta: true,  brokenLinks: true  },
+  full:     { outdated: true,  wordCount: true,  readability: true,  missingMeta: true,  brokenLinks: true  },
+}
+
+export const analyzeArticleWithPreset = (article, preset = 'standard') => {
+  const checks = PRESETS[preset] || PRESETS.standard
+  const issues = []
+  const body = article.body || ''
+  const wordCount = countWords(body)
+  const readabilityScore = checks.readability ? fleschKincaid(body) : null
+  const links = checks.brokenLinks ? extractLinks(body) : []
+
+  if (!article.title?.trim())
+    issues.push({ severity: 'critical', issue_type: 'missing_title', description: 'Article has no title.' })
+
+  if (checks.wordCount) {
+    if (wordCount < 50) issues.push({ severity: 'critical', issue_type: 'low_word_count', description: `Article is very short (${wordCount} words).`, metadata: { wordCount } })
+    else if (wordCount < 150) issues.push({ severity: 'warning', issue_type: 'low_word_count', description: `Article is short (${wordCount} words).`, metadata: { wordCount } })
+  }
+
+  if (checks.outdated) {
+    const days = article.updated_at ? Math.round((Date.now() - new Date(article.updated_at)) / (1000*60*60*24)) : null
+    if (!article.updated_at || days > 180)
+      issues.push({ severity: 'warning', issue_type: 'outdated', description: days ? `Not updated in ${days} days.` : 'Never updated.', metadata: { days, lastUpdated: article.updated_at } })
+  }
+
+  if (checks.missingMeta && (!article.label_names || article.label_names.length === 0))
+    issues.push({ severity: 'warning', issue_type: 'missing_labels', description: 'No labels or tags assigned.' })
+
+  if (checks.readability && readabilityScore !== null) {
+    if (readabilityScore < 30) issues.push({ severity: 'critical', issue_type: 'low_readability', description: `Readability very low (${readabilityScore}/100).`, metadata: { readabilityScore } })
+    else if (readabilityScore < 50) issues.push({ severity: 'warning', issue_type: 'low_readability', description: `Readability below average (${readabilityScore}/100).`, metadata: { readabilityScore } })
+  }
+
+  if (checks.missingMeta && !article.section_id)
+    issues.push({ severity: 'info', issue_type: 'missing_metadata', description: 'Not assigned to any section.' })
+
+  return { wordCount, readabilityScore, links, issues, hasMissingMeta: !article.title?.trim() || !article.section_id, brokenLinksCount: 0 }
+}
+
+export const runScan = async ({ scanJobId, userId, connector, articleLimit, preset = 'standard', onProgress }) => {
   const { subdomain, api_key_encrypted: apiKey } = connector
 
   try {
@@ -192,7 +234,7 @@ export const runScan = async ({ scanJobId, userId, connector, articleLimit, onPr
 
     for (let i = 0; i < limited.length; i++) {
       const zdArticle = limited[i]
-      const analysis = analyzeArticle(zdArticle)
+      const analysis = analyzeArticleWithPreset(zdArticle, preset)
 
       // Insert scanned article
       const { data: savedArticle } = await supabase.from('scanned_articles').insert({

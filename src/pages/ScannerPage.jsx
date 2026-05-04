@@ -108,6 +108,7 @@ export default function ScannerPage() {
   const navigate = useNavigate()
   const [connectors, setConnectors] = useState([])
   const [selectedConnector, setSelectedConnector] = useState(null)
+  const [scanPreset, setScanPreset] = useState('standard')
   const [scanning, setScanning] = useState(false)
   const [progress, setProgress] = useState({ phase: '', scanned: 0, total: 0 })
   const [pastScans, setPastScans] = useState([])
@@ -205,6 +206,7 @@ export default function ScannerPage() {
         userId: uid,
         connector: selectedConnector,
         articleLimit,
+        preset: scanPreset,
         onProgress: (p) => setProgress(p),
       })
 
@@ -306,23 +308,51 @@ export default function ScannerPage() {
           )}
 
           {selectedConnector && !scanning && (
-            <div className="flex items-center gap-3 p-3 rounded-md mb-4"
-              style={{ background: 'var(--surface-3)', border: '1px solid var(--border)' }}>
-              <Plug size={14} style={{ color: 'var(--xbox)' }} />
-              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                Scanning <span style={{ color: 'var(--text-primary)' }}>{selectedConnector.subdomain}.zendesk.com</span>
-                
-              </span>
+            <div className="mb-4">
+              {/* Connected connector pill */}
+              <div className="flex items-center gap-2 p-3 rounded-md mb-4"
+                style={{ background: 'var(--bg-sunken)', border: '1px solid var(--border)' }}>
+                <Plug size={13} style={{ color: 'var(--xbox)' }} />
+                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{selectedConnector.subdomain}.zendesk.com</span>
+                </span>
+              </div>
+
+              {/* Preset selector */}
+              <p className="section-header mb-3">Scan preset</p>
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                {[
+                  { value: 'fast', label: 'Fast', desc: 'Word count & outdated only', icon: '⚡', checks: 2 },
+                  { value: 'standard', label: 'Standard', desc: 'All quality checks', icon: '🔍', checks: 5 },
+                  { value: 'full', label: 'Full', desc: 'All checks + AI scoring', icon: '🤖', checks: 8, paid: true },
+                ].map(({ value, label, desc, icon, checks, paid }) => (
+                  <button key={value} type="button"
+                    onClick={() => setScanPreset(value)}
+                    style={{
+                      padding: '14px 12px', borderRadius: 8, cursor: 'pointer', textAlign: 'left',
+                      background: scanPreset === value ? 'var(--xbox-subtle)' : 'var(--bg-sunken)',
+                      border: `1px solid ${scanPreset === value ? 'var(--xbox-border)' : 'var(--border)'}`,
+                      transition: 'all 0.15s',
+                    }}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span style={{ fontSize: 16 }}>{icon}</span>
+                      {paid && <span style={{ fontSize: 9, padding: '1px 5px', background: 'var(--xbox-subtle)', color: 'var(--xbox)', border: '1px solid var(--xbox-border)', borderRadius: 3, fontFamily: 'Fira Code, monospace' }}>PRO</span>}
+                    </div>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: scanPreset === value ? 'var(--xbox)' : 'var(--text-primary)', marginBottom: 2 }}>{label}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>{desc}</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Fira Code, monospace' }}>{checks} checks</div>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
           {/* Scan in progress */}
           {scanning && (
             <div className="mb-4 p-4 rounded-lg" style={{ background: 'var(--bg-sunken)', border: '1px solid var(--xbox-border)' }}>
-              {/* Header */}
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--xbox)', boxShadow: '0 0 6px var(--xbox)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--xbox)', boxShadow: '0 0 6px var(--xbox)', animation: 'aiq-pulse 1.5s ease-in-out infinite' }} />
                   <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                     {progress.phase === 'fetching' ? 'Fetching articles from Zendesk' : 'Analyzing articles'}
                   </span>
@@ -332,24 +362,20 @@ export default function ScannerPage() {
                 </span>
               </div>
 
-              {/* Progress bar */}
+              {/* Progress bar — CSS transition smooths out jumpy updates */}
               <div className="progress-bar h-2 mb-2">
-                <div className="progress-fill" style={{ width: `${Math.max(progressPct, 2)}%`, transition: 'width 0.8s ease' }} />
+                <div className="progress-fill" style={{ width: `${Math.max(progressPct, 2)}%`, transition: 'width 1.2s ease-out' }} />
               </div>
 
-              {/* Stats row */}
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  {progress.total > 0
-                    ? `${progress.scanned} of ${progress.total} articles processed`
-                    : 'Connecting to Zendesk...'}
+                  {progress.total > 0 ? `${progress.scanned} of ${progress.total} articles` : 'Connecting to Zendesk...'}
                 </span>
                 <span className="text-xs font-mono font-bold" style={{ color: 'var(--xbox)' }}>
                   {progress.total > 0 ? `${progressPct}%` : '...'}
                 </span>
               </div>
 
-              {/* Live counters */}
               {progress.total > 0 && (
                 <div className="grid grid-cols-3 gap-2 mb-3">
                   {[
@@ -370,13 +396,13 @@ export default function ScannerPage() {
                   <Loader size={10} className="animate-spin flex-shrink-0" />
                   Safe to navigate away — scan continues in the background
                 </div>
-                <button onClick={cancelScan} className="btn-ghost text-xs py-1 px-2" style={{ color: 'var(--badge-critical-color)', borderColor: 'var(--badge-critical-border)' }}>
+                <button onClick={cancelScan} className="btn-ghost text-xs py-1 px-2" style={{ color: 'var(--badge-critical-color)' }}>
                   Stop scan
                 </button>
               </div>
             </div>
           )}
-          <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
+          <style>{`@keyframes aiq-pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }`}</style>
 
           {error && (
             <div className="mb-4 px-3 py-2.5 rounded-md text-sm flex items-start gap-2"
@@ -403,41 +429,36 @@ export default function ScannerPage() {
 
       {/* What gets checked */}
       <div className="card p-5 mb-6">
-        <p className="section-header mb-4">What gets checked</p>
+        <p className="section-header mb-4">Checks included — <span style={{ textTransform: 'none', fontFamily: 'Inter, sans-serif', letterSpacing: 0 }}>{scanPreset} preset</span></p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {[
-            { label: 'Broken Links', desc: 'Detects all dead or invalid hyperlinks', tier: 'free' },
-            { label: 'Last Updated Date', desc: 'Flags articles not updated in 180+ days', tier: 'free' },
-            { label: 'Word Count', desc: 'Warns on articles under 150 words', tier: 'free' },
-            { label: 'Missing Metadata', desc: 'Checks for missing labels and sections', tier: 'free' },
-            { label: 'Readability Score', desc: 'Flesch-Kincaid readability analysis', tier: 'free' },
-            { label: 'Grammar Fix', desc: 'AI-powered grammar and clarity improvements', tier: 'paid' },
-            { label: 'Full Rewrite', desc: 'AI rewrites article for clarity and tone', tier: 'paid' },
-            { label: 'Quality Score', desc: 'AI scores clarity, completeness, structure', tier: 'paid' },
-          ].map(({ label, desc, tier }) => (
-            <div key={label} className="flex items-start gap-2.5">
-              <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                tier === 'free' || profile?.plan === 'paid'
-                  ? 'bg-xbox/15 border border-xbox/30'
-                  : 'bg-surface-3 border border-border'
-              }`}>
-                {tier === 'free' || profile?.plan === 'paid' ? (
-                  <CheckCircle size={11} style={{ color: 'var(--xbox-light)' }} />
-                ) : (
-                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>⚡</span>
-                )}
-              </div>
-              <div>
-                <div className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
-                  {label}
-                  {tier === 'paid' && profile?.plan !== 'paid' && (
-                    <span className="px-1 py-0.5 rounded text-xs font-mono" style={{ background: 'rgba(16,124,16,0.15)', color: 'var(--xbox-light)', fontSize: '9px' }}>PRO</span>
-                  )}
+            { label: 'Last Updated Date', desc: 'Flags articles not updated in 180+ days', presets: ['fast','standard','full'] },
+            { label: 'Word Count', desc: 'Warns on articles under 150 words', presets: ['fast','standard','full'] },
+            { label: 'Broken Links', desc: 'Detects dead or invalid hyperlinks', presets: ['standard','full'] },
+            { label: 'Missing Metadata', desc: 'Checks for missing labels and sections', presets: ['standard','full'] },
+            { label: 'Readability Score', desc: 'Flesch-Kincaid readability analysis', presets: ['standard','full'] },
+            { label: 'AI Grammar Fix', desc: 'AI-powered grammar and clarity', presets: ['full'], paid: true },
+            { label: 'AI Quality Score', desc: 'AI scores clarity, completeness, structure', presets: ['full'], paid: true },
+          ].map(({ label, desc, presets, paid }) => {
+            const included = presets.includes(scanPreset)
+            return (
+              <div key={label} className="flex items-start gap-2.5" style={{ opacity: included ? 1 : 0.3 }}>
+                <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5"
+                  style={{ background: included ? 'var(--xbox-subtle)' : 'var(--bg-overlay)', border: `1px solid ${included ? 'var(--xbox-border)' : 'var(--border)'}` }}>
+                  {included
+                    ? <CheckCircle size={11} style={{ color: 'var(--xbox)' }} />
+                    : <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>—</span>}
                 </div>
-                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{desc}</div>
+                <div>
+                  <div className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
+                    {label}
+                    {paid && <span style={{ fontSize: 9, padding: '1px 4px', background: 'var(--xbox-subtle)', color: 'var(--xbox)', border: '1px solid var(--xbox-border)', borderRadius: 3, fontFamily: 'Fira Code, monospace' }}>PRO</span>}
+                  </div>
+                  <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{desc}</div>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 
