@@ -11,7 +11,7 @@ export default function ConnectorPage() {
   const [saving, setSaving] = useState(false)
   const [showKey, setShowKey] = useState(false)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ subdomain: '', email: '', token: '', label: 'Default' })
+  const [form, setForm] = useState({ subdomain: '', email: '', token: '' })
   const [error, setError] = useState(null)
 
   const loadConnectors = async () => {
@@ -45,13 +45,13 @@ export default function ConnectorPage() {
         subdomain: form.subdomain.trim().toLowerCase(),
         api_key_encrypted: `${form.email}/token:${form.token}`, // TODO: encrypt via Edge Function
         api_key_hint: hint,
-        label: form.label || 'Default',
+        label: 'Zendesk',
         last_verified_at: null,
       }, { onConflict: 'user_id,subdomain' })
       if (dbErr) throw dbErr
       await loadConnectors()
       setShowForm(false)
-      setForm({ subdomain: '', email: '', token: '', label: 'Default' })
+      setForm({ subdomain: '', email: '', token: '' })
       setTestResult(null)
     } catch (e) {
       setError(e.message)
@@ -103,7 +103,7 @@ export default function ConnectorPage() {
                     <span className={`w-2 h-2 rounded-full ${c.is_active ? 'bg-xbox' : 'bg-gray-500'}`} />
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                    {c.label} · Key: {c.api_key_hint || '••••••'}
+                    Key: {c.api_key_hint || '••••••'}
                     {c.last_verified_at && ` · Verified ${new Date(c.last_verified_at).toLocaleDateString()}`}
                   </div>
                 </div>
@@ -122,13 +122,7 @@ export default function ConnectorPage() {
           <p className="section-header mb-5">Add Zendesk Connector</p>
 
           <div className="space-y-4">
-            <div>
-              <label className="label">Connector Label</label>
-              <input className="input" placeholder="e.g. Production" value={form.label}
-                onChange={(e) => setForm(f => ({ ...f, label: e.target.value }))} />
-            </div>
-
-            <div>
+<div>
               <label className="label">Zendesk Subdomain</label>
               <div className="flex items-center">
                 <input className="input rounded-r-none" placeholder="yourcompany"

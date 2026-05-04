@@ -25,7 +25,7 @@ function ConnectorInline({ onConnected }) {
       subdomain: form.subdomain.trim().toLowerCase(),
       api_key_encrypted: `${form.email}/token:${form.token}`,
       api_key_hint: `...${form.token.slice(-6)}`,
-      label: 'Default',
+      label: 'Zendesk',
       last_verified_at: testResult?.success ? new Date().toISOString() : null,
     }, { onConflict: 'user_id,subdomain' })
     if (dbErr) { setError(dbErr.message); setSaving(false); return }
