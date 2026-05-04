@@ -62,4 +62,4 @@ export const STRIPE_WEBHOOK_STUB = `
 
 export const canUseAI = (plan) => plan === 'paid'
 export const canPushToZendesk = (plan) => plan === 'paid'
-export const getArticleLimit = (plan) => PLANS[plan]?.limits.articlesPerScan ?? 100
+export const getArticleLimit = (_plan) => Infinity
