@@ -138,10 +138,51 @@ export default function ScannerPage() {
         .order('created_at', { ascending: false })
         .limit(10)
       setPastScans(scans || [])
+
+      // Check if there's an active scan in progress
+      const activeScans = scans?.filter(s => s.status === 'running' || s.status === 'pending')
+      if (activeScans?.length > 0) {
+        setScanning(true)
+        setProgress({ phase: 'analyzing', scanned: activeScans[0].scanned_articles || 0, total: activeScans[0].total_articles || 0 })
+      }
+
       setLoading(false)
     }
     load()
   }, [profile, user, contextConnector])
+
+  // Poll for scan progress when scanning
+  useEffect(() => {
+    if (!scanning) return
+    const uid = profile?.id || user?.id
+    if (!uid) return
+
+    const interval = setInterval(async () => {
+      const { data: scans } = await supabase
+        .from('scan_jobs')
+        .select('*')
+        .eq('user_id', uid)
+        .order('created_at', { ascending: false })
+        .limit(10)
+      
+      if (!scans?.length) return
+      setPastScans(scans)
+
+      const active = scans.find(s => s.status === 'running' || s.status === 'pending')
+      if (active) {
+        setProgress({ phase: 'analyzing', scanned: active.scanned_articles || 0, total: active.total_articles || 0 })
+      } else {
+        // Scan finished
+        setScanning(false)
+        const completed = scans.find(s => s.status === 'completed' || s.status === 'failed')
+        if (completed?.status === 'completed') {
+          navigate(`/scanner/results/${completed.id}`)
+        }
+      }
+    }, 2000)
+
+    return () => clearInterval(interval)
+  }, [scanning, profile, user])
 
   const startScan = async () => {
     const uid = profile?.id || user?.id
@@ -255,17 +296,17 @@ export default function ScannerPage() {
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>
-                  {progress.phase === 'fetching' ? '⚡ Fetching articles...' : '🔍 Analyzing...'}
-                  {progress.total > 0 && ` ${progress.scanned}/${progress.total}`}
+                  {progress.phase === 'fetching' ? '⚡ Fetching articles from Zendesk...' : '🔍 Analyzing articles...'}
+                  {progress.total > 0 && ` ${progress.scanned} of ${progress.total}`}
                 </span>
-                <span className="text-sm font-mono" style={{ color: 'var(--xbox-light)' }}>{progressPct}%</span>
+                <span className="text-sm font-mono" style={{ color: 'var(--xbox)' }}>{progressPct}%</span>
               </div>
               <div className="progress-bar h-2">
-                <div className="progress-fill" style={{ width: `${progressPct}%` }} />
+                <div className="progress-fill" style={{ width: `${Math.max(progressPct, 3)}%` }} />
               </div>
               <div className="mt-2 flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
                 <Loader size={11} className="animate-spin" />
-                This may take a few minutes for large knowledge bases
+                Scan is running — you can navigate away and come back, it will still be here
               </div>
             </div>
           )}
