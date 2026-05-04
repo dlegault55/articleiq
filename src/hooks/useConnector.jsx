@@ -1,26 +1,41 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
 
 const ConnectorContext = createContext(null)
 
 export const ConnectorProvider = ({ children }) => {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [hasConnector, setHasConnector] = useState(null)
+  const [connector, setConnector] = useState(null)
+
+  const checkConnector = useCallback(async () => {
+    const uid = profile?.id || user?.id
+    if (!uid) { setHasConnector(false); return }
+    const { data } = await supabase
+      .from('zendesk_connectors')
+      .select('*')
+      .eq('user_id', uid)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+    const found = data?.[0] ?? null
+    setConnector(found)
+    setHasConnector(!!found)
+  }, [user, profile])
 
   useEffect(() => {
-    if (!user) { setHasConnector(false); return }
-    supabase
-      .from('zendesk_connectors')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .limit(1)
-      .then(({ data }) => setHasConnector((data?.length ?? 0) > 0))
-  }, [user])
+    checkConnector()
+  }, [checkConnector])
+
+  // Also recheck every time the window gets focus (e.g. after saving on another page)
+  useEffect(() => {
+    window.addEventListener('focus', checkConnector)
+    return () => window.removeEventListener('focus', checkConnector)
+  }, [checkConnector])
 
   return (
-    <ConnectorContext.Provider value={{ hasConnector }}>
+    <ConnectorContext.Provider value={{ hasConnector, connector, recheckConnector: checkConnector }}>
       {children}
     </ConnectorContext.Provider>
   )

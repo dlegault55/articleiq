@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { useConnector } from '@/hooks/useConnector'
 import { supabase } from '@/lib/supabase'
 import { Plug, Eye, EyeOff, Trash2, Loader, Plus } from 'lucide-react'
 
@@ -19,6 +20,7 @@ const FREQUENCIES = [
 
 export default function ConnectorPage() {
   const { profile, user } = useAuth()
+  const { recheckConnector } = useConnector()
   const [connectors, setConnectors] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -83,6 +85,7 @@ export default function ConnectorPage() {
     setShowForm(false)
     setForm({ subdomain: '', email: '', token: '', frequency: 'weekly' })
     await loadConnectors()
+    recheckConnector()
   }
 
   const deleteConnector = async (id) => {

@@ -41,22 +41,13 @@ export default function DashboardPage() {
   const { profile } = useAuth()
   const [stats, setStats] = useState({ scans: 0, articles: 0, issues: 0, critical: 0, warning: 0, info: 0 })
   const [recentScans, setRecentScans] = useState([])
-  const [hasConnector, setHasConnector] = useState(null)
+  const { hasConnector, recheckConnector } = useConnector()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!profile) return
     const load = async () => {
       try {
-        // Check connector
-        const { data: connectors } = await supabase
-          .from('zendesk_connectors')
-          .select('id')
-          .eq('user_id', profile.id)
-          .eq('is_active', true)
-          .limit(1)
-        setHasConnector(connectors?.length > 0)
-
         // Recent scans
         const { data: scans } = await supabase
           .from('scan_jobs')

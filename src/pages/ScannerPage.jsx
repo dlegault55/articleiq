@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
+import { useConnector } from '@/hooks/useConnector'
 import { supabase } from '@/lib/supabase'
 import { runScan } from '@/lib/scanner'
 import { Scan, Plug, AlertTriangle, Loader, ChevronRight, Clock, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react'
@@ -48,6 +49,7 @@ function ConnectorInline({ onConnected }) {
       }, { onConflict: 'user_id,subdomain' })
       console.log('Upsert result:', JSON.stringify(result))
       if (result.error) throw new Error(result.error.message || result.error.details || JSON.stringify(result.error))
+      recheckConnector()
       onConnected()
     } catch (e) {
       console.error('Save failed:', e)
@@ -116,13 +118,16 @@ export default function ScannerPage() {
   useEffect(() => {
     if (!profile) return
     const load = async () => {
+      const uid = profile?.id || user?.id
+      if (!uid) { setLoading(false); return }
       const { data: conns } = await supabase
         .from('zendesk_connectors')
         .select('*')
-        .eq('user_id', profile.id)
+        .eq('user_id', uid)
         .eq('is_active', true)
       setConnectors(conns || [])
       if (conns?.length) setSelectedConnector(conns[0])
+      else if (contextConnector) { setConnectors([contextConnector]); setSelectedConnector(contextConnector) }
 
       const { data: scans } = await supabase
         .from('scan_jobs')
