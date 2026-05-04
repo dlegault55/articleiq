@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useConnector } from '@/hooks/useConnector'
 import { supabase } from '@/lib/supabase'
 import { runScan } from '@/lib/scanner'
-import { Scan, Plug, AlertTriangle, Loader, ChevronRight, Clock, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react'
+import { Scan, Plug, AlertTriangle, Loader, ChevronRight, Clock, CheckCircle, XCircle, Eye, EyeOff, Trash2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
 const calculateNextSync = (frequency) => {
@@ -215,6 +215,31 @@ export default function ScannerPage() {
     }
   }
 
+  const cancelScan = async () => {
+    const uid = profile?.id || user?.id
+    if (!uid) return
+    // Find the running scan and mark it failed
+    const running = pastScans.find(s => s.status === 'running' || s.status === 'pending')
+    if (running) {
+      await supabase.from('scan_jobs').update({
+        status: 'failed',
+        error_message: 'Cancelled by user',
+        completed_at: new Date().toISOString(),
+      }).eq('id', running.id)
+    }
+    setScanning(false)
+    setProgress({ phase: '', scanned: 0, total: 0 })
+    // Refresh list
+    const { data } = await supabase.from('scan_jobs').select('*').eq('user_id', uid).order('created_at', { ascending: false }).limit(10)
+    setPastScans(data || [])
+  }
+
+  const deleteScan = async (scanId) => {
+    if (!confirm('Delete this scan and all its results?')) return
+    await supabase.from('scan_jobs').delete().eq('id', scanId)
+    setPastScans(prev => prev.filter(s => s.id !== scanId))
+  }
+
   const progressPct = progress.total > 0 ? Math.round((progress.scanned / progress.total) * 100) : 0
 
   return (
@@ -340,9 +365,14 @@ export default function ScannerPage() {
                 </div>
               )}
 
-              <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-                <Loader size={10} className="animate-spin flex-shrink-0" />
-                Safe to navigate away — scan continues in the background and will appear in history
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <Loader size={10} className="animate-spin flex-shrink-0" />
+                  Safe to navigate away — scan continues in the background
+                </div>
+                <button onClick={cancelScan} className="btn-ghost text-xs py-1 px-2" style={{ color: 'var(--badge-critical-color)', borderColor: 'var(--badge-critical-border)' }}>
+                  Stop scan
+                </button>
               </div>
             </div>
           )}
@@ -419,29 +449,38 @@ export default function ScannerPage() {
           </div>
           <div className="divide-y divide-border">
             {pastScans.map((scan) => (
-              <Link key={scan.id} to={`/scanner/results/${scan.id}`}
-                className="flex items-center gap-4 px-5 py-3.5 hover:bg-surface-3 transition-colors group">
-                <div>
-                  {scan.status === 'completed' && <CheckCircle size={16} style={{ color: 'var(--xbox)' }} />}
-                  {scan.status === 'running' && <Loader size={16} className="animate-spin" style={{ color: '#FCD34D' }} />}
-                  {scan.status === 'failed' && <XCircle size={16} style={{ color: '#FC8181' }} />}
-                  {scan.status === 'pending' && <Clock size={16} style={{ color: 'var(--text-muted)' }} />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                    #{scan.id.slice(-8).toUpperCase()}
+              <div key={scan.id} className="flex items-center gap-2 px-5 py-3.5 hover:bg-surface-3 transition-colors group" style={{ borderBottom: '1px solid var(--border)' }}>
+                <Link to={`/scanner/results/${scan.id}`} className="flex items-center gap-4 flex-1 min-w-0">
+                  <div>
+                    {scan.status === 'completed' && <CheckCircle size={16} style={{ color: 'var(--xbox)' }} />}
+                    {scan.status === 'running' && <Loader size={16} className="animate-spin" style={{ color: '#FCD34D' }} />}
+                    {scan.status === 'failed' && <XCircle size={16} style={{ color: '#FC8181' }} />}
+                    {scan.status === 'pending' && <Clock size={16} style={{ color: 'var(--text-muted)' }} />}
                   </div>
-                  <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                    {formatDistanceToNow(new Date(scan.created_at), { addSuffix: true })} · {scan.scanned_articles || 0} articles
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                      #{scan.id.slice(-8).toUpperCase()}
+                    </div>
+                    <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      {formatDistanceToNow(new Date(scan.created_at), { addSuffix: true })} · {scan.scanned_articles || 0} articles
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2 text-xs font-mono">
-                  {scan.critical_count > 0 && <span style={{ color: '#FC8181' }}>{scan.critical_count}C</span>}
-                  {scan.warning_count > 0 && <span style={{ color: '#FCD34D' }}>{scan.warning_count}W</span>}
-                  {scan.info_count > 0 && <span style={{ color: '#93C5FD' }}>{scan.info_count}I</span>}
-                </div>
-                <ChevronRight size={14} style={{ color: 'var(--text-muted)' }} className="group-hover:text-xbox transition-colors" />
-              </Link>
+                  <div className="flex items-center gap-2 text-xs font-mono">
+                    {scan.critical_count > 0 && <span style={{ color: '#FC8181' }}>{scan.critical_count}C</span>}
+                    {scan.warning_count > 0 && <span style={{ color: '#FCD34D' }}>{scan.warning_count}W</span>}
+                    {scan.info_count > 0 && <span style={{ color: '#93C5FD' }}>{scan.info_count}I</span>}
+                  </div>
+                  <ChevronRight size={14} style={{ color: 'var(--text-muted)' }} className="group-hover:text-xbox transition-colors" />
+                </Link>
+                <button
+                  onClick={(e) => { e.preventDefault(); deleteScan(scan.id) }}
+                  className="btn-ghost p-1.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                  style={{ color: 'var(--badge-critical-color)' }}
+                  title="Delete scan"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
             ))}
           </div>
         </div>
