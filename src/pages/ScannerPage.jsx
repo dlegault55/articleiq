@@ -103,7 +103,8 @@ function ConnectorInline({ onConnected }) {
 }
 
 export default function ScannerPage() {
-  const { profile } = useAuth()
+  const { profile, user } = useAuth()
+  const { hasConnector, connector: contextConnector, recheckConnector } = useConnector()
   const navigate = useNavigate()
   const [connectors, setConnectors] = useState([])
   const [selectedConnector, setSelectedConnector] = useState(null)
@@ -116,30 +117,31 @@ export default function ScannerPage() {
   const articleLimit = Infinity
 
   useEffect(() => {
-    if (!profile) return
     const load = async () => {
       const uid = profile?.id || user?.id
       if (!uid) { setLoading(false); return }
+
       const { data: conns } = await supabase
         .from('zendesk_connectors')
         .select('*')
         .eq('user_id', uid)
         .eq('is_active', true)
-      setConnectors(conns || [])
-      if (conns?.length) setSelectedConnector(conns[0])
-      else if (contextConnector) { setConnectors([contextConnector]); setSelectedConnector(contextConnector) }
+      
+      const allConns = conns?.length ? conns : (contextConnector ? [contextConnector] : [])
+      setConnectors(allConns)
+      if (allConns.length) setSelectedConnector(allConns[0])
 
       const { data: scans } = await supabase
         .from('scan_jobs')
         .select('*')
-        .eq('user_id', profile.id)
+        .eq('user_id', uid)
         .order('created_at', { ascending: false })
         .limit(10)
       setPastScans(scans || [])
       setLoading(false)
     }
     load()
-  }, [profile])
+  }, [profile, user, contextConnector])
 
   const startScan = async () => {
     if (!selectedConnector) return
