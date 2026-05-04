@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
+import { useConnector } from '@/hooks/useConnector'
 import { supabase } from '@/lib/supabase'
 import { PLANS } from '@/lib/stripe'
 import { format, formatDistanceToNow } from 'date-fns'
