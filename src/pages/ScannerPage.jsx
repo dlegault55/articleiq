@@ -13,25 +13,7 @@ function ConnectorInline({ onConnected }) {
   const [form, setForm] = useState({ subdomain: '', email: '', token: '' })
   const [showKey, setShowKey] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [testing, setTesting] = useState(false)
-  const [testResult, setTestResult] = useState(null)
   const [error, setError] = useState(null)
-
-  const testConnection = async () => {
-    if (!form.subdomain || !form.apiKey) return
-    setTesting(true)
-    setTestResult(null)
-    try {
-      const res = await fetch(`https://${form.subdomain}.zendesk.com/api/v2/help_center/categories.json?per_page=1`, {
-        headers: { Authorization: `Basic ${btoa(`${form.email}/token:${form.token}`)}` }
-      })
-      setTestResult({ success: res.ok, message: res.ok ? 'Connected! Zendesk is responding.' : `Error ${res.status} — check your subdomain and token.` })
-    } catch {
-      setTestResult({ success: false, message: 'Could not reach Zendesk. Check your subdomain.' })
-    } finally {
-      setTesting(false)
-    }
-  }
 
   const save = async () => {
     if (!userId) { setError('Not signed in — please refresh and try again.'); return }
@@ -80,19 +62,10 @@ function ConnectorInline({ onConnected }) {
           Find in Zendesk Admin → Apps & Integrations → APIs → Zendesk API → API Tokens
         </p>
       </div>
-      {testResult && (
-        <div className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm"
-          style={{ background: testResult.success ? 'rgba(16,124,16,0.1)' : 'rgba(239,68,68,0.1)', border: `1px solid ${testResult.success ? 'rgba(16,124,16,0.3)' : 'rgba(239,68,68,0.3)'}`, color: testResult.success ? 'var(--xbox-light)' : '#FC8181' }}>
-          {testResult.success ? <CheckCircle size={14} /> : <AlertTriangle size={14} />}
-          {testResult.message}
-        </div>
-      )}
+
       {error && <p className="text-sm" style={{ color: '#FC8181' }}>{error}</p>}
       <div className="flex items-center gap-3 pt-1">
-        <button onClick={testConnection} disabled={testing || !form.subdomain || !form.email || !form.token} className="btn-secondary">
-          {testing ? <Loader size={13} className="animate-spin" /> : null}
-          {testing ? 'Testing...' : 'Test Connection'}
-        </button>
+
         <button onClick={save} disabled={saving} className="btn-primary">
           {saving ? <Loader size={13} className="animate-spin" /> : <Plug size={13} />}
           {saving ? 'Saving...' : 'Connect & Continue'}

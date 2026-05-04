@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
-import { Plug, Eye, EyeOff, Trash2, CheckCircle, AlertCircle, Loader, Plus } from 'lucide-react'
+import { Plug, Eye, EyeOff, Trash2, Loader, Plus } from 'lucide-react'
 
 export default function ConnectorPage() {
   const { profile, user } = useAuth()
@@ -9,9 +9,7 @@ export default function ConnectorPage() {
   const [connectors, setConnectors] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [testing, setTesting] = useState(false)
   const [showKey, setShowKey] = useState(false)
-  const [testResult, setTestResult] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ subdomain: '', email: '', token: '', label: 'Default' })
   const [error, setError] = useState(null)
@@ -28,26 +26,7 @@ export default function ConnectorPage() {
 
   useEffect(() => { if (profile) loadConnectors() }, [profile])
 
-  const testConnection = async () => {
-    setTesting(true)
-    setTestResult(null)
-    try {
-      // Simple test: fetch help center info
-      const res = await fetch(`https://${form.subdomain}.zendesk.com/api/v2/help_center/categories.json?per_page=1`, {
-        headers: { Authorization: `Basic ${btoa(`${form.email}/token:${form.token}`)}` }
-      })
-      if (res.ok) {
-        setTestResult({ success: true, message: 'Connection successful! Zendesk API is responding.' })
-      } else {
-        const err = await res.json().catch(() => ({}))
-        setTestResult({ success: false, message: err.description || `HTTP ${res.status} — check your subdomain and API key.` })
-      }
-    } catch (e) {
-      setTestResult({ success: false, message: 'Connection failed. Check subdomain and try again. (CORS may block browser-direct calls — use your actual Zendesk subdomain)' })
-    } finally {
-      setTesting(false)
-    }
-  }
+
 
   const saveConnector = async () => {
     if (!form.subdomain || !form.email || !form.token) {
@@ -67,7 +46,7 @@ export default function ConnectorPage() {
         api_key_encrypted: `${form.email}/token:${form.token}`, // TODO: encrypt via Edge Function
         api_key_hint: hint,
         label: form.label || 'Default',
-        last_verified_at: testResult?.success ? new Date().toISOString() : null,
+        last_verified_at: null,
       }, { onConflict: 'user_id,subdomain' })
       if (dbErr) throw dbErr
       await loadConnectors()
@@ -196,17 +175,7 @@ export default function ConnectorPage() {
             </div>
 
             {/* Test result */}
-            {testResult && (
-              <div className={`flex items-start gap-2.5 px-3 py-2.5 rounded-md text-sm`}
-                style={{
-                  background: testResult.success ? 'rgba(16,124,16,0.1)' : 'rgba(239,68,68,0.1)',
-                  border: `1px solid ${testResult.success ? 'rgba(16,124,16,0.3)' : 'rgba(239,68,68,0.3)'}`,
-                  color: testResult.success ? 'var(--xbox-light)' : '#FC8181',
-                }}>
-                {testResult.success ? <CheckCircle size={15} className="flex-shrink-0 mt-0.5" /> : <AlertCircle size={15} className="flex-shrink-0 mt-0.5" />}
-                {testResult.message}
-              </div>
-            )}
+
 
             {error && (
               <div className="px-3 py-2.5 rounded-md text-sm"
@@ -216,10 +185,7 @@ export default function ConnectorPage() {
             )}
 
             <div className="flex items-center gap-3 pt-2">
-              <button onClick={testConnection} disabled={testing || !form.subdomain || !form.email || !form.token} className="btn-secondary">
-                {testing ? <Loader size={14} className="animate-spin" /> : null}
-                {testing ? 'Testing...' : 'Test Connection'}
-              </button>
+
               <button onClick={saveConnector} disabled={saving} className="btn-primary">
                 {saving ? <Loader size={14} className="animate-spin" /> : <Plug size={14} />}
                 {saving ? 'Saving...' : 'Save Connector'}
