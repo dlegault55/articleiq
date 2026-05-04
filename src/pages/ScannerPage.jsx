@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useConnector } from '@/hooks/useConnector'
+import { useScan } from '@/hooks/useScan'
 import { supabase } from '@/lib/supabase'
 import { runScan } from '@/lib/scanner'
 import { Scan, Plug, AlertTriangle, Loader, ChevronRight, Clock, CheckCircle, XCircle, Eye, EyeOff, Trash2 } from 'lucide-react'
@@ -113,8 +114,7 @@ export default function ScannerPage() {
   const [scanPreset, setScanPreset] = useState('standard')
   const [scanning, setScanning] = useState(false)
   const [progress, setProgress] = useState({ phase: '', scanned: 0, total: 0 })
-  const [pastScans, setPastScans] = useState([])
-  const [error, setError] = useState(null)
+    const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
 
   const articleLimit = Infinity
@@ -134,19 +134,10 @@ export default function ScannerPage() {
       setConnectors(allConns)
       if (allConns.length) setSelectedConnector(allConns[0])
 
-      const { data: scans } = await supabase
-        .from('scan_jobs')
-        .select('*')
-        .eq('user_id', uid)
-        .order('created_at', { ascending: false })
-        .limit(10)
-      setPastScans(scans || [])
-
-      // Check if there's an active scan in progress
-      const activeScans = scans?.filter(s => s.status === 'running' || s.status === 'pending')
-      if (activeScans?.length > 0) {
+      // Active scan state comes from global ScanContext
+      if (activeScan) {
         setScanning(true)
-        setProgress({ phase: 'analyzing', scanned: activeScans[0].scanned_articles || 0, total: activeScans[0].total_articles || 0 })
+        setProgress({ phase: 'analyzing', scanned: activeScan.scanned_articles || 0, total: activeScan.total_articles || 0 })
       }
 
       setLoading(false)
@@ -212,6 +203,7 @@ export default function ScannerPage() {
         onProgress: (p) => setProgress(p),
       })
 
+      loadScans()
       navigate(`/scanner/results/${job.id}`)
     } catch (e) {
       setError(e.message)
@@ -223,7 +215,7 @@ export default function ScannerPage() {
     const uid = profile?.id || user?.id
     if (!uid) return
     // Find the running scan and mark it failed
-    const running = pastScans.find(s => s.status === 'running' || s.status === 'pending')
+    const running = recentScans.find(s => s.status === 'running' || s.status === 'pending')
     if (running) {
       await supabase.from('scan_jobs').update({
         status: 'failed',
@@ -241,7 +233,7 @@ export default function ScannerPage() {
   const deleteScan = async (scanId) => {
     if (!confirm('Delete this scan and all its results?')) return
     await supabase.from('scan_jobs').delete().eq('id', scanId)
-    setPastScans(prev => prev.filter(s => s.id !== scanId))
+    loadScans()
   }
 
   const progressPct = progress.total > 0 ? Math.round((progress.scanned / progress.total) * 100) : 0
@@ -465,13 +457,13 @@ export default function ScannerPage() {
       </div>
 
       {/* Past scans */}
-      {pastScans.length > 0 && (
+      {recentScans.length > 0 && (
         <div className="card">
           <div className="px-5 py-4 border-b border-border">
             <p className="section-header mb-0">Scan History</p>
           </div>
           <div className="divide-y divide-border">
-            {pastScans.map((scan) => (
+            {recentScans.map((scan) => (
               <div key={scan.id} className="flex items-center gap-2 px-5 py-3.5 hover:bg-surface-3 transition-colors group" style={{ borderBottom: '1px solid var(--border)' }}>
                 <Link to={`/scanner/results/${scan.id}`} className="flex items-center gap-4 flex-1 min-w-0">
                   <div>

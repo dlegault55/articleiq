@@ -5,6 +5,7 @@ import App from './App'
 import { AuthProvider } from './hooks/useAuth'
 import { ThemeProvider } from './hooks/useTheme'
 import { ConnectorProvider } from './hooks/useConnector'
+import { ScanProvider } from './hooks/useScan'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -13,7 +14,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <ThemeProvider>
         <AuthProvider>
           <ConnectorProvider>
-            <App />
+            <ScanProvider>
+              <App />
+            </ScanProvider>
           </ConnectorProvider>
         </AuthProvider>
       </ThemeProvider>

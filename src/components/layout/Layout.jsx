@@ -2,10 +2,11 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/hooks/useTheme'
 import { useConnector } from '@/hooks/useConnector'
+import { useScan } from '@/hooks/useScan'
 import { signOut } from '@/lib/supabase'
 import {
   LayoutDashboard, Scan, Plug, CreditCard, Settings,
-  ShieldCheck, LogOut, Zap
+  ShieldCheck, LogOut, Zap, Loader
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -13,6 +14,7 @@ export default function Layout() {
   const { profile } = useAuth()
   const { isDark, toggleTheme } = useTheme()
   const { hasConnector } = useConnector()
+  const { activeScan } = useScan()
   const navigate = useNavigate()
 
   const handleSignOut = async () => {
@@ -63,7 +65,24 @@ export default function Layout() {
 
         {/* Nav */}
         <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
-          <p className="section-header px-2 mb-2" style={{ fontSize: 9 }}>Navigation</p>
+        {/* Active scan banner */}
+        {activeScan && (
+          <button
+            onClick={() => navigate('/scanner')}
+            className="mx-2 mb-2 w-auto flex items-center gap-2 px-3 py-2 rounded-md text-left transition-all"
+            style={{ background: 'var(--xbox-subtle)', border: '1px solid var(--xbox-border)', cursor: 'pointer' }}
+          >
+            <Loader size={11} className="animate-spin flex-shrink-0" style={{ color: 'var(--xbox)' }} />
+            <div className="min-w-0">
+              <div className="text-xs font-semibold" style={{ color: 'var(--xbox)' }}>Scan running</div>
+              <div className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
+                {activeScan.scanned_articles || 0}/{activeScan.total_articles || '?'} articles
+              </div>
+            </div>
+          </button>
+        )}
+
+        <p className="section-header px-2 mb-2" style={{ fontSize: 9 }}>Navigation</p>
           {navItems.map(({ to, icon: Icon, label, locked }) => (
             locked
               ? <div key={to} className="nav-item" style={{ opacity: 0.4, cursor: 'not-allowed' }} title="Connect Zendesk first">

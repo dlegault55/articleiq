@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useConnector } from '@/hooks/useConnector'
+import { useScan } from '@/hooks/useScan'
 import { supabase } from '@/lib/supabase'
 import { PLANS } from '@/lib/stripe'
 import { format, formatDistanceToNow } from 'date-fns'
@@ -43,7 +44,7 @@ const scanName = (scan) => `Scan — ${new Date(scan.created_at).toLocaleDateStr
 export default function DashboardPage() {
   const { profile } = useAuth()
   const [stats, setStats] = useState({ scans: 0, articles: 0, issues: 0, critical: 0, warning: 0, info: 0 })
-  const [recentScans, setRecentScans] = useState([])
+  const { activeScan, recentScans } = useScan()
   const { hasConnector, recheckConnector } = useConnector()
   const [loading, setLoading] = useState(true)
 
@@ -51,25 +52,16 @@ export default function DashboardPage() {
     if (!profile) return
     const load = async () => {
       try {
-        // Recent scans
-        const { data: scans } = await supabase
-          .from('scan_jobs')
-          .select('*')
-          .eq('user_id', profile.id)
-          .order('created_at', { ascending: false })
-          .limit(5)
-        setRecentScans(scans || [])
-
-        // Aggregate stats
-        if (scans?.length) {
-          const totals = scans.reduce((acc, s) => ({
+        // Aggregate stats from shared context
+        if (recentScans?.length) {
+          const totals = recentScans.reduce((acc, s) => ({
             articles: acc.articles + (s.scanned_articles || 0),
             issues: acc.issues + (s.issues_found || 0),
             critical: acc.critical + (s.critical_count || 0),
             warning: acc.warning + (s.warning_count || 0),
             info: acc.info + (s.info_count || 0),
           }), { articles: 0, issues: 0, critical: 0, warning: 0, info: 0 })
-          setStats({ scans: scans.length, ...totals })
+          setStats({ scans: recentScans.length, ...totals })
         }
       } finally {
         setLoading(false)
@@ -121,6 +113,26 @@ export default function DashboardPage() {
             Connect <ArrowRight size={13} />
           </Link>
         </div>
+      )}
+
+      {/* Active scan banner */}
+      {activeScan && (
+        <Link to="/scanner" className="card p-4 mb-4 flex items-center justify-between gap-4 hover:border-xbox transition-colors" style={{ borderColor: 'var(--xbox-border)', background: 'var(--xbox-subtle)' }}>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: 'var(--xbox-subtle)', border: '1px solid var(--xbox-border)' }}>
+              <Scan size={15} className="animate-pulse" style={{ color: 'var(--xbox)' }} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold" style={{ color: 'var(--xbox)' }}>Scan in progress</p>
+              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                {activeScan.scanned_articles || 0} of {activeScan.total_articles || '?'} articles analyzed
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--xbox)' }}>
+            View progress <ArrowRight size={13} />
+          </div>
+        </Link>
       )}
 
       {/* Stat cards */}
