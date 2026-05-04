@@ -179,7 +179,7 @@ export default function ScannerPage() {
           navigate(`/scanner/results/${completed.id}`)
         }
       }
-    }, 2000)
+    }, 1000)
 
     return () => clearInterval(interval)
   }, [scanning, profile, user])
@@ -293,23 +293,60 @@ export default function ScannerPage() {
 
           {/* Scan in progress */}
           {scanning && (
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>
-                  {progress.phase === 'fetching' ? '⚡ Fetching articles from Zendesk...' : '🔍 Analyzing articles...'}
-                  {progress.total > 0 && ` ${progress.scanned} of ${progress.total}`}
+            <div className="mb-4 p-4 rounded-lg" style={{ background: 'var(--bg-sunken)', border: '1px solid var(--xbox-border)' }}>
+              {/* Header */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--xbox)', boxShadow: '0 0 6px var(--xbox)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    {progress.phase === 'fetching' ? 'Fetching articles from Zendesk' : 'Analyzing articles'}
+                  </span>
+                </div>
+                <span className="text-xs font-mono px-2 py-1 rounded" style={{ background: 'var(--xbox-subtle)', color: 'var(--xbox)', border: '1px solid var(--xbox-border)' }}>
+                  RUNNING
                 </span>
-                <span className="text-sm font-mono" style={{ color: 'var(--xbox)' }}>{progressPct}%</span>
               </div>
-              <div className="progress-bar h-2">
-                <div className="progress-fill" style={{ width: `${Math.max(progressPct, 3)}%` }} />
+
+              {/* Progress bar */}
+              <div className="progress-bar h-2 mb-2">
+                <div className="progress-fill" style={{ width: `${Math.max(progressPct, 2)}%`, transition: 'width 0.8s ease' }} />
               </div>
-              <div className="mt-2 flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-                <Loader size={11} className="animate-spin" />
-                Scan is running — you can navigate away and come back, it will still be here
+
+              {/* Stats row */}
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {progress.total > 0
+                    ? `${progress.scanned} of ${progress.total} articles processed`
+                    : 'Connecting to Zendesk...'}
+                </span>
+                <span className="text-xs font-mono font-bold" style={{ color: 'var(--xbox)' }}>
+                  {progress.total > 0 ? `${progressPct}%` : '...'}
+                </span>
+              </div>
+
+              {/* Live counters */}
+              {progress.total > 0 && (
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  {[
+                    { label: 'Scanned', value: progress.scanned, color: 'var(--xbox)' },
+                    { label: 'Remaining', value: Math.max(0, progress.total - progress.scanned), color: 'var(--text-secondary)' },
+                    { label: 'Total', value: progress.total, color: 'var(--text-primary)' },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} className="text-center p-2 rounded" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+                      <div className="text-lg font-bold font-mono" style={{ color }}>{value}</div>
+                      <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                <Loader size={10} className="animate-spin flex-shrink-0" />
+                Safe to navigate away — scan continues in the background and will appear in history
               </div>
             </div>
           )}
+          <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
 
           {error && (
             <div className="mb-4 px-3 py-2.5 rounded-md text-sm flex items-start gap-2"
