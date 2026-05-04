@@ -30,6 +30,7 @@ function ConnectorInline({ onConnected }) {
   const [error, setError] = useState(null)
 
   const save = async () => {
+    console.log('save() called', { userId, subdomain: form.subdomain, email: form.email, hasToken: !!form.token })
     if (!userId) { setError('Not signed in — please refresh and try again.'); return }
     if (!form.subdomain || !form.email || !form.token) { setError('All fields are required.'); return }
     setSaving(true)
