@@ -43,6 +43,17 @@ export default function ConnectorPage() {
 
 
   const saveConnector = async () => {
+    // DEBUG — remove after fixing
+    const { data: { session } } = await supabase.auth.getSession()
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.slice(0, 20)
+    console.log('DEBUG', { 
+      session: !!session, 
+      userId: session?.user?.id,
+      anonKeyStart: anonKey,
+      profileId: profile?.id,
+      userId_derived: profile?.id || user?.id
+    })
+    
     if (!form.subdomain || !form.email || !form.token) {
       setError('All fields are required.')
       return
