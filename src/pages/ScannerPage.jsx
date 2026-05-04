@@ -144,23 +144,24 @@ export default function ScannerPage() {
   }, [profile, user, contextConnector])
 
   const startScan = async () => {
+    const uid = profile?.id || user?.id
     if (!selectedConnector) return
+    if (!uid) { setError('Not signed in — please refresh and try again.'); return }
     setScanning(true)
     setError(null)
     setProgress({ phase: 'starting', scanned: 0, total: 0 })
 
     try {
-      // Create scan job
       const { data: job, error: jobErr } = await supabase
         .from('scan_jobs')
-        .insert({ user_id: profile.id, connector_id: selectedConnector.id, status: 'pending' })
+        .insert({ user_id: uid, connector_id: selectedConnector.id, status: 'pending' })
         .select()
         .single()
       if (jobErr) throw jobErr
 
       await runScan({
         scanJobId: job.id,
-        userId: profile.id,
+        userId: uid,
         connector: selectedConnector,
         articleLimit,
         onProgress: (p) => setProgress(p),
