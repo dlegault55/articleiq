@@ -6,6 +6,7 @@ import { AuthProvider } from './hooks/useAuth'
 import { ThemeProvider } from './hooks/useTheme'
 import { ConnectorProvider } from './hooks/useConnector'
 import { ScanProvider } from './hooks/useScan'
+import { ToastProvider } from './hooks/useToast'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -15,7 +16,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <AuthProvider>
           <ConnectorProvider>
             <ScanProvider>
-              <App />
+              <ToastProvider>
+                <App />
+              </ToastProvider>
             </ScanProvider>
           </ConnectorProvider>
         </AuthProvider>

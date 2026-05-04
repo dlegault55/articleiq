@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useConnector } from '@/hooks/useConnector'
 import { useScan } from '@/hooks/useScan'
+import { useToast } from '@/hooks/useToast'
 import { supabase } from '@/lib/supabase'
 import { runScan } from '@/lib/scanner'
 import { Scan, Plug, AlertTriangle, Loader, ChevronRight, Clock, CheckCircle, XCircle, Eye, EyeOff, Trash2 } from 'lucide-react'
@@ -109,6 +110,7 @@ export default function ScannerPage() {
   const { profile, user } = useAuth()
   const { hasConnector, connector: contextConnector, recheckConnector } = useConnector()
   const { activeScan, recentScans, loadScans } = useScan()
+  const toast = useToast()
   const navigate = useNavigate()
   const [connectors, setConnectors] = useState([])
   const [selectedConnector, setSelectedConnector] = useState(null)
@@ -232,8 +234,10 @@ export default function ScannerPage() {
   }
 
   const deleteScan = async (scanId) => {
-    if (!confirm('Delete this scan and all its results?')) return
+    const ok = await toast.confirm('Delete this scan and all its results?', 'Delete', 'Cancel')
+    if (!ok) return
     await supabase.from('scan_jobs').delete().eq('id', scanId)
+    toast.success('Scan deleted')
     loadScans()
   }
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useConnector } from '@/hooks/useConnector'
+import { useToast } from '@/hooks/useToast'
 import { supabase } from '@/lib/supabase'
 import { Plug, Eye, EyeOff, Trash2, Loader, Plus } from 'lucide-react'
 
@@ -21,13 +22,13 @@ const FREQUENCIES = [
 export default function ConnectorPage() {
   const { profile, user } = useAuth()
   const { recheckConnector } = useConnector()
+  const toast = useToast()
   const [connectors, setConnectors] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showKey, setShowKey] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(false)
   const [form, setForm] = useState({ subdomain: '', email: '', token: '', frequency: 'weekly' })
 
   const userId = profile?.id || user?.id
@@ -81,7 +82,7 @@ export default function ConnectorPage() {
       return
     }
 
-    setSuccess(true)
+    toast.success('Zendesk connected successfully!')
     setShowForm(false)
     setForm({ subdomain: '', email: '', token: '', frequency: 'weekly' })
     await loadConnectors()
@@ -89,9 +90,12 @@ export default function ConnectorPage() {
   }
 
   const deleteConnector = async (id) => {
-    if (!confirm('Remove this connector?')) return
+    const ok = await toast.confirm('Remove this Zendesk connector?', 'Remove', 'Cancel')
+    if (!ok) return
     await supabase.from('zendesk_connectors').delete().eq('id', id)
+    toast.success('Connector removed')
     loadConnectors()
+    recheckConnector()
   }
 
   return (
@@ -108,13 +112,6 @@ export default function ConnectorPage() {
           </button>
         )}
       </div>
-
-      {success && (
-        <div className="mb-4 px-4 py-3 rounded-md text-sm"
-          style={{ background: 'rgba(16,124,16,0.1)', border: '1px solid rgba(16,124,16,0.3)', color: 'var(--xbox)' }}>
-          ✓ Connector saved successfully!
-        </div>
-      )}
 
       {/* Existing connectors */}
       {!loading && connectors.length > 0 && (
