@@ -64,11 +64,10 @@ export default function ConnectorPage() {
         next_sync_at: calculateNextSync(form.frequency),
         last_verified_at: null,
       }, { onConflict: 'user_id,subdomain' })
-      if (dbErr) throw dbErr
+      if (dbErr) throw new Error(dbErr.message || JSON.stringify(dbErr))
       await loadConnectors()
       setShowForm(false)
       setForm({ subdomain: '', email: '', token: '', frequency: 'weekly' })
-      setTestResult(null)
     } catch (e) {
       setError(e.message)
     } finally {

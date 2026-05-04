@@ -34,18 +34,23 @@ function ConnectorInline({ onConnected }) {
     if (!form.subdomain || !form.email || !form.token) { setError('All fields are required.'); return }
     setSaving(true)
     setError(null)
-    const { error: dbErr } = await supabase.from('zendesk_connectors').upsert({
-      user_id: userId,
-      subdomain: form.subdomain.trim().toLowerCase(),
-      api_key_encrypted: `${form.email}/token:${form.token}`,
-      api_key_hint: `...${form.token.slice(-6)}`,
-      label: 'Zendesk',
-      sync_frequency: form.frequency,
-      next_sync_at: calculateNextSync(form.frequency),
-      last_verified_at: testResult?.success ? new Date().toISOString() : null,
-    }, { onConflict: 'user_id,subdomain' })
-    if (dbErr) { setError(dbErr.message); setSaving(false); return }
-    onConnected()
+    try {
+      const { error: dbErr } = await supabase.from('zendesk_connectors').upsert({
+        user_id: userId,
+        subdomain: form.subdomain.trim().toLowerCase(),
+        api_key_encrypted: `${form.email}/token:${form.token}`,
+        api_key_hint: `...${form.token.slice(-6)}`,
+        label: 'Zendesk',
+        sync_frequency: form.frequency,
+        next_sync_at: calculateNextSync(form.frequency),
+      }, { onConflict: 'user_id,subdomain' })
+      if (dbErr) throw new Error(dbErr.message)
+      onConnected()
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
