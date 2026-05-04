@@ -38,6 +38,8 @@ const SeverityBar = ({ label, count, total, color, bg }) => (
   </div>
 )
 
+const scanName = (scan) => `Scan — ${new Date(scan.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${new Date(scan.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
+
 export default function DashboardPage() {
   const { profile } = useAuth()
   const [stats, setStats] = useState({ scans: 0, articles: 0, issues: 0, critical: 0, warning: 0, info: 0 })
@@ -203,7 +205,7 @@ export default function DashboardPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                      Scan #{scan.id.slice(-6).toUpperCase()}
+                      {scanName(scan)}
                     </span>
                     <span className={`text-xs px-1.5 py-0.5 rounded font-mono ${
                       scan.status === 'completed' ? 'text-xbox-light bg-xbox/10' :

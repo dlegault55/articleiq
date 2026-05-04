@@ -226,7 +226,7 @@ export default function ScanResultsPage() {
           <div>
             <p className="section-header">Scan Report</p>
             <h1 className="font-display font-bold text-3xl" style={{ color: 'var(--text-primary)' }}>
-              #{scanId.slice(-8).toUpperCase()}
+              {scan?.created_at ? `Scan — ${new Date(scan.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${new Date(scan.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}` : scanId.slice(-8).toUpperCase()}
             </h1>
             <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
               {formatDistanceToNow(new Date(scan.created_at), { addSuffix: true })} ·{' '}

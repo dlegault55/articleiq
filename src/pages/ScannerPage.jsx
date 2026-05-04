@@ -102,6 +102,8 @@ function ConnectorInline({ onConnected }) {
   )
 }
 
+const scanName = (scan) => `Scan — ${new Date(scan.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${new Date(scan.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
+
 export default function ScannerPage() {
   const { profile, user } = useAuth()
   const { hasConnector, connector: contextConnector, recheckConnector } = useConnector()
@@ -480,7 +482,7 @@ export default function ScannerPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                      #{scan.id.slice(-8).toUpperCase()}
+                      {scanName(scan)}
                     </div>
                     <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
                       {formatDistanceToNow(new Date(scan.created_at), { addSuffix: true })} · {scan.scanned_articles || 0} articles
