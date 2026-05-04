@@ -12,7 +12,7 @@ export default function ConnectorPage() {
   const [showKey, setShowKey] = useState(false)
   const [testResult, setTestResult] = useState(null)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ subdomain: '', apiKey: '', label: 'Default' })
+  const [form, setForm] = useState({ subdomain: '', email: '', token: '', label: 'Default' })
   const [error, setError] = useState(null)
 
   const loadConnectors = async () => {
@@ -33,7 +33,7 @@ export default function ConnectorPage() {
     try {
       // Simple test: fetch help center info
       const res = await fetch(`https://${form.subdomain}.zendesk.com/api/v2/help_center/categories.json?per_page=1`, {
-        headers: { Authorization: `Basic ${btoa(`${form.apiKey}/token:`)}` }
+        headers: { Authorization: `Basic ${btoa(`${form.email}/token:${form.token}`)}` }
       })
       if (res.ok) {
         setTestResult({ success: true, message: 'Connection successful! Zendesk API is responding.' })
@@ -49,8 +49,8 @@ export default function ConnectorPage() {
   }
 
   const saveConnector = async () => {
-    if (!form.subdomain || !form.apiKey) {
-      setError('Both subdomain and API key are required.')
+    if (!form.subdomain || !form.email || !form.token) {
+      setError('All fields are required.')
       return
     }
     setSaving(true)
@@ -59,11 +59,11 @@ export default function ConnectorPage() {
       // Store API key with a simple encoding note:
       // In production, use Supabase vault or a backend function with pgcrypto.
       // Here we store with a hint for display.
-      const hint = `...${form.apiKey.slice(-6)}`
+      const hint = `...${form.token.slice(-6)}`
       const { error: dbErr } = await supabase.from('zendesk_connectors').upsert({
         user_id: profile.id,
         subdomain: form.subdomain.trim().toLowerCase(),
-        api_key_encrypted: form.apiKey, // TODO: encrypt via Edge Function
+        api_key_encrypted: `${form.email}/token:${form.token}`, // TODO: encrypt via Edge Function
         api_key_hint: hint,
         label: form.label || 'Default',
         last_verified_at: testResult?.success ? new Date().toISOString() : null,
@@ -71,7 +71,7 @@ export default function ConnectorPage() {
       if (dbErr) throw dbErr
       await loadConnectors()
       setShowForm(false)
-      setForm({ subdomain: '', apiKey: '', label: 'Default' })
+      setForm({ subdomain: '', email: '', token: '', label: 'Default' })
       setTestResult(null)
     } catch (e) {
       setError(e.message)
@@ -165,14 +165,23 @@ export default function ConnectorPage() {
             </div>
 
             <div>
-              <label className="label">API Key (token)</label>
+              <label className="label">Zendesk Email</label>
+              <input
+                className="input mb-3"
+                type="email"
+                placeholder="you@yourcompany.com"
+                value={form.email}
+                onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
+              />
+
+              <label className="label">API Token</label>
               <div className="relative">
                 <input
                   className="input pr-10"
                   type={showKey ? 'text' : 'password'}
                   placeholder="your-zendesk-api-token"
-                  value={form.apiKey}
-                  onChange={(e) => setForm(f => ({ ...f, apiKey: e.target.value }))}
+                  value={form.token}
+                  onChange={(e) => setForm(f => ({ ...f, token: e.target.value }))}
                 />
                 <button onClick={() => setShowKey(!showKey)}
                   className="absolute right-3 top-1/2 -translate-y-1/2"
@@ -181,8 +190,7 @@ export default function ConnectorPage() {
                 </button>
               </div>
               <p className="text-xs mt-1.5" style={{ color: 'var(--text-muted)' }}>
-                Find in Zendesk Admin → Apps and Integrations → APIs → Zendesk API → API token.
-                <br />Use format: <span className="font-mono text-xbox-light">email@domain.com/token:your_token</span>
+                Find your token in Zendesk Admin → Apps & Integrations → APIs → Zendesk API → API Tokens
               </p>
             </div>
 
@@ -207,7 +215,7 @@ export default function ConnectorPage() {
             )}
 
             <div className="flex items-center gap-3 pt-2">
-              <button onClick={testConnection} disabled={testing || !form.subdomain || !form.apiKey} className="btn-secondary">
+              <button onClick={testConnection} disabled={testing || !form.subdomain || !form.email || !form.token} className="btn-secondary">
                 {testing ? <Loader size={14} className="animate-spin" /> : null}
                 {testing ? 'Testing...' : 'Test Connection'}
               </button>

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
-import { getArticleLimit } from '@/lib/stripe'
 import { runScan } from '@/lib/scanner'
 import { Scan, Plug, AlertTriangle, Loader, ChevronRight, Clock, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
@@ -10,7 +9,7 @@ import { formatDistanceToNow } from 'date-fns'
 // ─── Inline connector form ────────────────────────────────────
 function ConnectorInline({ onConnected }) {
   const { profile } = useAuth()
-  const [form, setForm] = useState({ subdomain: '', apiKey: '' })
+  const [form, setForm] = useState({ subdomain: '', email: '', token: '' })
   const [showKey, setShowKey] = useState(false)
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
@@ -23,7 +22,7 @@ function ConnectorInline({ onConnected }) {
     setTestResult(null)
     try {
       const res = await fetch(`https://${form.subdomain}.zendesk.com/api/v2/help_center/categories.json?per_page=1`, {
-        headers: { Authorization: `Basic ${btoa(`${form.apiKey}/token:`)}` }
+        headers: { Authorization: `Basic ${btoa(`${form.email}/token:${form.token}`)}` }
       })
       setTestResult({ success: res.ok, message: res.ok ? 'Connected! Zendesk is responding.' : `Error ${res.status} — check your subdomain and token.` })
     } catch {
@@ -34,14 +33,14 @@ function ConnectorInline({ onConnected }) {
   }
 
   const save = async () => {
-    if (!form.subdomain || !form.apiKey) { setError('Both fields are required.'); return }
+    if (!form.subdomain || !form.email || !form.token) { setError('All fields are required.'); return }
     setSaving(true)
     setError(null)
     const { error: dbErr } = await supabase.from('zendesk_connectors').upsert({
       user_id: profile.id,
       subdomain: form.subdomain.trim().toLowerCase(),
-      api_key_encrypted: form.apiKey,
-      api_key_hint: `...${form.apiKey.slice(-6)}`,
+      api_key_encrypted: `${form.email}/token:${form.token}`,
+      api_key_hint: `...${form.token.slice(-6)}`,
       label: 'Default',
       last_verified_at: testResult?.success ? new Date().toISOString() : null,
     }, { onConflict: 'user_id,subdomain' })
@@ -61,17 +60,22 @@ function ConnectorInline({ onConnected }) {
         </div>
       </div>
       <div>
+        <label className="label">Zendesk Email</label>
+        <input className="input" type="email" placeholder="you@yourcompany.com"
+          value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+      </div>
+      <div>
         <label className="label">API Token</label>
         <div className="relative">
           <input className="input pr-10" type={showKey ? 'text' : 'password'}
             placeholder="your-zendesk-api-token"
-            value={form.apiKey} onChange={e => setForm(f => ({ ...f, apiKey: e.target.value }))} />
+            value={form.token} onChange={e => setForm(f => ({ ...f, token: e.target.value }))} />
           <button onClick={() => setShowKey(!showKey)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}>
             {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
           </button>
         </div>
         <p className="text-xs mt-1.5" style={{ color: 'var(--text-muted)' }}>
-          Zendesk Admin → Apps & Integrations → APIs → Zendesk API → API Tokens
+          Find in Zendesk Admin → Apps & Integrations → APIs → Zendesk API → API Tokens
         </p>
       </div>
       {testResult && (
@@ -83,7 +87,7 @@ function ConnectorInline({ onConnected }) {
       )}
       {error && <p className="text-sm" style={{ color: '#FC8181' }}>{error}</p>}
       <div className="flex items-center gap-3 pt-1">
-        <button onClick={testConnection} disabled={testing || !form.subdomain || !form.apiKey} className="btn-secondary">
+        <button onClick={testConnection} disabled={testing || !form.subdomain || !form.email || !form.token} className="btn-secondary">
           {testing ? <Loader size={13} className="animate-spin" /> : null}
           {testing ? 'Testing...' : 'Test Connection'}
         </button>
@@ -107,7 +111,7 @@ export default function ScannerPage() {
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  const articleLimit = getArticleLimit(profile?.plan || 'free')
+  const articleLimit = Infinity
 
   useEffect(() => {
     if (!profile) return
@@ -172,7 +176,7 @@ export default function ScannerPage() {
           Article Scanner
         </h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-          Scan your Zendesk knowledge base for issues across {articleLimit === Infinity ? 'unlimited' : `up to ${articleLimit}`} articles.
+          Scan your Zendesk knowledge base for issues across all articles.
         </p>
       </div>
 
@@ -233,7 +237,7 @@ export default function ScannerPage() {
               <Plug size={14} style={{ color: 'var(--xbox)' }} />
               <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                 Scanning <span style={{ color: 'var(--text-primary)' }}>{selectedConnector.subdomain}.zendesk.com</span>
-                {' '}· Limit: <span style={{ color: 'var(--xbox-light)' }}>{articleLimit === Infinity ? 'Unlimited' : `${articleLimit} articles`}</span>
+                
               </span>
             </div>
           )}
