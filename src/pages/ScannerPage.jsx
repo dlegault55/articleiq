@@ -6,11 +6,25 @@ import { runScan } from '@/lib/scanner'
 import { Scan, Plug, AlertTriangle, Loader, ChevronRight, Clock, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
+const calculateNextSync = (frequency) => {
+  const d = new Date()
+  if (frequency === 'daily')   d.setDate(d.getDate() + 1)
+  if (frequency === 'weekly')  d.setDate(d.getDate() + 7)
+  if (frequency === 'monthly') d.setDate(d.getDate() + 30)
+  return d.toISOString()
+}
+
+const FREQUENCIES = [
+  { value: 'daily',   label: 'Daily',   desc: 'Every 24h' },
+  { value: 'weekly',  label: 'Weekly',  desc: 'Every 7d'  },
+  { value: 'monthly', label: 'Monthly', desc: 'Every 30d' },
+]
+
 // ─── Inline connector form ────────────────────────────────────
 function ConnectorInline({ onConnected }) {
   const { profile, user } = useAuth()
   const userId = profile?.id || user?.id
-  const [form, setForm] = useState({ subdomain: '', email: '', token: '' })
+  const [form, setForm] = useState({ subdomain: '', email: '', token: '', frequency: 'weekly' })
   const [showKey, setShowKey] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
@@ -26,6 +40,8 @@ function ConnectorInline({ onConnected }) {
       api_key_encrypted: `${form.email}/token:${form.token}`,
       api_key_hint: `...${form.token.slice(-6)}`,
       label: 'Zendesk',
+      sync_frequency: form.frequency,
+      next_sync_at: calculateNextSync(form.frequency),
       last_verified_at: testResult?.success ? new Date().toISOString() : null,
     }, { onConflict: 'user_id,subdomain' })
     if (dbErr) { setError(dbErr.message); setSaving(false); return }

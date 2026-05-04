@@ -3,6 +3,20 @@ import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import { Plug, Eye, EyeOff, Trash2, Loader, Plus } from 'lucide-react'
 
+const calculateNextSync = (frequency) => {
+  const d = new Date()
+  if (frequency === 'daily')   d.setDate(d.getDate() + 1)
+  if (frequency === 'weekly')  d.setDate(d.getDate() + 7)
+  if (frequency === 'monthly') d.setDate(d.getDate() + 30)
+  return d.toISOString()
+}
+
+const FREQUENCIES = [
+  { value: 'daily',   label: 'Daily',   desc: 'Every 24 hours' },
+  { value: 'weekly',  label: 'Weekly',  desc: 'Every 7 days'   },
+  { value: 'monthly', label: 'Monthly', desc: 'Every 30 days'  },
+]
+
 export default function ConnectorPage() {
   const { profile, user } = useAuth()
   const userId = profile?.id || user?.id
@@ -11,7 +25,7 @@ export default function ConnectorPage() {
   const [saving, setSaving] = useState(false)
   const [showKey, setShowKey] = useState(false)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ subdomain: '', email: '', token: '' })
+  const [form, setForm] = useState({ subdomain: '', email: '', token: '', frequency: 'weekly' })
   const [error, setError] = useState(null)
 
   const loadConnectors = async () => {
@@ -46,12 +60,14 @@ export default function ConnectorPage() {
         api_key_encrypted: `${form.email}/token:${form.token}`, // TODO: encrypt via Edge Function
         api_key_hint: hint,
         label: 'Zendesk',
+        sync_frequency: form.frequency,
+        next_sync_at: calculateNextSync(form.frequency),
         last_verified_at: null,
       }, { onConflict: 'user_id,subdomain' })
       if (dbErr) throw dbErr
       await loadConnectors()
       setShowForm(false)
-      setForm({ subdomain: '', email: '', token: '' })
+      setForm({ subdomain: '', email: '', token: '', frequency: 'weekly' })
       setTestResult(null)
     } catch (e) {
       setError(e.message)
@@ -103,8 +119,9 @@ export default function ConnectorPage() {
                     <span className={`w-2 h-2 rounded-full ${c.is_active ? 'bg-xbox' : 'bg-gray-500'}`} />
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                    Key: {c.api_key_hint || '••••••'}
-                    {c.last_verified_at && ` · Verified ${new Date(c.last_verified_at).toLocaleDateString()}`}
+                    Key: {c.api_key_hint || '••••••'} · {c.sync_frequency || 'weekly'}
+                    {c.next_sync_at && ` · Next sync ${new Date(c.next_sync_at).toLocaleDateString()}`}
+                    {c.last_synced_at && ` · Last synced ${new Date(c.last_synced_at).toLocaleDateString()}`}
                   </div>
                 </div>
               </div>
@@ -177,6 +194,29 @@ export default function ConnectorPage() {
                 {error}
               </div>
             )}
+
+            <div className="mb-2">
+              <label className="label">Sync Frequency</label>
+              <div className="grid grid-cols-3 gap-2">
+                {FREQUENCIES.map(({ value, label, desc }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, frequency: value }))}
+                    style={{
+                      padding: '10px 8px', borderRadius: 7, cursor: 'pointer',
+                      textAlign: 'center', transition: 'all 0.15s ease',
+                      background: form.frequency === value ? 'var(--xbox-subtle)' : 'var(--bg-sunken)',
+                      border: `1px solid ${form.frequency === value ? 'var(--xbox-border)' : 'var(--border)'}`,
+                      color: form.frequency === value ? 'var(--xbox)' : 'var(--text-secondary)',
+                    }}
+                  >
+                    <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>{label}</div>
+                    <div style={{ fontSize: 11, opacity: 0.7 }}>{desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div className="flex items-center gap-3 pt-2">
 
