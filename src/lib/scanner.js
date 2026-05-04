@@ -143,26 +143,36 @@ export const analyzeArticle = (article) => {
 
 // ─── Zendesk API: Fetch all articles ─────────────────────────
 export const fetchZendeskArticles = async (subdomain, apiKey, onProgress) => {
-  const baseUrl = `https://${subdomain}.zendesk.com/api/v2/help_center`
-  const headers = {
-    Authorization: `Basic ${btoa(`${apiKey}/token:`)}`,
-    'Content-Type': 'application/json',
-  }
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-  // Note: In production, this should go through a backend to avoid CORS.
-  // For now we use a proxy-friendly approach.
+  // Get current session token for auth
+  const { supabase } = await import('./supabase')
+  const { data: { session } } = await supabase.auth.getSession()
+  const authToken = session?.access_token || supabaseKey
+
   let page = 1
   let allArticles = []
   let hasMore = true
 
   while (hasMore) {
-    const res = await fetch(`${baseUrl}/articles?per_page=100&page=${page}&include=sections`, { headers })
+    const res = await fetch(`${supabaseUrl}/functions/v1/zendesk-proxy`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`,
+        'apikey': supabaseKey,
+      },
+      body: JSON.stringify({ subdomain, apiKey, page }),
+    })
+
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      throw new Error(err.description || `Zendesk API error ${res.status}`)
+      throw new Error(err.error || `Proxy error ${res.status}`)
     }
+
     const data = await res.json()
-    allArticles = [...allArticles, ...data.articles]
+    allArticles = [...allArticles, ...(data.articles || [])]
     onProgress?.(allArticles.length, data.count)
     hasMore = !!data.next_page
     page++
