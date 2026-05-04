@@ -47,29 +47,28 @@ export default function ConnectorPage() {
       setError('All fields are required.')
       return
     }
+    const uid = profile?.id || user?.id
+    if (!uid) { setError('Not signed in. Please refresh and try again.'); return }
     setSaving(true)
     setError(null)
     try {
-      // Store API key with a simple encoding note:
-      // In production, use Supabase vault or a backend function with pgcrypto.
-      // Here we store with a hint for display.
       const hint = `...${form.token.slice(-6)}`
-      const { error: dbErr } = await supabase.from('zendesk_connectors').upsert({
-        user_id: userId,
+      const { data, error: dbErr } = await supabase.from('zendesk_connectors').upsert({
+        user_id: uid,
         subdomain: form.subdomain.trim().toLowerCase(),
-        api_key_encrypted: `${form.email}/token:${form.token}`, // TODO: encrypt via Edge Function
+        api_key_encrypted: `${form.email}/token:${form.token}`,
         api_key_hint: hint,
         label: 'Zendesk',
         sync_frequency: form.frequency,
         next_sync_at: calculateNextSync(form.frequency),
         last_verified_at: null,
-      }, { onConflict: 'user_id,subdomain' })
-      if (dbErr) throw new Error(dbErr.message || JSON.stringify(dbErr))
-      await loadConnectors()
+      }, { onConflict: 'user_id,subdomain' }).select()
+      if (dbErr) throw new Error(dbErr.message || dbErr.details || JSON.stringify(dbErr))
+      await loadConnectors(uid)
       setShowForm(false)
       setForm({ subdomain: '', email: '', token: '', frequency: 'weekly' })
     } catch (e) {
-      setError(e.message)
+      setError(e.message || 'Save failed — check your connection and try again')
     } finally {
       setSaving(false)
     }
