@@ -182,9 +182,9 @@ export const PRESETS = {
 export const analyzeArticleWithPreset = (article, preset = 'standard') => {
   const checks = PRESETS[preset] || PRESETS.standard
   const issues = []
-  const body = article.body || ''
+  const body = article?.body || ''
   const wordCount = countWords(body)
-  const readabilityScore = checks.readability ? fleschKincaid(body) : null
+  const readabilityScore = (checks.readability && body.length > 0) ? fleschKincaid(body) : null
   const links = checks.brokenLinks ? extractLinks(body) : []
 
   if (!article.title?.trim())
@@ -234,7 +234,13 @@ export const runScan = async ({ scanJobId, userId, connector, articleLimit, pres
 
     for (let i = 0; i < limited.length; i++) {
       const zdArticle = limited[i]
-      const analysis = analyzeArticleWithPreset(zdArticle, preset)
+      let analysis
+      try {
+        analysis = analyzeArticleWithPreset(zdArticle, preset)
+      } catch (analyzeErr) {
+        console.warn('Failed to analyze article:', zdArticle?.id, analyzeErr.message)
+        analysis = { wordCount: 0, readabilityScore: null, links: [], issues: [], hasMissingMeta: false, brokenLinksCount: 0 }
+      }
 
       // Insert scanned article
       const { data: savedArticle } = await supabase.from('scanned_articles').insert({
