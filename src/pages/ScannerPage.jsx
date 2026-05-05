@@ -22,8 +22,11 @@ const calculateNextSync = (frequency) => {
   return d.toISOString()
 }
 
-const scanLabel = (scan) =>
-  `Scan — ${new Date(scan.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${new Date(scan.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
+const scanLabel = (scan) => {
+  const date = `${new Date(scan.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${new Date(scan.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
+  const preset = scan.preset ? ` · ${scan.preset.charAt(0).toUpperCase() + scan.preset.slice(1)}` : ''
+  return date + preset
+}
 
 const FREQUENCIES = [
   { value: 'daily',   label: 'Daily',   desc: 'Every 24h' },
@@ -262,7 +265,7 @@ export default function ScannerPage() {
     try {
       const { data: job, error: jobErr } = await supabase
         .from('scan_jobs')
-        .insert({ user_id: userId, connector_id: selectedConnector.id, status: 'pending' })
+        .insert({ user_id: userId, connector_id: selectedConnector.id, status: 'pending', preset: scanPreset })
         .select().single()
       if (jobErr) throw new Error(jobErr.message)
 

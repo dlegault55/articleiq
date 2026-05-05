@@ -10,7 +10,7 @@ import {
   Wand2, RefreshCcw, Star, ExternalLink, Loader,
   ArrowLeft, CheckCircle, FileText, Clock, Type, Tag,
   Link2, BookOpen, Copy, Download, ChevronLeft, ChevronRight as ChevronR,
-  CheckSquare, Square
+  CheckSquare, Square, Share2, Check
 } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 
@@ -369,6 +369,8 @@ export default function ScanResultsPage() {
   const [issues,   setIssues]   = useState([])
   const [loading,  setLoading]  = useState(true)
   const [exporting,setExporting]= useState(false)
+  const [sharing,  setSharing]   = useState(false)
+  const [shared,   setShared]    = useState(false)
 
   // Resolved state (persisted to Supabase)
   const [resolvedIssues,   setResolvedIssues]   = useState(new Set())
@@ -471,6 +473,21 @@ export default function ScanResultsPage() {
     finally { setExporting(false) }
   }
 
+  const handleShare = async () => {
+    setSharing(true)
+    try {
+      await supabase.from('scan_jobs').update({ is_shared: true, shared_at: new Date().toISOString() }).eq('id', scanId)
+      const url = `${window.location.origin}/share/${scanId}`
+      await navigator.clipboard.writeText(url)
+      setShared(true)
+      setTimeout(() => setShared(false), 3000)
+    } catch (e) {
+      console.error('Share failed:', e)
+    } finally {
+      setSharing(false)
+    }
+  }
+
   if (loading) return (
     <div style={{ padding: 32, maxWidth: 960, margin: '0 auto' }} className="animate-fade-in">
       {[0,1,2,3].map(i => <div key={i} style={{ height: 68, borderRadius: 8, marginBottom: 8 }} className="skeleton" />)}
@@ -492,10 +509,16 @@ export default function ScanResultsPage() {
         <Link to="/scanner" className="btn-ghost" style={{ fontSize: 12 }}>
           <ArrowLeft size={12} /> Back to Scanner
         </Link>
-        <button onClick={handleExport} disabled={exporting} className="btn-secondary" style={{ fontSize: 12 }}>
-          {exporting ? <Loader size={13} className="animate-spin" /> : <Download size={13} />}
-          {exporting ? 'Exporting...' : 'Export to Excel'}
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={handleShare} disabled={sharing} className="btn-secondary" style={{ fontSize: 12 }}>
+            {sharing ? <Loader size={13} className="animate-spin" /> : shared ? <Check size={13} /> : <Share2 size={13} />}
+            {shared ? 'Link copied!' : 'Share report'}
+          </button>
+          <button onClick={handleExport} disabled={exporting} className="btn-secondary" style={{ fontSize: 12 }}>
+            {exporting ? <Loader size={13} className="animate-spin" /> : <Download size={13} />}
+            {exporting ? 'Exporting...' : 'Export to Excel'}
+          </button>
+        </div>
       </div>
 
       {/* Header */}

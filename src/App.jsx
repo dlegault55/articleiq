@@ -11,6 +11,7 @@ import SettingsPage from './pages/SettingsPage'
 import AdminPage from './pages/AdminPage'
 import BillingPage from './pages/BillingPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
+import SharedReportPage from './pages/SharedReportPage'
 import LoadingScreen from './components/ui/LoadingScreen'
 
 // ─── Error Boundary ────────────────────────────────────────────
@@ -63,6 +64,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        <Route path="/share/:scanId" element={<SharedReportPage />} />
         <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />

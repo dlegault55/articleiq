@@ -8,7 +8,7 @@ import {
   Scan, AlertOctagon, AlertTriangle, Info, ArrowRight,
   Plug, Zap, BarChart3, CheckCircle
 } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { formatDistanceToNow } from 'date-fns'
 
 const scanName = (scan) =>
@@ -35,6 +35,19 @@ export default function DashboardPage() {
     warning:  s.warning_count  || 0,
     info:     s.info_count     || 0,
   }))
+
+  const [chartMode, setChartMode] = useState('health')
+
+  const healthChartData = recentScans.slice().reverse().map((s, i) => {
+    const scanArticles = Array(s.scanned_articles || 0).fill(null)
+    const critical = s.critical_count || 0
+    const warning  = s.warning_count  || 0
+    const info     = s.info_count     || 0
+    const total    = s.scanned_articles || 0
+    const penalty  = total > 0 ? (critical * 3 + warning * 1 + info * 0.2) / total : 0
+    const score    = Math.max(0, Math.min(100, Math.round(100 - penalty * 20)))
+    return { name: `S${i+1}`, score }
+  })
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
@@ -104,17 +117,40 @@ export default function DashboardPage() {
         </div>
 
         <div className="card p-5 lg:col-span-2">
-          <p className="section-header mb-4">Issues per scan</p>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+            <button onClick={() => setChartMode('health')}
+              style={{ fontSize: 11, padding: '3px 10px', borderRadius: 5, border: 'none', cursor: 'pointer', fontFamily: 'Fira Code, monospace',
+                background: chartMode === 'health' ? 'var(--xbox-subtle)' : 'var(--bg-sunken)',
+                color: chartMode === 'health' ? 'var(--xbox)' : 'var(--text-muted)',
+                outline: chartMode === 'health' ? '1px solid var(--xbox-border)' : '1px solid var(--border)',
+              }}>Health score</button>
+            <button onClick={() => setChartMode('issues')}
+              style={{ fontSize: 11, padding: '3px 10px', borderRadius: 5, border: 'none', cursor: 'pointer', fontFamily: 'Fira Code, monospace',
+                background: chartMode === 'issues' ? 'var(--xbox-subtle)' : 'var(--bg-sunken)',
+                color: chartMode === 'issues' ? 'var(--xbox)' : 'var(--text-muted)',
+                outline: chartMode === 'issues' ? '1px solid var(--xbox-border)' : '1px solid var(--border)',
+              }}>Issues</button>
+          </div>
           {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={chartData} barGap={2} barSize={14}>
-                <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'var(--text-muted)', fontFamily: 'Fira Code' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: 'var(--text-muted)', fontFamily: 'Fira Code' }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 7, fontSize: 11 }} cursor={{ fill: 'var(--xbox-subtle)' }} />
-                <Bar dataKey="critical" name="Critical" radius={[3,3,0,0]} fill="var(--badge-critical-color)" fillOpacity={0.85} />
-                <Bar dataKey="warning"  name="Warning"  radius={[3,3,0,0]} fill="var(--badge-warning-color)"  fillOpacity={0.85} />
-                <Bar dataKey="info"     name="Info"     radius={[3,3,0,0]} fill="var(--badge-info-color)"     fillOpacity={0.85} />
-              </BarChart>
+            <ResponsiveContainer width="100%" height={150}>
+              {chartMode === 'health' ? (
+                <LineChart data={healthChartData}>
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'var(--text-muted)', fontFamily: 'Fira Code' }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[0,100]} tick={{ fontSize: 10, fill: 'var(--text-muted)', fontFamily: 'Fira Code' }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 7, fontSize: 11 }} cursor={{ stroke: 'var(--border)' }} />
+                  <ReferenceLine y={80} stroke="var(--xbox)" strokeDasharray="3 3" strokeOpacity={0.4} />
+                  <Line type="monotone" dataKey="score" name="Health score" stroke="var(--xbox)" strokeWidth={2} dot={{ fill: 'var(--xbox)', r: 3 }} />
+                </LineChart>
+              ) : (
+                <BarChart data={chartData} barGap={2} barSize={14}>
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'var(--text-muted)', fontFamily: 'Fira Code' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: 'var(--text-muted)', fontFamily: 'Fira Code' }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 7, fontSize: 11 }} cursor={{ fill: 'var(--xbox-subtle)' }} />
+                  <Bar dataKey="critical" name="Critical" radius={[3,3,0,0]} fill="var(--badge-critical-color)" fillOpacity={0.85} />
+                  <Bar dataKey="warning"  name="Warning"  radius={[3,3,0,0]} fill="var(--badge-warning-color)"  fillOpacity={0.85} />
+                  <Bar dataKey="info"     name="Info"     radius={[3,3,0,0]} fill="var(--badge-info-color)"     fillOpacity={0.85} />
+                </BarChart>
+              )}
             </ResponsiveContainer>
           ) : (
             <EmptyState icon={BarChart3} title="No scan data yet" description="Run your first scan to see trends" />
