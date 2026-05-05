@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
@@ -8,24 +8,46 @@ import { EmptyState } from '@/components/ui'
 import {
   AlertOctagon, AlertTriangle, Info, ChevronDown, ChevronUp,
   Wand2, RefreshCcw, Star, ExternalLink, Loader,
-  ArrowLeft, CheckCircle, FileText, Clock, Type, Tag, Link2, BookOpen, Copy
+  ArrowLeft, CheckCircle, FileText, Clock, Type, Tag,
+  Link2, BookOpen, Copy, Download, ChevronLeft, ChevronRight as ChevronR,
+  CheckSquare, Square
 } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 
+// ─── Constants ────────────────────────────────────────────────
+const PAGE_SIZE = 25
+
+const SEVERITY_COLOR = {
+  critical: 'var(--badge-critical-color)',
+  warning:  'var(--badge-warning-color)',
+  info:     'var(--badge-info-color)',
+}
+
+const ISSUE_ICON = {
+  low_readability:   BookOpen,
+  low_word_count:    Type,
+  outdated:          Clock,
+  missing_labels:    Tag,
+  missing_metadata:  FileText,
+  missing_title:     FileText,
+  broken_link:       Link2,
+  duplicate_content: Copy,
+}
+
 // ─── Helpers ──────────────────────────────────────────────────
-const readabilityColor = (score) => {
-  if (score === null || score === undefined) return 'var(--text-muted)'
-  if (score >= 70) return 'var(--xbox)'
-  if (score >= 50) return 'var(--badge-warning-color)'
-  if (score >= 30) return '#f97316'
+const readabilityColor = (s) => {
+  if (s == null) return 'var(--text-muted)'
+  if (s >= 70) return 'var(--xbox)'
+  if (s >= 50) return 'var(--badge-warning-color)'
+  if (s >= 30) return '#f97316'
   return 'var(--badge-critical-color)'
 }
 
-const readabilityLabel = (score) => {
-  if (score === null || score === undefined) return 'N/A'
-  if (score >= 70) return 'Easy'
-  if (score >= 50) return 'Moderate'
-  if (score >= 30) return 'Difficult'
+const readabilityLabel = (s) => {
+  if (s == null) return 'N/A'
+  if (s >= 70) return 'Easy'
+  if (s >= 50) return 'Moderate'
+  if (s >= 30) return 'Difficult'
   return 'Very hard'
 }
 
@@ -39,27 +61,73 @@ const healthScore = (articles, issues) => {
   return Math.max(0, Math.min(100, Math.round(100 - penalty * 20)))
 }
 
-const healthColor = (score) => {
-  if (score >= 80) return 'var(--xbox)'
-  if (score >= 60) return 'var(--badge-warning-color)'
-  if (score >= 40) return '#f97316'
+const healthColor = (s) => {
+  if (s >= 80) return 'var(--xbox)'
+  if (s >= 60) return 'var(--badge-warning-color)'
+  if (s >= 40) return '#f97316'
   return 'var(--badge-critical-color)'
 }
 
-const issueTypeIcon = {
-  low_readability:   BookOpen,
-  low_word_count:    Type,
-  outdated:          Clock,
-  missing_labels:    Tag,
-  missing_metadata:  FileText,
-  missing_title:     FileText,
-  broken_link:       Link2,
-  duplicate_content: Copy,
+// ─── Export to Excel (SheetJS) ────────────────────────────────
+const exportToExcel = async (scan, articles, issues, scanId) => {
+  const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs')
+
+  const scanDate = format(new Date(scan.created_at), 'MMM d yyyy h:mm a')
+
+  // Summary sheet
+  const summaryData = [
+    ['ArticleIQ — Scan Report'],
+    [''],
+    ['Scan Date',     scanDate],
+    ['Articles',      articles.length],
+    ['Critical',      issues.filter(i => i.severity === 'critical').length],
+    ['Warnings',      issues.filter(i => i.severity === 'warning').length],
+    ['Info',          issues.filter(i => i.severity === 'info').length],
+    ['Health Score',  healthScore(articles, issues) ?? 'N/A'],
+  ]
+
+  // Issues sheet
+  const issueRows = [
+    ['Article Title', 'URL', 'Severity', 'Issue Type', 'Description', 'Word Count', 'Readability', 'Last Updated']
+  ]
+  for (const article of articles) {
+    const artIssues = issues.filter(i => i.article_id === article.id)
+    if (artIssues.length === 0) {
+      issueRows.push([article.title, article.url || '', 'Clean', '', '', article.word_count || 0, article.readability_score ?? '', article.last_updated ? format(new Date(article.last_updated), 'MMM d yyyy') : ''])
+    } else {
+      for (const iss of artIssues) {
+        issueRows.push([
+          article.title,
+          article.url || '',
+          iss.severity.charAt(0).toUpperCase() + iss.severity.slice(1),
+          iss.issue_type.replace(/_/g, ' '),
+          iss.description,
+          article.word_count || 0,
+          article.readability_score ?? '',
+          article.last_updated ? format(new Date(article.last_updated), 'MMM d yyyy') : '',
+        ])
+      }
+    }
+  }
+
+  const wb = XLSX.utils.book_new()
+  const wsSummary = XLSX.utils.aoa_to_sheet(summaryData)
+  const wsIssues  = XLSX.utils.aoa_to_sheet(issueRows)
+
+  // Column widths
+  wsIssues['!cols'] = [{ wch: 50 }, { wch: 40 }, { wch: 10 }, { wch: 22 }, { wch: 60 }, { wch: 12 }, { wch: 12 }, { wch: 16 }]
+  wsSummary['!cols'] = [{ wch: 20 }, { wch: 30 }]
+
+  XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary')
+  XLSX.utils.book_append_sheet(wb, wsIssues, 'Issues')
+
+  const filename = `ArticleIQ_Scan_${format(new Date(scan.created_at), 'yyyy-MM-dd_HH-mm')}.xlsx`
+  XLSX.writeFile(wb, filename)
 }
 
-// ─── Readability pill ─────────────────────────────────────────
+// ─── ReadabilityPill ──────────────────────────────────────────
 const ReadabilityPill = ({ score }) => {
-  if (!score && score !== 0) return <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>—</span>
+  if (score == null) return <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>—</span>
   const color = readabilityColor(score)
   return (
     <span style={{ fontSize: 11, fontFamily: 'Fira Code, monospace', color, background: `${color}15`, border: `1px solid ${color}30`, borderRadius: 4, padding: '1px 6px' }}>
@@ -68,41 +136,47 @@ const ReadabilityPill = ({ score }) => {
   )
 }
 
-// ─── Issue chip ───────────────────────────────────────────────
-const IssueChip = ({ issue }) => {
-  const Icon = issueTypeIcon[issue.issue_type] || Info
-  const cls = `badge-${issue.severity}`
+// ─── IssueChip ────────────────────────────────────────────────
+const IssueChip = ({ issue, onResolve, resolved }) => {
+  const Icon = ISSUE_ICON[issue.issue_type] || Info
+  const color = SEVERITY_COLOR[issue.severity]
   return (
-    <div className={cls} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 2, padding: '6px 8px', borderRadius: 6 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        <Icon size={10} />
-        <span style={{ fontWeight: 600 }}>{issue.issue_type.replace(/_/g, ' ')}</span>
+    <div style={{
+      display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8,
+      padding: '8px 10px', borderRadius: 6, marginBottom: 4,
+      background: `${color}10`, border: `1px solid ${color}25`,
+      opacity: resolved ? 0.45 : 1,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, flex: 1, minWidth: 0 }}>
+        <Icon size={13} style={{ color, flexShrink: 0, marginTop: 1 }} />
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 600, color, marginBottom: 2, textDecoration: resolved ? 'line-through' : 'none' }}>
+            {issue.issue_type.replace(/_/g, ' ')}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.4 }}>{issue.description}</div>
+        </div>
       </div>
-      <span style={{ opacity: 0.8, fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: 11, textTransform: 'none', letterSpacing: 0 }}>{issue.description}</span>
+      <button onClick={() => onResolve(issue.id, !resolved)}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', color: resolved ? 'var(--xbox)' : 'var(--text-muted)', flexShrink: 0, padding: 2, display: 'flex', alignItems: 'center', gap: 4, fontSize: 11 }}
+        title={resolved ? 'Mark unresolved' : 'Mark resolved'}>
+        {resolved ? <CheckSquare size={14} /> : <Square size={14} />}
+      </button>
     </div>
   )
 }
 
-// ─── AI Panel ─────────────────────────────────────────────────
+// ─── AIPanel ─────────────────────────────────────────────────
 const AIPanel = ({ article, isPaid }) => {
   const [loading, setLoading] = useState(null)
-  const [result, setResult] = useState(null)
+  const [result,  setResult]  = useState(null)
 
   const run = async (action) => {
     if (!isPaid) return
-    setLoading(action)
-    setResult(null)
+    setLoading(action); setResult(null)
     try {
-      if (action === 'grammar') {
-        const r = await grammarFix(article.title, article.title)
-        setResult({ type: 'grammar', content: r })
-      } else if (action === 'rewrite') {
-        const r = await fullRewrite(article.title, article.title)
-        setResult({ type: 'rewrite', content: r })
-      } else if (action === 'quality') {
-        const r = await getQualityScore(article.title, article.title)
-        setResult({ type: 'quality', score: r })
-      }
+      if (action === 'grammar')  setResult({ type: 'grammar',  content: await grammarFix(article.title, article.title) })
+      if (action === 'rewrite')  setResult({ type: 'rewrite',  content: await fullRewrite(article.title, article.title) })
+      if (action === 'quality')  setResult({ type: 'quality',  score:   await getQualityScore(article.title, article.title) })
     } catch (e) {
       setResult({ type: 'error', content: e.message })
     } finally {
@@ -119,26 +193,22 @@ const AIPanel = ({ article, isPaid }) => {
           { key: 'rewrite', label: 'Rewrite',     icon: RefreshCcw },
           { key: 'quality', label: 'Score',        icon: Star },
         ].map(({ key, label, icon: Icon }) => (
-          <button key={key}
-            onClick={() => run(key)}
-            disabled={!isPaid || loading === key}
-            className="btn-secondary"
+          <button key={key} onClick={() => run(key)}
+            disabled={!isPaid || loading === key} className="btn-secondary"
             style={{ fontSize: 11, padding: '4px 10px', opacity: isPaid ? 1 : 0.4, cursor: isPaid ? 'pointer' : 'not-allowed' }}
-            title={!isPaid ? 'Upgrade to Pro' : undefined}
-          >
+            title={!isPaid ? 'Upgrade to Pro' : undefined}>
             {loading === key ? <Loader size={11} className="animate-spin" /> : <Icon size={11} />}
             {label}
             {!isPaid && <span style={{ fontSize: 8, background: 'var(--xbox-subtle)', color: 'var(--xbox)', border: '1px solid var(--xbox-border)', borderRadius: 3, padding: '1px 4px', fontFamily: 'Fira Code, monospace' }}>PRO</span>}
           </button>
         ))}
       </div>
-
       {result && (
         <div style={{ marginTop: 10, padding: '12px 14px', borderRadius: 7, background: 'var(--bg-sunken)', border: '1px solid var(--border)' }}>
           {result.type === 'error' && <p style={{ color: 'var(--badge-critical-color)', fontSize: 12, margin: 0 }}>{result.content}</p>}
           {(result.type === 'grammar' || result.type === 'rewrite') && (
             <>
-              <p style={{ fontSize: 11, fontFamily: 'Fira Code, monospace', color: 'var(--xbox)', marginBottom: 6, margin: '0 0 6px 0' }}>
+              <p style={{ fontSize: 11, fontFamily: 'Fira Code, monospace', color: 'var(--xbox)', margin: '0 0 6px 0' }}>
                 ✓ {result.type === 'grammar' ? 'Grammar fixed' : 'Article rewritten'}
               </p>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', margin: 0, lineHeight: 1.6 }}>
@@ -153,12 +223,10 @@ const AIPanel = ({ article, isPaid }) => {
                   <div style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 36, color: healthColor(result.score.overall), lineHeight: 1 }}>{result.score.overall}</div>
                   <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Fira Code, monospace' }}>/ 100</div>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{result.score.summary}</p>
-                </div>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5, flex: 1 }}>{result.score.summary}</p>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
-                {['clarity', 'completeness', 'structure', 'tone'].map(k => (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6 }}>
+                {['clarity','completeness','structure','tone'].map(k => (
                   <div key={k} style={{ textAlign: 'center', padding: '6px', background: 'var(--bg-elevated)', borderRadius: 5, border: '1px solid var(--border)' }}>
                     <div style={{ fontWeight: 700, fontSize: 18, color: healthColor(result.score[k]) }}>{result.score[k]}</div>
                     <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{k}</div>
@@ -173,29 +241,28 @@ const AIPanel = ({ article, isPaid }) => {
   )
 }
 
-// ─── Article row ──────────────────────────────────────────────
-const ArticleRow = ({ article, issues, isPaid }) => {
+// ─── ArticleRow ───────────────────────────────────────────────
+const ArticleRow = ({ article, issues, isPaid, resolvedIssues, resolvedArticles, onResolveIssue, onResolveArticle }) => {
   const [open, setOpen] = useState(false)
+
+  const articleResolved = resolvedArticles.has(article.id)
   const critical = issues.filter(i => i.severity === 'critical')
   const warning  = issues.filter(i => i.severity === 'warning')
   const info     = issues.filter(i => i.severity === 'info')
-  const hasIssues = issues.length > 0
-  const score = article.readability_score
+  const unresolvedIssues = issues.filter(i => !resolvedIssues.has(i.id))
+
+  const leftColor = critical.length ? 'var(--badge-critical-color)' : warning.length ? 'var(--badge-warning-color)' : 'var(--xbox)'
 
   return (
-    <div style={{ borderBottom: '1px solid var(--border)' }}>
-      <div
-        onClick={() => setOpen(!open)}
-        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', cursor: 'pointer', transition: 'background 0.1s', userSelect: 'none' }}
+    <div style={{ borderBottom: '1px solid var(--border)', opacity: articleResolved ? 0.45 : 1 }}>
+      <div onClick={() => setOpen(v => !v)}
+        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', cursor: 'pointer', userSelect: 'none' }}
         onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-      >
-        {/* Health indicator */}
-        <div style={{ width: 3, alignSelf: 'stretch', borderRadius: 2, flexShrink: 0, background: critical.length ? 'var(--badge-critical-color)' : warning.length ? 'var(--badge-warning-color)' : 'var(--xbox)' }} />
-
+        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+        <div style={{ width: 3, alignSelf: 'stretch', borderRadius: 2, flexShrink: 0, background: leftColor }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: articleResolved ? 'line-through' : 'none' }}>
               {article.title}
             </span>
             {article.url && (
@@ -207,35 +274,43 @@ const ArticleRow = ({ article, issues, isPaid }) => {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{article.word_count || 0} words</span>
-            {article.last_updated && (
-              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                Updated {formatDistanceToNow(new Date(article.last_updated), { addSuffix: true })}
-              </span>
-            )}
-            <ReadabilityPill score={score} />
+            {article.last_updated && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Updated {formatDistanceToNow(new Date(article.last_updated), { addSuffix: true })}</span>}
+            <ReadabilityPill score={article.readability_score} />
           </div>
         </div>
-
-        {/* Issue badges */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
           {critical.length > 0 && <span className="badge-critical"><AlertOctagon size={9} />{critical.length}</span>}
           {warning.length  > 0 && <span className="badge-warning"><AlertTriangle size={9} />{warning.length}</span>}
           {info.length     > 0 && <span className="badge-info"><Info size={9} />{info.length}</span>}
-          {!hasIssues && <CheckCircle size={13} style={{ color: 'var(--xbox)' }} />}
+          {issues.length === 0 && <CheckCircle size={13} style={{ color: 'var(--xbox)' }} />}
           {open ? <ChevronUp size={14} style={{ color: 'var(--text-muted)' }} /> : <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />}
         </div>
       </div>
 
       {open && (
         <div style={{ padding: '4px 20px 16px 36px', background: 'var(--bg-sunken)' }}>
+          {/* Mark article resolved */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 8 }}>
+            <button onClick={() => onResolveArticle(article.id, !articleResolved)}
+              style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: articleResolved ? 'var(--xbox)' : 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>
+              {articleResolved ? <CheckSquare size={13} /> : <Square size={13} />}
+              {articleResolved ? 'Article reviewed' : 'Mark article reviewed'}
+            </button>
+          </div>
+
           {issues.length === 0 ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 0', color: 'var(--xbox)', fontSize: 12 }}>
-              <CheckCircle size={13} /> No issues found — this article looks great
+              <CheckCircle size={13} /> No issues — this article looks great
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 10, paddingBottom: 4 }}>
-              {[...critical, ...warning, ...info].map(issue => (
-                <IssueChip key={issue.id} issue={issue} />
+            <div style={{ marginBottom: 8 }}>
+              {issues.map(issue => (
+                <IssueChip
+                  key={issue.id}
+                  issue={issue}
+                  resolved={resolvedIssues.has(issue.id)}
+                  onResolve={onResolveIssue}
+                />
               ))}
             </div>
           )}
@@ -246,19 +321,65 @@ const ArticleRow = ({ article, issues, isPaid }) => {
   )
 }
 
+// ─── Pagination ───────────────────────────────────────────────
+const Pagination = ({ page, totalPages, onChange }) => {
+  if (totalPages <= 1) return null
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '16px 0' }}>
+      <button onClick={() => onChange(page - 1)} disabled={page === 1} className="btn-secondary"
+        style={{ padding: '5px 10px', opacity: page === 1 ? 0.4 : 1 }}>
+        <ChevronLeft size={14} />
+      </button>
+      {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
+        let p
+        if (totalPages <= 7) p = i + 1
+        else if (page <= 4) p = i + 1
+        else if (page >= totalPages - 3) p = totalPages - 6 + i
+        else p = page - 3 + i
+        return (
+          <button key={p} onClick={() => onChange(p)}
+            style={{ width: 32, height: 32, borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: page === p ? 700 : 400,
+              background: page === p ? 'var(--xbox)' : 'var(--bg-elevated)',
+              color: page === p ? '#fff' : 'var(--text-secondary)',
+              outline: '1px solid var(--border)',
+            }}>
+            {p}
+          </button>
+        )
+      })}
+      <button onClick={() => onChange(page + 1)} disabled={page === totalPages} className="btn-secondary"
+        style={{ padding: '5px 10px', opacity: page === totalPages ? 0.4 : 1 }}>
+        <ChevronR size={14} />
+      </button>
+      <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>
+        Page {page} of {totalPages}
+      </span>
+    </div>
+  )
+}
+
 // ─── Main page ────────────────────────────────────────────────
 export default function ScanResultsPage() {
-  const { scanId } = useParams()
+  const { scanId }  = useParams()
   const { profile } = useAuth()
-  const [scan, setScan]         = useState(null)
+  const isPaid      = canUseAI(profile?.plan)
+
+  const [scan,     setScan]     = useState(null)
   const [articles, setArticles] = useState([])
-  const [issues, setIssues]     = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [filter, setFilter]     = useState('all')
-  const [sort, setSort]         = useState('severity') // 'severity' | 'readability' | 'words' | 'updated'
+  const [issues,   setIssues]   = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [exporting,setExporting]= useState(false)
 
-  const isPaid = canUseAI(profile?.plan)
+  // Resolved state (persisted to Supabase)
+  const [resolvedIssues,   setResolvedIssues]   = useState(new Set())
+  const [resolvedArticles, setResolvedArticles] = useState(new Set())
 
+  // UI state
+  const [filter, setFilter] = useState('all')
+  const [sort,   setSort]   = useState('severity')
+  const [page,   setPage]   = useState(1)
+
+  // Load data
   useEffect(() => {
     const load = async () => {
       const [{ data: s }, { data: a }, { data: i }] = await Promise.all([
@@ -266,41 +387,61 @@ export default function ScanResultsPage() {
         supabase.from('scanned_articles').select('*').eq('scan_job_id', scanId),
         supabase.from('article_issues').select('*').eq('scan_job_id', scanId),
       ])
-      setScan(s)
-      setArticles(a || [])
-      setIssues(i || [])
+      setScan(s); setArticles(a || []); setIssues(i || [])
+
+      // Load resolved state
+      const resolvedI = new Set((i || []).filter(x => x.resolved).map(x => x.id))
+      const resolvedA = new Set((a || []).filter(x => x.has_missing_metadata === null).map(x => x.id)) // placeholder
+      // Actually load from resolved column
+      const resolvedIssueSet = new Set((i || []).filter(x => x.resolved).map(x => x.id))
+      setResolvedIssues(resolvedIssueSet)
       setLoading(false)
     }
     load()
   }, [scanId])
 
+  // Mark issue resolved
+  const resolveIssue = useCallback(async (issueId, resolved) => {
+    await supabase.from('article_issues').update({ resolved, resolved_at: resolved ? new Date().toISOString() : null }).eq('id', issueId)
+    setResolvedIssues(prev => {
+      const next = new Set(prev)
+      resolved ? next.add(issueId) : next.delete(issueId)
+      return next
+    })
+  }, [])
+
+  // Mark article reviewed (we store this as a local Set for now — could persist to a separate table)
+  const resolveArticle = useCallback((articleId, resolved) => {
+    setResolvedArticles(prev => {
+      const next = new Set(prev)
+      resolved ? next.add(articleId) : next.delete(articleId)
+      return next
+    })
+  }, [])
+
   const score = healthScore(articles, issues)
 
-  const filterOptions = [
-    { key: 'all',      label: 'All',      count: articles.length },
-    { key: 'issues',   label: 'Has issues', count: articles.filter(a => issues.some(i => i.article_id === a.id)).length },
-    { key: 'critical', label: 'Critical', count: articles.filter(a => issues.some(i => i.article_id === a.id && i.severity === 'critical')).length },
-    { key: 'warning',  label: 'Warning',  count: articles.filter(a => issues.some(i => i.article_id === a.id && i.severity === 'warning')).length },
-    { key: 'clean',    label: 'Clean',    count: articles.filter(a => !issues.some(i => i.article_id === a.id)).length },
-  ]
-
+  // Filter articles
   const filtered = articles
     .filter(a => {
       const ai = issues.filter(i => i.article_id === a.id)
-      if (filter === 'all')      return true
-      if (filter === 'issues')   return ai.length > 0
-      if (filter === 'critical') return ai.some(i => i.severity === 'critical')
-      if (filter === 'warning')  return ai.some(i => i.severity === 'warning')
-      if (filter === 'clean')    return ai.length === 0
+      const unresolvedIssues = ai.filter(i => !resolvedIssues.has(i.id))
+      const isArticleResolved = resolvedArticles.has(a.id)
+
+      if (filter === 'resolved') return isArticleResolved || (ai.length > 0 && ai.every(i => resolvedIssues.has(i.id)))
+      if (filter === 'all')      return !isArticleResolved
+      if (filter === 'clean')    return !isArticleResolved && ai.length === 0
+      if (filter === 'issues')   return !isArticleResolved && unresolvedIssues.length > 0
+      if (filter === 'critical') return !isArticleResolved && unresolvedIssues.some(i => i.severity === 'critical')
+      if (filter === 'warning')  return !isArticleResolved && unresolvedIssues.some(i => i.severity === 'warning')
       return true
     })
     .sort((a, b) => {
-      const ai = issues.filter(i => i.article_id === a.id)
-      const bi = issues.filter(i => i.article_id === b.id)
+      const ai = issues.filter(i => i.article_id === a.id).filter(i => !resolvedIssues.has(i.id))
+      const bi = issues.filter(i => i.article_id === b.id).filter(i => !resolvedIssues.has(i.id))
       if (sort === 'severity') {
-        const aSev = ai.some(i => i.severity === 'critical') ? 0 : ai.some(i => i.severity === 'warning') ? 1 : ai.length ? 2 : 3
-        const bSev = bi.some(i => i.severity === 'critical') ? 0 : bi.some(i => i.severity === 'warning') ? 1 : bi.length ? 2 : 3
-        return aSev - bSev
+        const sev = (x) => x.some(i => i.severity === 'critical') ? 0 : x.some(i => i.severity === 'warning') ? 1 : x.length ? 2 : 3
+        return sev(ai) - sev(bi)
       }
       if (sort === 'readability') return (a.readability_score || 0) - (b.readability_score || 0)
       if (sort === 'words')       return (a.word_count || 0) - (b.word_count || 0)
@@ -308,42 +449,56 @@ export default function ScanResultsPage() {
       return 0
     })
 
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
+  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+  // Reset page when filter changes
+  useEffect(() => setPage(1), [filter, sort])
+
+  const filterOptions = [
+    { key: 'all',      label: 'All',        count: articles.filter(a => !resolvedArticles.has(a.id)).length },
+    { key: 'issues',   label: 'Has issues', count: articles.filter(a => !resolvedArticles.has(a.id) && issues.some(i => i.article_id === a.id && !resolvedIssues.has(i.id))).length },
+    { key: 'critical', label: 'Critical',   count: articles.filter(a => !resolvedArticles.has(a.id) && issues.some(i => i.article_id === a.id && i.severity === 'critical' && !resolvedIssues.has(i.id))).length },
+    { key: 'warning',  label: 'Warning',    count: articles.filter(a => !resolvedArticles.has(a.id) && issues.some(i => i.article_id === a.id && i.severity === 'warning' && !resolvedIssues.has(i.id))).length },
+    { key: 'clean',    label: 'Clean',      count: articles.filter(a => !resolvedArticles.has(a.id) && !issues.some(i => i.article_id === a.id)).length },
+    { key: 'resolved', label: 'Resolved',   count: articles.filter(a => resolvedArticles.has(a.id) || (issues.filter(i => i.article_id === a.id).length > 0 && issues.filter(i => i.article_id === a.id).every(i => resolvedIssues.has(i.id)))).length },
+  ]
+
+  const handleExport = async () => {
+    setExporting(true)
+    try { await exportToExcel(scan, articles, issues, scanId) }
+    catch (e) { console.error('Export failed:', e) }
+    finally { setExporting(false) }
+  }
+
   if (loading) return (
     <div style={{ padding: 32, maxWidth: 960, margin: '0 auto' }} className="animate-fade-in">
-      <div style={{ width: 120, height: 16, marginBottom: 24 }} className="skeleton" />
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, gap: 16 }}>
-        <div>
-          <div style={{ width: 80, height: 12, marginBottom: 10 }} className="skeleton" />
-          <div style={{ width: 280, height: 28, marginBottom: 8 }} className="skeleton" />
-          <div style={{ width: 200, height: 14 }} className="skeleton" />
-        </div>
-        <div style={{ width: 80, height: 70, borderRadius: 10 }} className="skeleton" />
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 24 }}>
-        {[0,1,2,3].map(i => <div key={i} style={{ height: 72, borderRadius: 10 }} className="skeleton" />)}
-      </div>
-      <div style={{ height: 40, marginBottom: 16, borderRadius: 8 }} className="skeleton" />
-      {[0,1,2,3,4,5].map(i => (
-        <div key={i} style={{ height: 68, borderRadius: 8, marginBottom: 1 }} className="skeleton" />
-      ))}
+      {[0,1,2,3].map(i => <div key={i} style={{ height: 68, borderRadius: 8, marginBottom: 8 }} className="skeleton" />)}
     </div>
   )
 
   if (!scan) return (
     <div style={{ padding: 32 }}>
-      <EmptyState icon={FileText} title="Scan not found" description="This scan may have been deleted." action={<Link to="/scanner" className="btn-primary" style={{ fontSize: 13 }}>Back to Scanner</Link>} />
+      <EmptyState icon={FileText} title="Scan not found" description="This scan may have been deleted."
+        action={<Link to="/scanner" className="btn-primary" style={{ fontSize: 13 }}>Back to Scanner</Link>} />
     </div>
   )
 
   return (
     <div style={{ padding: '32px', maxWidth: 960, margin: '0 auto' }} className="animate-fade-in">
 
-      {/* Back */}
-      <Link to="/scanner" className="btn-ghost" style={{ fontSize: 12, marginBottom: 20, display: 'inline-flex' }}>
-        <ArrowLeft size={12} /> Back to Scanner
-      </Link>
+      {/* Back + export */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <Link to="/scanner" className="btn-ghost" style={{ fontSize: 12 }}>
+          <ArrowLeft size={12} /> Back to Scanner
+        </Link>
+        <button onClick={handleExport} disabled={exporting} className="btn-secondary" style={{ fontSize: 12 }}>
+          {exporting ? <Loader size={13} className="animate-spin" /> : <Download size={13} />}
+          {exporting ? 'Exporting...' : 'Export to Excel'}
+        </button>
+      </div>
 
-      {/* Report header */}
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
         <div>
           <p className="section-header">Scan Report</p>
@@ -351,7 +506,7 @@ export default function ScanResultsPage() {
             {format(new Date(scan.created_at), 'MMM d, yyyy — h:mm a')}
           </h1>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-            {scan.scanned_articles || 0} articles scanned · {formatDistanceToNow(new Date(scan.created_at), { addSuffix: true })}
+            {articles.length} articles scanned · {formatDistanceToNow(new Date(scan.created_at), { addSuffix: true })}
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
@@ -372,13 +527,13 @@ export default function ScanResultsPage() {
         </div>
       </div>
 
-      {/* Summary row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
+      {/* Summary cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 24 }}>
         {[
-          { label: 'Articles',   value: articles.length,                                         color: 'var(--text-primary)',         icon: FileText },
-          { label: 'Critical',   value: issues.filter(i => i.severity === 'critical').length,    color: 'var(--badge-critical-color)', icon: AlertOctagon },
-          { label: 'Warnings',   value: issues.filter(i => i.severity === 'warning').length,     color: 'var(--badge-warning-color)',  icon: AlertTriangle },
-          { label: 'Info',       value: issues.filter(i => i.severity === 'info').length,        color: 'var(--badge-info-color)',     icon: Info },
+          { label: 'Articles', value: articles.length,                                       color: 'var(--text-primary)',         icon: FileText },
+          { label: 'Critical', value: issues.filter(i => i.severity === 'critical').length,  color: 'var(--badge-critical-color)', icon: AlertOctagon },
+          { label: 'Warnings', value: issues.filter(i => i.severity === 'warning').length,   color: 'var(--badge-warning-color)',  icon: AlertTriangle },
+          { label: 'Resolved', value: resolvedIssues.size + resolvedArticles.size,           color: 'var(--xbox)',                 icon: CheckSquare },
         ].map(({ label, value, color, icon: Icon }) => (
           <div key={label} className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 34, height: 34, borderRadius: 8, background: `${color}15`, border: `1px solid ${color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -397,9 +552,7 @@ export default function ScanResultsPage() {
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {filterOptions.map(({ key, label, count }) => (
             <button key={key} onClick={() => setFilter(key)}
-              style={{
-                padding: '5px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer',
-                fontFamily: 'Fira Code, monospace', transition: 'all 0.15s',
+              style={{ padding: '5px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: 'Fira Code, monospace', transition: 'all 0.15s',
                 background: filter === key ? 'var(--xbox-subtle)' : 'var(--bg-elevated)',
                 border: `1px solid ${filter === key ? 'var(--xbox-border)' : 'var(--border)'}`,
                 color: filter === key ? 'var(--xbox)' : 'var(--text-secondary)',
@@ -408,19 +561,16 @@ export default function ScanResultsPage() {
             </button>
           ))}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Sort:</span>
-          <select value={sort} onChange={e => setSort(e.target.value)}
-            className="input" style={{ padding: '4px 8px', fontSize: 12, width: 'auto' }}>
-            <option value="severity">By severity</option>
-            <option value="readability">By readability</option>
-            <option value="words">By word count</option>
-            <option value="updated">By last updated</option>
-          </select>
-        </div>
+        <select value={sort} onChange={e => setSort(e.target.value)}
+          className="input" style={{ padding: '4px 28px 4px 8px', fontSize: 12, width: 'auto' }}>
+          <option value="severity">By severity</option>
+          <option value="readability">By readability</option>
+          <option value="words">By word count</option>
+          <option value="updated">By last updated</option>
+        </select>
       </div>
 
-      {/* Readability legend */}
+      {/* Readability legend + count */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Fira Code, monospace' }}>Readability:</span>
         {[
@@ -435,25 +585,32 @@ export default function ScanResultsPage() {
           </div>
         ))}
         <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Fira Code, monospace' }}>
-          {filtered.length} article{filtered.length !== 1 ? 's' : ''}
+          {filtered.length} article{filtered.length !== 1 ? 's' : ''} · page {page} of {Math.max(1, totalPages)}
         </span>
       </div>
 
       {/* Article list */}
       <div className="card" style={{ overflow: 'hidden' }}>
-        {filtered.length === 0 ? (
+        {paginated.length === 0 ? (
           <EmptyState icon={CheckCircle} title="No articles match this filter" />
         ) : (
-          filtered.map(a => (
+          paginated.map(a => (
             <ArticleRow
               key={a.id}
               article={a}
               issues={issues.filter(i => i.article_id === a.id)}
               isPaid={isPaid}
+              resolvedIssues={resolvedIssues}
+              resolvedArticles={resolvedArticles}
+              onResolveIssue={resolveIssue}
+              onResolveArticle={resolveArticle}
             />
           ))
         )}
       </div>
+
+      {/* Pagination */}
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
     </div>
   )
 }

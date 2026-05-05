@@ -382,9 +382,16 @@ export default function ScannerPage() {
             </div>
           )}
 
-          <button onClick={startScan} className="btn-primary">
-            <Scan size={14} /> Start Scan
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <button onClick={startScan} className="btn-primary">
+              <Scan size={14} /> Start Scan
+            </button>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              {scanPreset === 'fast'     && '~10 min per 1,000 articles'}
+              {scanPreset === 'standard' && '~20 min per 1,000 articles'}
+              {scanPreset === 'full'     && '~30+ min per 1,000 articles (AI calls)'}
+            </span>
+          </div>
         </div>
       )}
 
