@@ -1,76 +1,63 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase, getProfile } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 const AuthContext = createContext(null)
 
+const fetchProfile = async (userId) => {
+  const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
+  return data ?? null
+}
+
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null)
+  const [user, setUser]       = useState(undefined) // undefined = not yet known
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  const loadProfile = async (userId) => {
-    try {
-      const p = await getProfile(userId)
-      setProfile(p)
-    } catch {
-      setProfile(null)
-    }
-  }
-
   useEffect(() => {
-    // Safety timeout — never show loading screen forever
-    const timeout = setTimeout(() => setLoading(false), 5000)
+    let mounted = true
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!mounted) return
       if (session?.user) {
-        loadProfile(session.user.id).finally(() => {
-          clearTimeout(timeout)
-          setLoading(false)
-        })
+        setUser(session.user)
+        const p = await fetchProfile(session.user.id)
+        if (mounted) { setProfile(p); setLoading(false) }
       } else {
-        clearTimeout(timeout)
+        setUser(null)
         setLoading(false)
       }
-    }).catch(() => {
-      clearTimeout(timeout)
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return
+      if (session?.user) {
+        setUser(session.user)
+        const p = await fetchProfile(session.user.id)
+        if (mounted) setProfile(p)
+      } else {
+        setUser(null)
+        setProfile(null)
+        if (event === 'SIGNED_OUT') {
+          window.location.replace('/login')
+        }
+      }
       setLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        await loadProfile(session.user.id)
-      } else {
-        setProfile(null)
-        // Session expired or signed out — redirect to login
-        if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !session) {
-          window.location.href = '/login'
-        }
-      }
-    })
-
-    // Check session every 2 minutes — catch expiry proactively
-    const sessionCheck = setInterval(async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        setUser(null)
-        setProfile(null)
-        window.location.href = '/login'
-      }
-    }, 2 * 60 * 1000)
-
-    return () => {
-      subscription.unsubscribe()
-      clearTimeout(timeout)
-      clearInterval(sessionCheck)
-    }
+    init()
+    return () => { mounted = false; subscription.unsubscribe() }
   }, [])
 
-  const refreshProfile = () => user && loadProfile(user.id)
+  const userId = profile?.id ?? user?.id ?? null
+  const refreshProfile = async () => {
+    if (!userId) return
+    const p = await fetchProfile(userId)
+    setProfile(p)
+  }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, userId, loading, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   )

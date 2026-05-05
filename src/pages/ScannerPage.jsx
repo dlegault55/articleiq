@@ -25,8 +25,7 @@ const FREQUENCIES = [
 
 // ─── Inline connector form ────────────────────────────────────
 function ConnectorInline({ onConnected }) {
-  const { profile, user } = useAuth()
-  const userId = profile?.id || user?.id
+  const { userId } = useAuth()
   const [form, setForm] = useState({ subdomain: '', email: '', token: '', frequency: 'weekly' })
   const [showKey, setShowKey] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -51,8 +50,8 @@ function ConnectorInline({ onConnected }) {
       }, { onConflict: 'user_id,subdomain' })
       console.log('Upsert result:', JSON.stringify(result))
       if (result.error) throw new Error(result.error.message || result.error.details || JSON.stringify(result.error))
-      recheckConnector()
-      onConnected()
+      reloadConnector()
+    onConnected()
     } catch (e) {
       console.error('Save failed:', e)
       setError(e.message || 'Unknown error — check browser console')
@@ -107,8 +106,8 @@ function ConnectorInline({ onConnected }) {
 const scanName = (scan) => `Scan — ${new Date(scan.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${new Date(scan.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
 
 export default function ScannerPage() {
-  const { profile, user } = useAuth()
-  const { hasConnector, connector: contextConnector, recheckConnector } = useConnector()
+  const { profile, user, userId } = useAuth()
+  const { hasConnector, connector: contextConnector, reload } = useConnector()
   const { activeScan, recentScans, loadScans } = useScan()
   const toast = useToast()
   const navigate = useNavigate()
@@ -129,13 +128,13 @@ export default function ScannerPage() {
 
   useEffect(() => {
     const load = async () => {
-      const uid = profile?.id || user?.id
+      const uid = userId
       if (!uid) { setLoading(false); return }
 
       const { data: conns } = await supabase
         .from('zendesk_connectors')
         .select('*')
-        .eq('user_id', uid)
+        .eq('user_id', userId)
         .eq('is_active', true)
       
       const allConns = conns?.length ? conns : (contextConnector ? [contextConnector] : [])
@@ -148,7 +147,7 @@ export default function ScannerPage() {
   }, [profile, user, contextConnector])
 
   const startScan = async () => {
-    const uid = profile?.id || user?.id
+    const uid = userId
     if (!selectedConnector) return
     if (!uid) { setError('Not signed in — please refresh and try again.'); return }
     setError(null)
@@ -156,14 +155,14 @@ export default function ScannerPage() {
     try {
       const { data: job, error: jobErr } = await supabase
         .from('scan_jobs')
-        .insert({ user_id: uid, connector_id: selectedConnector.id, status: 'pending' })
+        .insert({ user_id: userId, connector_id: selectedConnector.id, status: 'pending' })
         .select()
         .single()
       if (jobErr) throw jobErr
 
       await runScan({
         scanJobId: job.id,
-        userId: uid,
+        userId: userId,
         connector: selectedConnector,
         articleLimit,
         preset: scanPreset,
@@ -179,7 +178,7 @@ export default function ScannerPage() {
   }
 
   const cancelScan = async () => {
-    const uid = profile?.id || user?.id
+    const uid = userId
     if (!uid) return
     // Find the running scan and mark it failed
     const running = recentScans.find(s => s.status === 'running' || s.status === 'pending')

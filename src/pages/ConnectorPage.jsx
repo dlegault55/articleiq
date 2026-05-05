@@ -20,8 +20,8 @@ const FREQUENCIES = [
 ]
 
 export default function ConnectorPage() {
-  const { profile, user } = useAuth()
-  const { recheckConnector } = useConnector()
+  const { userId } = useAuth()
+  const { reload: reloadConnector } = useConnector()
   const toast = useToast()
   const [connectors, setConnectors] = useState([])
   const [loading, setLoading] = useState(true)
@@ -31,26 +31,23 @@ export default function ConnectorPage() {
   const [error, setError] = useState(null)
   const [form, setForm] = useState({ subdomain: '', email: '', token: '', frequency: 'weekly' })
 
-  const userId = profile?.id || user?.id
-
   const loadConnectors = async () => {
-    const uid = profile?.id || user?.id
-    if (!uid) return
+    if (!userId) return
     const { data } = await supabase
       .from('zendesk_connectors')
       .select('*')
-      .eq('user_id', uid)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
     setConnectors(data || [])
     setLoading(false)
   }
 
   useEffect(() => {
-    if (profile?.id || user?.id) loadConnectors()
+    if (userId) loadConnectors()
   }, [profile, user])
 
   const saveConnector = async () => {
-    const uid = profile?.id || user?.id
+    const uid = userId
     setError(null)
     setSuccess(false)
 
@@ -86,7 +83,7 @@ export default function ConnectorPage() {
     setShowForm(false)
     setForm({ subdomain: '', email: '', token: '', frequency: 'weekly' })
     await loadConnectors()
-    recheckConnector()
+    reload()
   }
 
   const deleteConnector = async (id) => {
@@ -95,7 +92,7 @@ export default function ConnectorPage() {
     await supabase.from('zendesk_connectors').delete().eq('id', id)
     toast.success('Connector removed')
     loadConnectors()
-    recheckConnector()
+    reload()
   }
 
   return (

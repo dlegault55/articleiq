@@ -42,10 +42,10 @@ const SeverityBar = ({ label, count, total, color, bg }) => (
 const scanName = (scan) => `Scan — ${new Date(scan.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${new Date(scan.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
 
 export default function DashboardPage() {
-  const { profile } = useAuth()
+  const { profile, userId } = useAuth()
   const [stats, setStats] = useState({ scans: 0, articles: 0, issues: 0, critical: 0, warning: 0, info: 0 })
   const { activeScan, recentScans } = useScan()
-  const { hasConnector, recheckConnector } = useConnector()
+  const { hasConnector, reload } = useConnector()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

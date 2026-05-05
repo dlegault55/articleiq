@@ -5,37 +5,32 @@ import { useAuth } from './useAuth'
 const ConnectorContext = createContext(null)
 
 export const ConnectorProvider = ({ children }) => {
-  const { user, profile } = useAuth()
-  const [hasConnector, setHasConnector] = useState(null)
+  const { userId } = useAuth()
   const [connector, setConnector] = useState(null)
+  const [hasConnector, setHasConnector] = useState(null) // null = loading
 
-  const checkConnector = useCallback(async () => {
-    const uid = profile?.id || user?.id
-    if (!uid) { setHasConnector(false); return }
+  const reload = useCallback(async () => {
+    if (!userId) { setConnector(null); setHasConnector(false); return }
     const { data } = await supabase
       .from('zendesk_connectors')
       .select('*')
-      .eq('user_id', uid)
+      .eq('user_id', userId)
       .eq('is_active', true)
       .order('created_at', { ascending: false })
       .limit(1)
     const found = data?.[0] ?? null
     setConnector(found)
     setHasConnector(!!found)
-  }, [user, profile])
+  }, [userId])
 
+  useEffect(() => { reload() }, [reload])
   useEffect(() => {
-    checkConnector()
-  }, [checkConnector])
-
-  // Also recheck every time the window gets focus (e.g. after saving on another page)
-  useEffect(() => {
-    window.addEventListener('focus', checkConnector)
-    return () => window.removeEventListener('focus', checkConnector)
-  }, [checkConnector])
+    window.addEventListener('focus', reload)
+    return () => window.removeEventListener('focus', reload)
+  }, [reload])
 
   return (
-    <ConnectorContext.Provider value={{ hasConnector, connector, recheckConnector: checkConnector }}>
+    <ConnectorContext.Provider value={{ connector, hasConnector, reload }}>
       {children}
     </ConnectorContext.Provider>
   )
