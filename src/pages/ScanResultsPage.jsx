@@ -389,18 +389,31 @@ export default function ScanResultsPage() {
         supabase.from('scanned_articles').select('*').eq('scan_job_id', scanId),
         supabase.from('article_issues').select('*').eq('scan_job_id', scanId),
       ])
-      setScan(s); setArticles(a || []); setIssues(i || [])
-
-      // Load resolved state
-      const resolvedI = new Set((i || []).filter(x => x.resolved).map(x => x.id))
-      const resolvedA = new Set((a || []).filter(x => x.has_missing_metadata === null).map(x => x.id)) // placeholder
-      // Actually load from resolved column
-      const resolvedIssueSet = new Set((i || []).filter(x => x.resolved).map(x => x.id))
-      setResolvedIssues(resolvedIssueSet)
+      setScan(s)
+      setArticles(a || [])
+      setIssues(i || [])
+      setResolvedIssues(new Set((i || []).filter(x => x.resolved).map(x => x.id)))
       setLoading(false)
     }
     load()
   }, [scanId])
+
+  // Poll while scan is still running
+  useEffect(() => {
+    if (!scan) return
+    if (scan.status !== 'running' && scan.status !== 'pending') return
+    const interval = setInterval(async () => {
+      const [{ data: s }, { data: a }, { data: i }] = await Promise.all([
+        supabase.from('scan_jobs').select('*').eq('id', scanId).single(),
+        supabase.from('scanned_articles').select('*').eq('scan_job_id', scanId),
+        supabase.from('article_issues').select('*').eq('scan_job_id', scanId),
+      ])
+      setScan(s)
+      setArticles(a || [])
+      setIssues(i || [])
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [scan?.status, scanId])
 
   // Mark issue resolved
   const resolveIssue = useCallback(async (issueId, resolved) => {
@@ -549,6 +562,30 @@ export default function ScanResultsPage() {
           </div>
         </div>
       </div>
+
+      {/* Live progress banner — shown while scan is running */}
+      {(scan.status === 'running' || scan.status === 'pending') && (
+        <div style={{ marginBottom: 20, padding: '14px 18px', borderRadius: 9, background: 'var(--xbox-subtle)', border: '1px solid var(--xbox-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--xbox)', boxShadow: '0 0 6px var(--xbox)', animation: 'aiq-pulse 1.5s ease-in-out infinite', flexShrink: 0 }} />
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--xbox)', margin: 0 }}>Scan in progress</p>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0 }}>
+                {scan.scanned_articles || 0} of {scan.total_articles || '?'} articles analyzed — results updating live
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 120, height: 4, borderRadius: 2, background: 'var(--bg-overlay)', overflow: 'hidden' }}>
+              <div style={{ height: '100%', background: 'var(--xbox)', borderRadius: 2, transition: 'width 1s ease', width: scan.total_articles ? `${Math.round((scan.scanned_articles / scan.total_articles) * 100)}%` : '0%' }} />
+            </div>
+            <span style={{ fontSize: 11, fontFamily: 'Fira Code, monospace', color: 'var(--xbox)', minWidth: 32 }}>
+              {scan.total_articles ? `${Math.round((scan.scanned_articles / scan.total_articles) * 100)}%` : '...'}
+            </span>
+          </div>
+        </div>
+      )}
+      <style>{`@keyframes aiq-pulse{0%,100%{opacity:1}50%{opacity:0.35}}`}</style>
 
       {/* Summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 24 }}>

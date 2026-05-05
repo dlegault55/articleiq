@@ -6,6 +6,7 @@ import { useScan } from '@/hooks/useScan'
 import { useToast } from '@/hooks/useToast'
 import { supabase } from '@/lib/supabase'
 import { runScan } from '@/lib/scanner'
+import { sendScanCompleteEmail } from '@/lib/email'
 import { PageShell, PageSkeleton, EmptyState } from '@/components/ui'
 import {
   Scan, Plug, AlertTriangle, Loader, ChevronRight,
@@ -279,6 +280,21 @@ export default function ScannerPage() {
       })
 
       reloadScans()
+
+      // Send completion email (non-blocking)
+      const { data: done } = await supabase.from('scan_jobs').select('*').eq('id', job.id).single()
+      if (profile?.email && done) {
+        sendScanCompleteEmail({
+          to:        profile.email,
+          firstName: profile.full_name?.split(' ')[0],
+          scanId:    job.id,
+          articles:  done.scanned_articles || 0,
+          critical:  done.critical_count   || 0,
+          warning:   done.warning_count    || 0,
+          scanDate:  new Date(done.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        })
+      }
+
       navigate(`/scanner/results/${job.id}`)
     } catch (e) {
       setError(e.message)
