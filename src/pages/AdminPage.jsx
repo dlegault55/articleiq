@@ -4,10 +4,12 @@ import { supabase } from '@/lib/supabase'
 import { adminSetPlan } from '@/lib/supabase'
 import { Users, Zap, Shield, TrendingUp, ChevronDown, Loader, Search } from 'lucide-react'
 import { PageShell, StatCard, LoadingState } from '@/components/ui'
+import { useToast } from '@/hooks/useToast'
 import { formatDistanceToNow } from 'date-fns'
 
 export default function AdminPage() {
   const { profile: adminProfile } = useAuth()
+  const toast = useToast()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -36,7 +38,7 @@ export default function AdminPage() {
       await adminSetPlan(adminProfile.id, userId, newPlan)
       await loadUsers()
     } catch (e) {
-      alert('Failed to update plan: ' + e.message)
+      toast.error('Failed to update plan: ' + e.message)
     } finally {
       setOverriding(null)
     }
@@ -89,14 +91,14 @@ export default function AdminPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {filtered.map(u => (
-                  <tr key={u.id} className="hover:bg-surface-3 transition-colors">
+                  <tr key={u.id} onMouseEnter={e=>e.currentTarget.style.background='var(--bg-hover)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2.5">
                         {u.avatar_url ? (
                           <img src={u.avatar_url} alt="" className="w-7 h-7 rounded-full border border-border" />
                         ) : (
                           <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
-                            style={{ background: 'var(--surface-4)', color: 'var(--xbox-light)' }}>
+                            style={{ background: 'var(--xbox-subtle)', color: 'var(--xbox)' }}>
                             {u.full_name?.[0] || u.email?.[0] || '?'}
                           </div>
                         )}

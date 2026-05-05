@@ -2,8 +2,8 @@ import { Loader, AlertTriangle, RefreshCw, Inbox } from 'lucide-react'
 
 // ─── PageShell ────────────────────────────────────────────────
 // Consistent page wrapper with header
-export const PageShell = ({ eyebrow, title, subtitle, action, children }) => (
-  <div className="p-8 max-w-5xl mx-auto animate-fade-in">
+export const PageShell = ({ eyebrow, title, subtitle, action, children, maxWidth = 960 }) => (
+  <div className="animate-fade-in" style={{ padding: 32, maxWidth, margin: '0 auto' }}>
     <div className="flex items-start justify-between mb-8">
       <div>
         {eyebrow && <p className="section-header">{eyebrow}</p>}
@@ -97,5 +97,23 @@ export const StatCard = ({ label, value, sub, icon: Icon, color }) => (
     </div>
     <div style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 28, letterSpacing: -0.5, color: color || 'var(--text-primary)', lineHeight: 1 }}>{value}</div>
     {sub && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{sub}</div>}
+  </div>
+)
+
+// ─── Skeleton ─────────────────────────────────────────────────
+export const Skeleton = ({ width, height = 16, style = {} }) => (
+  <div className="skeleton" style={{ width: width || '100%', height, borderRadius: 5, ...style }} />
+)
+
+// ─── PageSkeleton — generic page loading state ────────────────
+export const PageSkeleton = () => (
+  <div style={{ padding: 32, maxWidth: 960, margin: '0 auto' }} className="animate-fade-in">
+    <Skeleton width={100} height={12} style={{ marginBottom: 12 }} />
+    <Skeleton width={240} height={28} style={{ marginBottom: 8 }} />
+    <Skeleton width={180} height={14} style={{ marginBottom: 32 }} />
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 24 }}>
+      {[0,1,2,3].map(i => <Skeleton key={i} height={90} style={{ borderRadius: 10 }} />)}
+    </div>
+    <Skeleton height={200} style={{ borderRadius: 10 }} />
   </div>
 )

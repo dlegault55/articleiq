@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/useToast'
 import { supabase } from '@/lib/supabase'
 import { runScan } from '@/lib/scanner'
 import { Scan, Plug, AlertTriangle, Loader, ChevronRight, Clock, CheckCircle, XCircle, Eye, EyeOff, Trash2 } from 'lucide-react'
-import { PageShell, EmptyState, LoadingState } from '@/components/ui'
+import { PageShell, EmptyState, LoadingState, PageSkeleton } from '@/components/ui'
 import { formatDistanceToNow } from 'date-fns'
 
 const calculateNextSync = (frequency) => {
@@ -69,7 +69,7 @@ function ConnectorInline({ onConnected }) {
           <input className="input rounded-r-none" placeholder="yourcompany"
             value={form.subdomain} onChange={e => setForm(f => ({ ...f, subdomain: e.target.value }))} />
           <div className="px-3 py-2 text-sm rounded-r-md border border-l-0 border-border flex-shrink-0"
-            style={{ background: 'var(--surface-3)', color: 'var(--text-muted)' }}>.zendesk.com</div>
+            style={{ background: 'var(--bg-sunken)', color: 'var(--text-muted)' }}>.zendesk.com</div>
         </div>
       </div>
       <div>
@@ -207,17 +207,14 @@ export default function ScannerPage() {
 
   const progressPct = progress.total > 0 ? Math.round((progress.scanned / progress.total) * 100) : 0
 
+  if (loading) return <PageSkeleton />
+
   return (
-    <div className="p-8 max-w-4xl mx-auto animate-fade-in">
-      <div className="mb-8">
-        <p className="section-header">Analysis Engine</p>
-        <h1 className="font-display font-bold text-3xl" style={{ color: 'var(--text-primary)' }}>
-          Article Scanner
-        </h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-          Scan your Zendesk knowledge base for issues across all articles.
-        </p>
-      </div>
+    <PageShell
+      eyebrow="Analysis Engine"
+      title="Article Scanner"
+      subtitle="Scan your Zendesk knowledge base for issues across all articles."
+    >
 
       {/* No connector — inline setup, don't make them hunt */}
       {!loading && connectors.length === 0 && (
@@ -235,7 +232,7 @@ export default function ScannerPage() {
               <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
                 Enter your Zendesk subdomain and API token to start scanning. Read-only access — we never modify anything without your say-so.
               </p>
-              <ConnectorInline onConnected={() => window.location.reload()} />
+              <ConnectorInline onConnected={() => { reloadConnector(); setConnectors([]); }} />
             </div>
           </div>
         </div>
@@ -306,8 +303,7 @@ export default function ScannerPage() {
                     onClick={() => setSelectedConnector(c)}
                     className={`flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm text-left transition-all ${
                       selectedConnector?.id === c.id
-                        ? 'bg-xbox/15 border border-xbox/30 text-xbox-light'
-                        : 'border border-border bg-surface-3 hover:border-border-bright'
+                        ? '' : ''
                     }`} style={{ color: selectedConnector?.id === c.id ? undefined : 'var(--text-secondary)' }}>
                     <Plug size={13} />
                     <div>
@@ -377,7 +373,7 @@ export default function ScannerPage() {
             {profile?.plan === 'free' && (
               <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 Free plan: up to {articleLimit} articles ·{' '}
-                <Link to="/billing" style={{ color: 'var(--xbox-light)' }}>Upgrade for unlimited</Link>
+                <Link to="/billing" style={{ color: 'var(--xbox)' }}>Upgrade for unlimited</Link>
               </span>
             )}
           </div>
@@ -463,6 +459,6 @@ export default function ScannerPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageShell>
   )
 }

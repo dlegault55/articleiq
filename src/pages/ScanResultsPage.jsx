@@ -309,12 +309,23 @@ export default function ScanResultsPage() {
     })
 
   if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-        <Loader size={20} style={{ color: 'var(--xbox)', animation: 'spin 0.8s linear infinite' }} />
-        <p style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Fira Code, monospace' }}>Loading report...</p>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    <div style={{ padding: 32, maxWidth: 960, margin: '0 auto' }} className="animate-fade-in">
+      <div style={{ width: 120, height: 16, marginBottom: 24 }} className="skeleton" />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, gap: 16 }}>
+        <div>
+          <div style={{ width: 80, height: 12, marginBottom: 10 }} className="skeleton" />
+          <div style={{ width: 280, height: 28, marginBottom: 8 }} className="skeleton" />
+          <div style={{ width: 200, height: 14 }} className="skeleton" />
+        </div>
+        <div style={{ width: 80, height: 70, borderRadius: 10 }} className="skeleton" />
       </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 24 }}>
+        {[0,1,2,3].map(i => <div key={i} style={{ height: 72, borderRadius: 10 }} className="skeleton" />)}
+      </div>
+      <div style={{ height: 40, marginBottom: 16, borderRadius: 8 }} className="skeleton" />
+      {[0,1,2,3,4,5].map(i => (
+        <div key={i} style={{ height: 68, borderRadius: 8, marginBottom: 1 }} className="skeleton" />
+      ))}
     </div>
   )
 

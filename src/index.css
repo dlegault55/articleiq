@@ -295,3 +295,73 @@
 
 .animate-fade-in  { animation: fade-in  0.3s ease-out; }
 .animate-slide-up { animation: slide-up 0.35s ease-out; }
+
+/* ─── Polish ─────────────────────────────────────────────────── */
+
+/* Smooth page transitions */
+.animate-fade-in {
+  animation: fade-in 0.25s ease-out;
+}
+
+/* Focus ring for accessibility */
+:focus-visible {
+  outline: 2px solid var(--xbox);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Remove default focus outline when using mouse */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Smooth color transitions on theme change */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color;
+  transition-duration: 0.15s;
+  transition-timing-function: ease;
+}
+
+/* But don't transition layout properties */
+.no-transition,
+.no-transition * {
+  transition: none !important;
+}
+
+/* Card hover lift */
+.card:hover {
+  transform: translateY(-1px);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Better select styling */
+select.input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239B9B96' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+
+/* Skeleton loading animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-overlay) 25%, var(--bg-hover) 50%, var(--bg-overlay) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+/* Prevent layout shift on scroll */
+html {
+  scrollbar-gutter: stable;
+}

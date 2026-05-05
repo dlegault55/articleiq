@@ -15,7 +15,7 @@ const FeatureRow = ({ text, free, paid }) => (
     <div className="w-20 text-center">
       {paid === true ? <Check size={14} style={{ color: 'var(--xbox)' }} className="mx-auto" />
         : paid === false ? <span style={{ color: 'var(--text-muted)' }}>—</span>
-        : <span className="text-xs" style={{ color: 'var(--xbox-light)' }}>{paid}</span>}
+        : <span className="text-xs" style={{ color: 'var(--xbox)' }}>{paid}</span>}
     </div>
   </div>
 )
@@ -93,7 +93,7 @@ export default function BillingPage() {
           <div className="flex-1 px-5 py-3" />
           <div className="w-20 text-center px-2 py-3 text-xs font-mono uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Free</div>
           <div className="w-20 text-center px-2 py-3 text-xs font-mono uppercase tracking-wider"
-            style={{ color: 'var(--xbox-light)', background: 'rgba(16,124,16,0.08)' }}>Pro</div>
+            style={{ color: 'var(--xbox)', background: 'rgba(16,124,16,0.08)' }}>Pro</div>
         </div>
 
         <div className="divide-y divide-border">

@@ -85,10 +85,10 @@ export default function Layout() {
         <p className="section-header px-2 mb-2" style={{ fontSize: 9 }}>Navigation</p>
           {navItems.map(({ to, icon: Icon, label, locked }) => (
             locked
-              ? <div key={to} className="nav-item" style={{ opacity: 0.4, cursor: 'not-allowed' }} title="Connect Zendesk first">
+              ? <div key={to} className="nav-item" title="Add a Zendesk connector first"
+                  style={{ opacity: 0.35, cursor: 'not-allowed', pointerEvents: 'none' }}>
                   <Icon size={15} className="flex-shrink-0" />
                   {label}
-                  <span style={{ marginLeft: 'auto', fontSize: 9, fontFamily: 'Fira Code, monospace', background: 'var(--bg-overlay)', color: 'var(--text-muted)', padding: '1px 5px', borderRadius: 3 }}>SETUP</span>
                 </div>
               : <NavLink key={to} to={to} className={({ isActive }) => clsx('nav-item', isActive && 'active')}>
                   <Icon size={15} className="nav-icon flex-shrink-0" />
