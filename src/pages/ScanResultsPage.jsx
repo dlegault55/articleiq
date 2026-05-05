@@ -4,167 +4,167 @@ import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import { grammarFix, fullRewrite, getQualityScore } from '@/lib/claude'
 import { canUseAI } from '@/lib/stripe'
+import { EmptyState } from '@/components/ui'
 import {
   AlertOctagon, AlertTriangle, Info, ChevronDown, ChevronUp,
-  Wand2, RefreshCcw, Star, ExternalLink, Filter, Loader,
-  ArrowLeft, CheckCircle
+  Wand2, RefreshCcw, Star, ExternalLink, Loader,
+  ArrowLeft, CheckCircle, FileText, Clock, Type, Tag, Link2, BookOpen
 } from 'lucide-react'
-import { EmptyState, LoadingState } from '@/components/ui'
-import { formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNow, format } from 'date-fns'
 
-const severityIcon = { critical: AlertOctagon, warning: AlertTriangle, info: Info }
-const severityColor = { critical: '#FC8181', warning: '#FCD34D', info: '#93C5FD' }
+// ─── Helpers ──────────────────────────────────────────────────
+const readabilityColor = (score) => {
+  if (score === null || score === undefined) return 'var(--text-muted)'
+  if (score >= 70) return 'var(--xbox)'
+  if (score >= 50) return 'var(--badge-warning-color)'
+  if (score >= 30) return '#f97316'
+  return 'var(--badge-critical-color)'
+}
 
-const IssueRow = ({ issue }) => {
-  const Icon = severityIcon[issue.severity] || Info
+const readabilityLabel = (score) => {
+  if (score === null || score === undefined) return 'N/A'
+  if (score >= 70) return 'Easy'
+  if (score >= 50) return 'Moderate'
+  if (score >= 30) return 'Difficult'
+  return 'Very hard'
+}
+
+const healthScore = (scan) => {
+  if (!scan || !scan.scanned_articles) return null
+  const total = scan.scanned_articles
+  const critical = scan.critical_count || 0
+  const warning = scan.warning_count || 0
+  const info = scan.info_count || 0
+  // Weighted penalty: critical = 3pts, warning = 1pt, info = 0.2pt
+  const penalty = (critical * 3 + warning * 1 + info * 0.2) / total
+  return Math.max(0, Math.min(100, Math.round(100 - penalty * 20)))
+}
+
+const healthColor = (score) => {
+  if (score >= 80) return 'var(--xbox)'
+  if (score >= 60) return 'var(--badge-warning-color)'
+  if (score >= 40) return '#f97316'
+  return 'var(--badge-critical-color)'
+}
+
+const issueTypeIcon = {
+  low_readability:  BookOpen,
+  low_word_count:   Type,
+  outdated:         Clock,
+  missing_labels:   Tag,
+  missing_metadata: FileText,
+  missing_title:    FileText,
+  broken_link:      Link2,
+}
+
+// ─── Readability pill ─────────────────────────────────────────
+const ReadabilityPill = ({ score }) => {
+  if (!score && score !== 0) return <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>—</span>
+  const color = readabilityColor(score)
   return (
-    <div className="flex items-start gap-3 py-3 px-4 border-b border-border last:border-0 hover:bg-surface-3 transition-colors">
-      <Icon size={14} className="flex-shrink-0 mt-0.5" style={{ color: severityColor[issue.severity] }} />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className={`badge-${issue.severity}`}>
-            <Icon size={9} /> {issue.issue_type.replace(/_/g, ' ')}
-          </span>
-        </div>
-        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{issue.description}</p>
+    <span style={{ fontSize: 11, fontFamily: 'Fira Code, monospace', color, background: `${color}15`, border: `1px solid ${color}30`, borderRadius: 4, padding: '1px 6px' }}>
+      {score} · {readabilityLabel(score)}
+    </span>
+  )
+}
+
+// ─── Issue chip ───────────────────────────────────────────────
+const IssueChip = ({ issue }) => {
+  const Icon = issueTypeIcon[issue.issue_type] || Info
+  const cls = `badge-${issue.severity}`
+  return (
+    <div className={cls} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 2, padding: '6px 8px', borderRadius: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <Icon size={10} />
+        <span style={{ fontWeight: 600 }}>{issue.issue_type.replace(/_/g, ' ')}</span>
       </div>
+      <span style={{ opacity: 0.8, fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: 11, textTransform: 'none', letterSpacing: 0 }}>{issue.description}</span>
     </div>
   )
 }
 
-const ArticleRow = ({ article, issues, isPaid, onAIAction }) => {
-  const [expanded, setExpanded] = useState(false)
-  const [aiLoading, setAiLoading] = useState(null)
-  const [aiResult, setAiResult] = useState(null)
-  const [qualityScore, setQualityScore] = useState(null)
+// ─── AI Panel ─────────────────────────────────────────────────
+const AIPanel = ({ article, isPaid }) => {
+  const [loading, setLoading] = useState(null)
+  const [result, setResult] = useState(null)
 
-  const critical = issues.filter(i => i.severity === 'critical').length
-  const warning = issues.filter(i => i.severity === 'warning').length
-  const info = issues.filter(i => i.severity === 'info').length
-
-  const handleAI = async (action) => {
+  const run = async (action) => {
     if (!isPaid) return
-    setAiLoading(action)
-    setAiResult(null)
+    setLoading(action)
+    setResult(null)
     try {
       if (action === 'grammar') {
-        const result = await grammarFix(article.title, article.title) // placeholder — real impl fetches body
-        setAiResult({ type: 'grammar', content: result })
+        const r = await grammarFix(article.title, article.title)
+        setResult({ type: 'grammar', content: r })
       } else if (action === 'rewrite') {
-        const result = await fullRewrite(article.title, article.title)
-        setAiResult({ type: 'rewrite', content: result })
+        const r = await fullRewrite(article.title, article.title)
+        setResult({ type: 'rewrite', content: r })
       } else if (action === 'quality') {
-        const score = await getQualityScore(article.title, article.title)
-        setQualityScore(score)
+        const r = await getQualityScore(article.title, article.title)
+        setResult({ type: 'quality', score: r })
       }
-      onAIAction?.(action)
     } catch (e) {
-      setAiResult({ type: 'error', content: e.message })
+      setResult({ type: 'error', content: e.message })
     } finally {
-      setAiLoading(null)
+      setLoading(null)
     }
   }
 
   return (
-    <div className="border-b border-border last:border-0">
-      <div className="flex items-center gap-3 px-5 py-3.5 hover:bg-surface-3 transition-colors cursor-pointer"
-        onClick={() => setExpanded(!expanded)}>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-              {article.title}
-            </span>
-            {article.url && (
-              <a href={article.url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}
-                className="flex-shrink-0">
-                <ExternalLink size={11} style={{ color: 'var(--text-muted)' }} />
-              </a>
-            )}
-          </div>
-          <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--text-muted)' }}>
-            <span>{article.word_count || 0} words</span>
-            <span>Readability: {article.readability_score || 'N/A'}</span>
-            {article.last_updated && <span>Updated {formatDistanceToNow(new Date(article.last_updated), { addSuffix: true })}</span>}
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {critical > 0 && <span className="badge-critical"><AlertOctagon size={9} />{critical}</span>}
-          {warning > 0 && <span className="badge-warning"><AlertTriangle size={9} />{warning}</span>}
-          {info > 0 && <span className="badge-info"><Info size={9} />{info}</span>}
-          {expanded ? <ChevronUp size={14} style={{ color: 'var(--text-muted)' }} /> : <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />}
-        </div>
+    <div style={{ marginTop: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 10, fontFamily: 'Fira Code, monospace', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>AI Actions</span>
+        {[
+          { key: 'grammar', label: 'Fix Grammar', icon: Wand2 },
+          { key: 'rewrite', label: 'Rewrite',     icon: RefreshCcw },
+          { key: 'quality', label: 'Score',        icon: Star },
+        ].map(({ key, label, icon: Icon }) => (
+          <button key={key}
+            onClick={() => run(key)}
+            disabled={!isPaid || loading === key}
+            className="btn-secondary"
+            style={{ fontSize: 11, padding: '4px 10px', opacity: isPaid ? 1 : 0.4, cursor: isPaid ? 'pointer' : 'not-allowed' }}
+            title={!isPaid ? 'Upgrade to Pro' : undefined}
+          >
+            {loading === key ? <Loader size={11} className="animate-spin" /> : <Icon size={11} />}
+            {label}
+            {!isPaid && <span style={{ fontSize: 8, background: 'var(--xbox-subtle)', color: 'var(--xbox)', border: '1px solid var(--xbox-border)', borderRadius: 3, padding: '1px 4px', fontFamily: 'Fira Code, monospace' }}>PRO</span>}
+          </button>
+        ))}
       </div>
 
-      {expanded && (
-        <div className="px-5 pb-4 bg-surface-1">
-          {/* Issues */}
-          {issues.length > 0 ? (
-            <div className="rounded-md overflow-hidden mb-4" style={{ border: '1px solid var(--border)' }}>
-              {issues.map(i => <IssueRow key={i.id} issue={i} />)}
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 py-3 text-xs mb-4" style={{ color: 'var(--xbox-light)' }}>
-              <CheckCircle size={13} /> No issues found for this article
-            </div>
+      {result && (
+        <div style={{ marginTop: 10, padding: '12px 14px', borderRadius: 7, background: 'var(--bg-sunken)', border: '1px solid var(--border)' }}>
+          {result.type === 'error' && <p style={{ color: 'var(--badge-critical-color)', fontSize: 12, margin: 0 }}>{result.content}</p>}
+          {(result.type === 'grammar' || result.type === 'rewrite') && (
+            <>
+              <p style={{ fontSize: 11, fontFamily: 'Fira Code, monospace', color: 'var(--xbox)', marginBottom: 6, margin: '0 0 6px 0' }}>
+                ✓ {result.type === 'grammar' ? 'Grammar fixed' : 'Article rewritten'}
+              </p>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', margin: 0, lineHeight: 1.6 }}>
+                {result.content.slice(0, 600)}{result.content.length > 600 ? '…' : ''}
+              </p>
+            </>
           )}
-
-          {/* AI Actions */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-mono mr-1" style={{ color: 'var(--text-muted)' }}>AI Actions:</span>
-            {[
-              { key: 'grammar', label: 'Fix Grammar', icon: Wand2 },
-              { key: 'rewrite', label: 'Full Rewrite', icon: RefreshCcw },
-              { key: 'quality', label: 'Quality Score', icon: Star },
-            ].map(({ key, label, icon: Icon }) => (
-              <button key={key}
-                onClick={() => isPaid ? handleAI(key) : null}
-                disabled={!isPaid || aiLoading === key}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-medium transition-all ${
-                  isPaid ? 'btn-secondary' : 'opacity-40 cursor-not-allowed'
-                }`}
-                title={!isPaid ? 'Upgrade to Pro to use AI features' : undefined}>
-                {aiLoading === key ? <Loader size={11} className="animate-spin" /> : <Icon size={11} />}
-                {label}
-                {!isPaid && <span className="px-1 rounded" style={{ background: 'rgba(16,124,16,0.2)', color: 'var(--xbox-light)', fontSize: '8px' }}>PRO</span>}
-              </button>
-            ))}
-          </div>
-
-          {/* AI Result */}
-          {(aiResult || qualityScore) && (
-            <div className="mt-3 p-3 rounded-md text-xs" style={{ background: 'var(--surface-3)', border: '1px solid var(--border-bright)' }}>
-              {aiResult?.type === 'error' && <p style={{ color: '#FC8181' }}>{aiResult.content}</p>}
-              {aiResult?.type === 'grammar' && (
-                <>
-                  <p className="font-mono mb-1" style={{ color: 'var(--xbox-light)' }}>✓ Grammar Fix Applied</p>
-                  <p className="whitespace-pre-wrap" style={{ color: 'var(--text-secondary)' }}>{aiResult.content.slice(0, 500)}{aiResult.content.length > 500 ? '...' : ''}</p>
-                </>
-              )}
-              {aiResult?.type === 'rewrite' && (
-                <>
-                  <p className="font-mono mb-1" style={{ color: 'var(--xbox-light)' }}>✓ Article Rewritten</p>
-                  <p className="whitespace-pre-wrap" style={{ color: 'var(--text-secondary)' }}>{aiResult.content.slice(0, 500)}{aiResult.content.length > 500 ? '...' : ''}</p>
-                </>
-              )}
-              {qualityScore && (
-                <div>
-                  <div className="flex items-center gap-4 mb-2">
-                    <span className="font-mono" style={{ color: 'var(--xbox-light)' }}>Quality Score</span>
-                    <span className="font-display font-bold text-2xl" style={{ color: qualityScore.overall >= 70 ? 'var(--xbox-light)' : qualityScore.overall >= 40 ? '#FCD34D' : '#FC8181' }}>
-                      {qualityScore.overall}<span className="text-sm">/100</span>
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-4 gap-2 mb-2">
-                    {['clarity', 'completeness', 'structure', 'tone'].map(k => (
-                      <div key={k} className="text-center">
-                        <div className="font-mono font-bold" style={{ color: 'var(--text-primary)' }}>{qualityScore[k]}</div>
-                        <div style={{ color: 'var(--text-muted)' }}>{k}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <p style={{ color: 'var(--text-secondary)' }}>{qualityScore.summary}</p>
+          {result.type === 'quality' && result.score && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 36, color: healthColor(result.score.overall), lineHeight: 1 }}>{result.score.overall}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Fira Code, monospace' }}>/ 100</div>
                 </div>
-              )}
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{result.score.summary}</p>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+                {['clarity', 'completeness', 'structure', 'tone'].map(k => (
+                  <div key={k} style={{ textAlign: 'center', padding: '6px', background: 'var(--bg-elevated)', borderRadius: 5, border: '1px solid var(--border)' }}>
+                    <div style={{ fontWeight: 700, fontSize: 18, color: healthColor(result.score[k]) }}>{result.score[k]}</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{k}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -173,145 +173,274 @@ const ArticleRow = ({ article, issues, isPaid, onAIAction }) => {
   )
 }
 
+// ─── Article row ──────────────────────────────────────────────
+const ArticleRow = ({ article, issues, isPaid }) => {
+  const [open, setOpen] = useState(false)
+  const critical = issues.filter(i => i.severity === 'critical')
+  const warning  = issues.filter(i => i.severity === 'warning')
+  const info     = issues.filter(i => i.severity === 'info')
+  const hasIssues = issues.length > 0
+  const score = article.readability_score
+
+  return (
+    <div style={{ borderBottom: '1px solid var(--border)' }}>
+      <div
+        onClick={() => setOpen(!open)}
+        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', cursor: 'pointer', transition: 'background 0.1s', userSelect: 'none' }}
+        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+      >
+        {/* Health indicator */}
+        <div style={{ width: 3, alignSelf: 'stretch', borderRadius: 2, flexShrink: 0, background: critical.length ? 'var(--badge-critical-color)' : warning.length ? 'var(--badge-warning-color)' : 'var(--xbox)' }} />
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {article.title}
+            </span>
+            {article.url && (
+              <a href={article.url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
+                style={{ flexShrink: 0, color: 'var(--text-muted)', lineHeight: 1 }}>
+                <ExternalLink size={11} />
+              </a>
+            )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{article.word_count || 0} words</span>
+            {article.last_updated && (
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                Updated {formatDistanceToNow(new Date(article.last_updated), { addSuffix: true })}
+              </span>
+            )}
+            <ReadabilityPill score={score} />
+          </div>
+        </div>
+
+        {/* Issue badges */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          {critical.length > 0 && <span className="badge-critical"><AlertOctagon size={9} />{critical.length}</span>}
+          {warning.length  > 0 && <span className="badge-warning"><AlertTriangle size={9} />{warning.length}</span>}
+          {info.length     > 0 && <span className="badge-info"><Info size={9} />{info.length}</span>}
+          {!hasIssues && <CheckCircle size={13} style={{ color: 'var(--xbox)' }} />}
+          {open ? <ChevronUp size={14} style={{ color: 'var(--text-muted)' }} /> : <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />}
+        </div>
+      </div>
+
+      {open && (
+        <div style={{ padding: '4px 20px 16px 36px', background: 'var(--bg-sunken)' }}>
+          {issues.length === 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 0', color: 'var(--xbox)', fontSize: 12 }}>
+              <CheckCircle size={13} /> No issues found — this article looks great
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 10, paddingBottom: 4 }}>
+              {[...critical, ...warning, ...info].map(issue => (
+                <IssueChip key={issue.id} issue={issue} />
+              ))}
+            </div>
+          )}
+          <AIPanel article={article} isPaid={isPaid} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Main page ────────────────────────────────────────────────
 export default function ScanResultsPage() {
   const { scanId } = useParams()
   const { profile } = useAuth()
-  const [scan, setScan] = useState(null)
+  const [scan, setScan]         = useState(null)
   const [articles, setArticles] = useState([])
-  const [issues, setIssues] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('all')
+  const [issues, setIssues]     = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [filter, setFilter]     = useState('all')
+  const [sort, setSort]         = useState('severity') // 'severity' | 'readability' | 'words' | 'updated'
 
   const isPaid = canUseAI(profile?.plan)
 
   useEffect(() => {
     const load = async () => {
-      const { data: scanData } = await supabase.from('scan_jobs').select('*').eq('id', scanId).single()
-      setScan(scanData)
-
-      const { data: arts } = await supabase.from('scanned_articles').select('*').eq('scan_job_id', scanId).order('title')
-      setArticles(arts || [])
-
-      const { data: iss } = await supabase.from('article_issues').select('*').eq('scan_job_id', scanId)
-      setIssues(iss || [])
+      const [{ data: s }, { data: a }, { data: i }] = await Promise.all([
+        supabase.from('scan_jobs').select('*').eq('id', scanId).single(),
+        supabase.from('scanned_articles').select('*').eq('scan_job_id', scanId),
+        supabase.from('article_issues').select('*').eq('scan_job_id', scanId),
+      ])
+      setScan(s)
+      setArticles(a || [])
+      setIssues(i || [])
       setLoading(false)
     }
     load()
   }, [scanId])
 
-  const filteredArticles = articles.filter(a => {
-    const artIssues = issues.filter(i => i.article_id === a.id)
-    if (filter === 'all') return true
-    if (filter === 'issues') return artIssues.length > 0
-    return artIssues.some(i => i.severity === filter)
-  })
+  const score = healthScore(scan)
+
+  const filterOptions = [
+    { key: 'all',      label: 'All',      count: articles.length },
+    { key: 'issues',   label: 'Has issues', count: articles.filter(a => issues.some(i => i.article_id === a.id)).length },
+    { key: 'critical', label: 'Critical', count: articles.filter(a => issues.some(i => i.article_id === a.id && i.severity === 'critical')).length },
+    { key: 'warning',  label: 'Warning',  count: articles.filter(a => issues.some(i => i.article_id === a.id && i.severity === 'warning')).length },
+    { key: 'clean',    label: 'Clean',    count: articles.filter(a => !issues.some(i => i.article_id === a.id)).length },
+  ]
+
+  const filtered = articles
+    .filter(a => {
+      const ai = issues.filter(i => i.article_id === a.id)
+      if (filter === 'all')      return true
+      if (filter === 'issues')   return ai.length > 0
+      if (filter === 'critical') return ai.some(i => i.severity === 'critical')
+      if (filter === 'warning')  return ai.some(i => i.severity === 'warning')
+      if (filter === 'clean')    return ai.length === 0
+      return true
+    })
+    .sort((a, b) => {
+      const ai = issues.filter(i => i.article_id === a.id)
+      const bi = issues.filter(i => i.article_id === b.id)
+      if (sort === 'severity') {
+        const aSev = ai.some(i => i.severity === 'critical') ? 0 : ai.some(i => i.severity === 'warning') ? 1 : ai.length ? 2 : 3
+        const bSev = bi.some(i => i.severity === 'critical') ? 0 : bi.some(i => i.severity === 'warning') ? 1 : bi.length ? 2 : 3
+        return aSev - bSev
+      }
+      if (sort === 'readability') return (a.readability_score || 0) - (b.readability_score || 0)
+      if (sort === 'words')       return (a.word_count || 0) - (b.word_count || 0)
+      if (sort === 'updated')     return new Date(a.last_updated || 0) - new Date(b.last_updated || 0)
+      return 0
+    })
 
   if (loading) return (
-    <div className="flex items-center justify-center h-full">
-      <Loader size={24} className="animate-spin" style={{ color: 'var(--xbox)' }} />
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <Loader size={20} style={{ color: 'var(--xbox)', animation: 'spin 0.8s linear infinite' }} />
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Fira Code, monospace' }}>Loading report...</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
     </div>
   )
 
   if (!scan) return (
-    <div className="p-8 text-center" style={{ color: 'var(--text-muted)' }}>Scan not found.</div>
+    <div style={{ padding: 32 }}>
+      <EmptyState icon={FileText} title="Scan not found" description="This scan may have been deleted." action={<Link to="/scanner" className="btn-primary" style={{ fontSize: 13 }}>Back to Scanner</Link>} />
+    </div>
   )
 
   return (
-    <div className="p-8 max-w-5xl mx-auto animate-fade-in">
-      {/* Header */}
-      <div className="mb-6">
-        <Link to="/scanner" className="btn-ghost text-xs mb-4 inline-flex">
-          <ArrowLeft size={12} /> Back to Scanner
-        </Link>
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="section-header">Scan Report</p>
-            <h1 className="font-display font-bold text-3xl" style={{ color: 'var(--text-primary)' }}>
-              {scan?.created_at ? `Scan — ${new Date(scan.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${new Date(scan.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}` : scanId.slice(-8).toUpperCase()}
-            </h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-              {formatDistanceToNow(new Date(scan.created_at), { addSuffix: true })} ·{' '}
-              {scan.scanned_articles || 0} articles scanned
-            </p>
-          </div>
-          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-mono ${
-            scan.status === 'completed' ? 'text-xbox-light bg-xbox/10 border border-xbox/20' :
-            scan.status === 'failed' ? 'text-red-400 bg-red-400/10 border border-red-400/20' :
-            'text-yellow-400 bg-yellow-400/10 border border-yellow-400/20'
-          }`}>
-            {scan.status === 'completed' && <CheckCircle size={13} />}
+    <div style={{ padding: '32px', maxWidth: 960, margin: '0 auto' }} className="animate-fade-in">
+
+      {/* Back */}
+      <Link to="/scanner" className="btn-ghost" style={{ fontSize: 12, marginBottom: 20, display: 'inline-flex' }}>
+        <ArrowLeft size={12} /> Back to Scanner
+      </Link>
+
+      {/* Report header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
+        <div>
+          <p className="section-header">Scan Report</p>
+          <h1 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 26, color: 'var(--text-primary)', margin: '0 0 4px 0', letterSpacing: -0.5 }}>
+            {format(new Date(scan.created_at), 'MMM d, yyyy — h:mm a')}
+          </h1>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+            {scan.scanned_articles || 0} articles scanned · {formatDistanceToNow(new Date(scan.created_at), { addSuffix: true })}
+          </p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          {score !== null && (
+            <div style={{ textAlign: 'center', padding: '10px 16px', borderRadius: 10, background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              <div style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 32, color: healthColor(score), lineHeight: 1 }}>{score}</div>
+              <div style={{ fontSize: 10, fontFamily: 'Fira Code, monospace', color: 'var(--text-muted)', marginTop: 2 }}>Health score</div>
+            </div>
+          )}
+          <div style={{ padding: '6px 12px', borderRadius: 6, fontSize: 11, fontFamily: 'Fira Code, monospace', fontWeight: 600,
+            background: scan.status === 'completed' ? 'var(--xbox-subtle)' : 'rgba(245,158,11,0.1)',
+            border: `1px solid ${scan.status === 'completed' ? 'var(--xbox-border)' : 'rgba(245,158,11,0.3)'}`,
+            color: scan.status === 'completed' ? 'var(--xbox)' : 'var(--badge-warning-color)',
+          }}>
+            {scan.status === 'completed' && <CheckCircle size={11} style={{ display: 'inline', marginRight: 4 }} />}
             {scan.status.toUpperCase()}
           </div>
         </div>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      {/* Summary row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         {[
-          { label: 'Articles', value: scan.scanned_articles || 0, color: 'var(--text-primary)' },
-          { label: 'Critical', value: scan.critical_count || 0, color: '#FC8181' },
-          { label: 'Warning', value: scan.warning_count || 0, color: '#FCD34D' },
-          { label: 'Info', value: scan.info_count || 0, color: '#93C5FD' },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="card p-4 text-center">
-            <div className="font-display font-bold text-3xl" style={{ color }}>{value}</div>
-            <div className="text-xs font-mono mt-1" style={{ color: 'var(--text-muted)' }}>{label}</div>
+          { label: 'Articles',   value: scan.scanned_articles || 0, color: 'var(--text-primary)',          icon: FileText },
+          { label: 'Critical',   value: scan.critical_count   || 0, color: 'var(--badge-critical-color)',  icon: AlertOctagon },
+          { label: 'Warnings',   value: scan.warning_count    || 0, color: 'var(--badge-warning-color)',   icon: AlertTriangle },
+          { label: 'Info',       value: scan.info_count       || 0, color: 'var(--badge-info-color)',      icon: Info },
+        ].map(({ label, value, color, icon: Icon }) => (
+          <div key={label} className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 8, background: `${color}15`, border: `1px solid ${color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Icon size={15} style={{ color }} />
+            </div>
+            <div>
+              <div style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 24, color, lineHeight: 1 }}>{value}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{label}</div>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-2 mb-4">
-        <Filter size={13} style={{ color: 'var(--text-muted)' }} />
-        {['all', 'issues', 'critical', 'warning', 'info'].map(f => (
-          <button key={f} onClick={() => setFilter(f)}
-            className={`px-3 py-1 rounded text-xs font-mono transition-all ${
-              filter === f
-                ? 'bg-xbox/15 border border-xbox/30 text-xbox-light'
-                : 'bg-surface-3 border border-border hover:border-border-bright'
-            }`} style={{ color: filter === f ? undefined : 'var(--text-secondary)' }}>
-            {f}
-          </button>
-        ))}
-        <span className="ml-auto text-xs font-mono" style={{ color: 'var(--text-muted)' }}>
-          {filteredArticles.length} article{filteredArticles.length !== 1 ? 's' : ''}
-        </span>
+      {/* Filters + sort */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {filterOptions.map(({ key, label, count }) => (
+            <button key={key} onClick={() => setFilter(key)}
+              style={{
+                padding: '5px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer',
+                fontFamily: 'Fira Code, monospace', transition: 'all 0.15s',
+                background: filter === key ? 'var(--xbox-subtle)' : 'var(--bg-elevated)',
+                border: `1px solid ${filter === key ? 'var(--xbox-border)' : 'var(--border)'}`,
+                color: filter === key ? 'var(--xbox)' : 'var(--text-secondary)',
+              }}>
+              {label} <span style={{ opacity: 0.6 }}>({count})</span>
+            </button>
+          ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Sort:</span>
+          <select value={sort} onChange={e => setSort(e.target.value)}
+            className="input" style={{ padding: '4px 8px', fontSize: 12, width: 'auto' }}>
+            <option value="severity">By severity</option>
+            <option value="readability">By readability</option>
+            <option value="words">By word count</option>
+            <option value="updated">By last updated</option>
+          </select>
+        </div>
       </div>
 
-      {/* Compact readability legend */}
-      <div className="flex items-center gap-3 mb-4 px-1 flex-wrap">
-        <span className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'Fira Code, monospace' }}>Readability:</span>
+      {/* Readability legend */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Fira Code, monospace' }}>Readability:</span>
         {[
           { range: '70–100', label: 'Easy',      color: 'var(--xbox)' },
           { range: '50–69',  label: 'Moderate',  color: 'var(--badge-warning-color)' },
           { range: '30–49',  label: 'Difficult', color: '#f97316' },
           { range: '0–29',   label: 'Very hard', color: 'var(--badge-critical-color)' },
         ].map(({ range, label, color }) => (
-          <div key={range} className="flex items-center gap-1.5">
-            <span className="text-xs font-mono" style={{ color }}>{range}</span>
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</span>
+          <div key={range} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontSize: 11, fontFamily: 'Fira Code, monospace', color }}>{range}</span>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{label}</span>
           </div>
         ))}
+        <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Fira Code, monospace' }}>
+          {filtered.length} article{filtered.length !== 1 ? 's' : ''}
+        </span>
       </div>
 
-      {/* Articles table */}
-      <div className="card">
-        {filteredArticles.length === 0 ? (
-          <div className="py-16 text-center" style={{ color: 'var(--text-muted)' }}>
-            No articles match this filter.
-          </div>
+      {/* Article list */}
+      <div className="card" style={{ overflow: 'hidden' }}>
+        {filtered.length === 0 ? (
+          <EmptyState icon={CheckCircle} title="No articles match this filter" />
         ) : (
-          <div className="divide-y divide-border">
-            {filteredArticles.map(a => (
-              <ArticleRow
-                key={a.id}
-                article={a}
-                issues={issues.filter(i => i.article_id === a.id)}
-                isPaid={isPaid}
-                onAIAction={() => {}}
-              />
-            ))}
-          </div>
+          filtered.map(a => (
+            <ArticleRow
+              key={a.id}
+              article={a}
+              issues={issues.filter(i => i.article_id === a.id)}
+              isPaid={isPaid}
+            />
+          ))
         )}
       </div>
     </div>
