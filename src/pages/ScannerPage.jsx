@@ -108,7 +108,7 @@ const scanName = (scan) => `Scan — ${new Date(scan.created_at).toLocaleDateStr
 
 export default function ScannerPage() {
   const { profile, user, userId } = useAuth()
-  const { hasConnector, connector: contextConnector, reload } = useConnector()
+  const { hasConnector, connector: contextConnector, reload: reloadConnector } = useConnector()
   const { activeScan, recentScans, loadScans } = useScan()
   const toast = useToast()
   const navigate = useNavigate()
