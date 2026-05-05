@@ -29,14 +29,13 @@ const readabilityLabel = (score) => {
   return 'Very hard'
 }
 
-const healthScore = (scan) => {
-  if (!scan || !scan.scanned_articles) return null
-  const total = scan.scanned_articles
-  const critical = scan.critical_count || 0
-  const warning = scan.warning_count || 0
-  const info = scan.info_count || 0
-  // Weighted penalty: critical = 3pts, warning = 1pt, info = 0.2pt
-  const penalty = (critical * 3 + warning * 1 + info * 0.2) / total
+const healthScore = (articles, issues) => {
+  if (!articles?.length) return null
+  const total    = articles.length
+  const critical = issues.filter(i => i.severity === 'critical').length
+  const warning  = issues.filter(i => i.severity === 'warning').length
+  const info     = issues.filter(i => i.severity === 'info').length
+  const penalty  = (critical * 3 + warning * 1 + info * 0.2) / total
   return Math.max(0, Math.min(100, Math.round(100 - penalty * 20)))
 }
 
@@ -274,7 +273,7 @@ export default function ScanResultsPage() {
     load()
   }, [scanId])
 
-  const score = healthScore(scan)
+  const score = healthScore(articles, issues)
 
   const filterOptions = [
     { key: 'all',      label: 'All',      count: articles.length },
@@ -375,10 +374,10 @@ export default function ScanResultsPage() {
       {/* Summary row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         {[
-          { label: 'Articles',   value: scan.scanned_articles || 0, color: 'var(--text-primary)',          icon: FileText },
-          { label: 'Critical',   value: scan.critical_count   || 0, color: 'var(--badge-critical-color)',  icon: AlertOctagon },
-          { label: 'Warnings',   value: scan.warning_count    || 0, color: 'var(--badge-warning-color)',   icon: AlertTriangle },
-          { label: 'Info',       value: scan.info_count       || 0, color: 'var(--badge-info-color)',      icon: Info },
+          { label: 'Articles',   value: articles.length,                                         color: 'var(--text-primary)',         icon: FileText },
+          { label: 'Critical',   value: issues.filter(i => i.severity === 'critical').length,    color: 'var(--badge-critical-color)', icon: AlertOctagon },
+          { label: 'Warnings',   value: issues.filter(i => i.severity === 'warning').length,     color: 'var(--badge-warning-color)',  icon: AlertTriangle },
+          { label: 'Info',       value: issues.filter(i => i.severity === 'info').length,        color: 'var(--badge-info-color)',     icon: Info },
         ].map(({ label, value, color, icon: Icon }) => (
           <div key={label} className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 34, height: 34, borderRadius: 8, background: `${color}15`, border: `1px solid ${color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
