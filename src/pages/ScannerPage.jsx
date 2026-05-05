@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/useToast'
 import { supabase } from '@/lib/supabase'
 import { runScan } from '@/lib/scanner'
 import { Scan, Plug, AlertTriangle, Loader, ChevronRight, Clock, CheckCircle, XCircle, Eye, EyeOff, Trash2 } from 'lucide-react'
+import { PageShell, EmptyState, LoadingState } from '@/components/ui'
 import { formatDistanceToNow } from 'date-fns'
 
 const calculateNextSync = (frequency) => {

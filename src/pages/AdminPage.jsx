@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import { adminSetPlan } from '@/lib/supabase'
 import { Users, Zap, Shield, TrendingUp, ChevronDown, Loader, Search } from 'lucide-react'
+import { PageShell, StatCard, LoadingState } from '@/components/ui'
 import { formatDistanceToNow } from 'date-fns'
 
 export default function AdminPage() {
@@ -47,33 +48,14 @@ export default function AdminPage() {
   )
 
   return (
-    <div className="p-8 max-w-6xl mx-auto animate-fade-in">
-      <div className="mb-8">
-        <p className="section-header">Control Center</p>
-        <h1 className="font-display font-bold text-3xl" style={{ color: 'var(--text-primary)' }}>
-          Admin Panel
-        </h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-          User management, usage stats, and plan overrides.
-        </p>
-      </div>
+<PageShell eyebrow="Control Center" title="Admin Panel" subtitle="User management, usage stats, and plan overrides.">
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {[
-          { label: 'Total Users', value: stats.total, icon: Users, color: 'var(--text-primary)' },
-          { label: 'Pro Users', value: stats.paid, icon: Zap, color: 'var(--xbox-light)' },
-          { label: 'Free Users', value: stats.free, icon: TrendingUp, color: '#93C5FD' },
-          { label: 'Admins', value: users.filter(u => u.is_admin).length, icon: Shield, color: '#FCD34D' },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="card p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-mono uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{label}</span>
-              <Icon size={14} style={{ color }} />
-            </div>
-            <div className="font-display font-bold text-3xl" style={{ color }}>{value}</div>
-          </div>
-        ))}
+        <StatCard label="Total Users" value={stats.total} icon={Users}     color="var(--text-primary)" />
+        <StatCard label="Pro Users"   value={stats.paid}  icon={Zap}       color="var(--xbox)" />
+        <StatCard label="Free Users"  value={stats.free}  icon={TrendingUp} color="var(--badge-info-color)" />
+        <StatCard label="Admins"      value={users.filter(u => u.is_admin).length} icon={Shield} color="var(--badge-warning-color)" />
       </div>
 
       {/* Users table */}
@@ -175,6 +157,6 @@ export default function AdminPage() {
           </div>
         )}
       </div>
-    </div>
+    </PageShell>
   )
 }

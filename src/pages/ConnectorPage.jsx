@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { PageShell, EmptyState, LoadingState } from '@/components/ui'
 import { useConnector } from '@/hooks/useConnector'
 import { useToast } from '@/hooks/useToast'
 import { supabase } from '@/lib/supabase'
@@ -96,19 +97,12 @@ export default function ConnectorPage() {
   }
 
   return (
-    <div className="p-8 max-w-3xl mx-auto animate-fade-in">
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <p className="section-header">Integrations</p>
-          <h1 className="font-display font-bold text-3xl" style={{ color: 'var(--text-primary)' }}>Zendesk Connector</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Connect your Zendesk account to start scanning.</p>
-        </div>
-        {connectors.length > 0 && (
-          <button onClick={() => setShowForm(true)} className="btn-primary">
-            <Plus size={14} /> Add Connector
-          </button>
-        )}
-      </div>
+    <PageShell
+      eyebrow="Integrations"
+      title="Zendesk Connector"
+      subtitle="Connect your Zendesk account to start scanning."
+      action={connectors.length > 0 ? <button onClick={() => setShowForm(true)} className="btn-primary"><Plus size={14} /> Add Connector</button> : null}
+    >
 
       {/* Existing connectors */}
       {!loading && connectors.length > 0 && (
@@ -230,6 +224,6 @@ export default function ConnectorPage() {
           Your API token is stored securely with row-level security. Only you can access it.
         </p>
       </div>
-    </div>
+    </PageShell>
   )
 }

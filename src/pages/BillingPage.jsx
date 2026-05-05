@@ -2,6 +2,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { PLANS, createCheckoutSession, openBillingPortal } from '@/lib/stripe'
 import { useState } from 'react'
 import { Zap, Check, Lock, ExternalLink, AlertCircle } from 'lucide-react'
+import { PageShell } from '@/components/ui'
 
 const FeatureRow = ({ text, free, paid }) => (
   <div className="flex items-center py-2.5 border-b border-border last:border-0">
@@ -43,16 +44,7 @@ export default function BillingPage() {
   const isPaid = profile?.plan === 'paid'
 
   return (
-    <div className="p-8 max-w-3xl mx-auto animate-fade-in">
-      <div className="mb-8">
-        <p className="section-header">Subscription</p>
-        <h1 className="font-display font-bold text-3xl" style={{ color: 'var(--text-primary)' }}>
-          Billing & Plans
-        </h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-          {isPaid ? 'You are on the Pro plan.' : 'Upgrade to unlock AI features and unlimited scans.'}
-        </p>
-      </div>
+    <PageShell eyebrow="Subscription" title="Billing & Plans" subtitle={isPaid ? 'You are on the Pro plan.' : 'Upgrade to unlock AI features and unlimited scans.'}>
 
       {/* Current plan banner */}
       <div className={`card-glow p-4 mb-6 flex items-center justify-between`}>
@@ -154,6 +146,6 @@ export default function BillingPage() {
         <Lock size={11} />
         Payments are processed securely by Stripe. We never store payment details.
       </div>
-    </div>
+    </PageShell>
   )
 }

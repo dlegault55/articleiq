@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { signOut } from '@/lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import { Save, LogOut, CheckCircle, Sun, Moon } from 'lucide-react'
+import { PageShell } from '@/components/ui'
 
 export default function SettingsPage() {
   const { profile, refreshProfile } = useAuth()
@@ -41,11 +42,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-8 max-w-2xl mx-auto animate-fade-in">
-      <div className="mb-8">
-        <p className="section-header">Configuration</p>
-        <h1 className="font-display font-bold text-3xl" style={{ color: 'var(--text-primary)' }}>Settings</h1>
-      </div>
+<PageShell eyebrow="Configuration" title="Settings">
 
       {/* Profile */}
       <div className="card p-6 mb-4">
@@ -151,6 +148,6 @@ export default function SettingsPage() {
       </div>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
+    </PageShell>
   )
 }

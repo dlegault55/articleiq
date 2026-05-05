@@ -9,6 +9,7 @@ import {
   Wand2, RefreshCcw, Star, ExternalLink, Filter, Loader,
   ArrowLeft, CheckCircle
 } from 'lucide-react'
+import { EmptyState, LoadingState } from '@/components/ui'
 import { formatDistanceToNow } from 'date-fns'
 
 const severityIcon = { critical: AlertOctagon, warning: AlertTriangle, info: Info }
