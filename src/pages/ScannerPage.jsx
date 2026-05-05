@@ -45,6 +45,7 @@ const CHECKS = [
   { label: 'Readability Score', desc: 'Flesch-Kincaid readability analysis',      presets: ['standard','full'] },
   { label: 'AI Grammar Fix',    desc: 'AI-powered grammar and clarity',           presets: ['full'], paid: true },
   { label: 'AI Quality Score',  desc: 'AI scores clarity, completeness, structure', presets: ['full'], paid: true },
+  { label: 'Duplicate Detection', desc: 'Flags articles with similar titles or content', presets: ['standard','full'] },
 ]
 
 // ─── ConnectorForm — shown when no connector exists ───────────

@@ -46,6 +46,61 @@ const isOutdated = (updatedAt) => {
   return days > 180
 }
 
+
+// ─── Duplicate detection ──────────────────────────────────────
+// Normalize title for comparison: lowercase, strip punctuation, collapse spaces
+const normalizeTitle = (title) =>
+  title.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim()
+
+// Levenshtein distance between two strings
+const levenshtein = (a, b) => {
+  const m = a.length, n = b.length
+  const dp = Array.from({ length: m + 1 }, (_, i) => Array.from({ length: n + 1 }, (_, j) => i === 0 ? j : j === 0 ? i : 0))
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])
+  return dp[m][n]
+}
+
+// Title similarity 0-1 (1 = identical)
+const titleSimilarity = (a, b) => {
+  const na = normalizeTitle(a), nb = normalizeTitle(b)
+  if (!na || !nb) return 0
+  const maxLen = Math.max(na.length, nb.length)
+  if (maxLen === 0) return 1
+  return 1 - levenshtein(na, nb) / maxLen
+}
+
+// Find duplicates across all articles in a scan
+// Returns Map<articleId, { matchId, matchTitle, titleSim, wordCountSim }>
+export const findDuplicates = (articles) => {
+  const duplicates = new Map()
+  for (let i = 0; i < articles.length; i++) {
+    for (let j = i + 1; j < articles.length; j++) {
+      const a = articles[i], b = articles[j]
+      if (!a.title || !b.title) continue
+
+      const titleSim = titleSimilarity(a.title, b.title)
+      
+      // Word count similarity — how close are they in length?
+      const wA = a.word_count || 0, wB = b.word_count || 0
+      const maxW = Math.max(wA, wB)
+      const wordCountSim = maxW > 0 ? 1 - Math.abs(wA - wB) / maxW : 1
+
+      // Flag as duplicate if title is very similar (>0.85) OR
+      // title is moderately similar (>0.70) AND word counts are close (>0.80)
+      const isDuplicate = titleSim > 0.85 || (titleSim > 0.70 && wordCountSim > 0.80)
+
+      if (isDuplicate && !duplicates.has(a.id) && !duplicates.has(b.id)) {
+        // Flag both articles
+        duplicates.set(a.id, { matchId: b.id, matchTitle: b.title, titleSim, wordCountSim })
+        duplicates.set(b.id, { matchId: a.id, matchTitle: a.title, titleSim, wordCountSim })
+      }
+    }
+  }
+  return duplicates
+}
+
 // ─── Analyze a single article ─────────────────────────────────
 export const analyzeArticle = (article) => {
   const issues = []
@@ -174,9 +229,9 @@ export const fetchZendeskArticles = async (subdomain, apiKey, onProgress) => {
 
 // ─── Run a full scan job ──────────────────────────────────────
 export const PRESETS = {
-  fast:     { outdated: true,  wordCount: true,  readability: false, missingMeta: false, brokenLinks: false },
-  standard: { outdated: true,  wordCount: true,  readability: true,  missingMeta: true,  brokenLinks: true  },
-  full:     { outdated: true,  wordCount: true,  readability: true,  missingMeta: true,  brokenLinks: true  },
+  fast:     { outdated: true,  wordCount: true,  readability: false, missingMeta: false, brokenLinks: false, duplicates: false },
+  standard: { outdated: true,  wordCount: true,  readability: true,  missingMeta: true,  brokenLinks: true,  duplicates: true  },
+  full:     { outdated: true,  wordCount: true,  readability: true,  missingMeta: true,  brokenLinks: true,  duplicates: true  },
 }
 
 export const analyzeArticleWithPreset = (article, preset = 'standard') => {
@@ -230,6 +285,12 @@ export const runScan = async ({ scanJobId, userId, connector, articleLimit, pres
 
     await supabase.from('scan_jobs').update({ total_articles: articles.length, scanned_articles: 0 }).eq('id', scanJobId)
 
+    // Pre-compute duplicates if preset includes it
+    const checks = PRESETS[preset] || PRESETS.standard
+    const duplicateMap = checks.duplicates
+      ? findDuplicates(limited.map((a, idx) => ({ id: String(idx), title: a.title, word_count: countWords(a.body || '') })))
+      : new Map()
+
     let totalIssues = 0, criticalCount = 0, warningCount = 0, infoCount = 0
 
     for (let i = 0; i < limited.length; i++) {
@@ -259,6 +320,18 @@ export const runScan = async ({ scanJobId, userId, connector, articleLimit, pres
         has_missing_metadata: analysis.hasMissingMeta,
         broken_links_count: analysis.brokenLinksCount,
       }).select().single()
+
+      // Check for duplicates
+      const dupMatch = duplicateMap.get(String(i))
+      if (dupMatch) {
+        const pct = Math.round(dupMatch.titleSim * 100)
+        analysis.issues.push({
+          severity: 'warning',
+          issue_type: 'duplicate_content',
+          description: `${pct}% title similarity with "${dupMatch.matchTitle}". May be a duplicate article.`,
+          metadata: { titleSimilarity: dupMatch.titleSim, wordCountSimilarity: dupMatch.wordCountSim, matchTitle: dupMatch.matchTitle },
+        })
+      }
 
       if (savedArticle && analysis.issues.length > 0) {
         const issueRows = analysis.issues.map((issue) => ({

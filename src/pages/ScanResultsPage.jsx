@@ -8,7 +8,7 @@ import { EmptyState } from '@/components/ui'
 import {
   AlertOctagon, AlertTriangle, Info, ChevronDown, ChevronUp,
   Wand2, RefreshCcw, Star, ExternalLink, Loader,
-  ArrowLeft, CheckCircle, FileText, Clock, Type, Tag, Link2, BookOpen
+  ArrowLeft, CheckCircle, FileText, Clock, Type, Tag, Link2, BookOpen, Copy
 } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 
@@ -47,13 +47,14 @@ const healthColor = (score) => {
 }
 
 const issueTypeIcon = {
-  low_readability:  BookOpen,
-  low_word_count:   Type,
-  outdated:         Clock,
-  missing_labels:   Tag,
-  missing_metadata: FileText,
-  missing_title:    FileText,
-  broken_link:      Link2,
+  low_readability:   BookOpen,
+  low_word_count:    Type,
+  outdated:          Clock,
+  missing_labels:    Tag,
+  missing_metadata:  FileText,
+  missing_title:     FileText,
+  broken_link:       Link2,
+  duplicate_content: Copy,
 }
 
 // ─── Readability pill ─────────────────────────────────────────
