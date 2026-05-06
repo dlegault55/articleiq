@@ -1,13 +1,10 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/hooks/useTheme'
 import { useConnector } from '@/hooks/useConnector'
 import { useScan } from '@/hooks/useScan'
 import { signOut } from '@/lib/supabase'
-import {
-  LayoutDashboard, Scan, Plug, CreditCard, Settings,
-  ShieldCheck, LogOut, Zap, Loader
-} from 'lucide-react'
+import { LayoutDashboard, Plug, CreditCard, Settings, ShieldCheck, LogOut, Zap, Loader } from 'lucide-react'
 import clsx from 'clsx'
 
 export default function Layout() {
@@ -15,7 +12,6 @@ export default function Layout() {
   const { isDark, toggleTheme } = useTheme()
   const { hasConnector } = useConnector()
   const { activeScan } = useScan()
-  const navigate = useNavigate()
 
   const handleSignOut = async () => {
     await signOut()
@@ -23,11 +19,10 @@ export default function Layout() {
   }
 
   const navItems = [
-    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard',  locked: false },
-    { to: '/scanner',   icon: Scan,            label: 'Scanner',    locked: !hasConnector },
-    { to: '/connector', icon: Plug,            label: 'Connector',  locked: false },
-    { to: '/billing',   icon: CreditCard,      label: 'Billing',    locked: false },
-    { to: '/settings',  icon: Settings,        label: 'Settings',   locked: false },
+    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard'  },
+    { to: '/connector', icon: Plug,            label: 'Connectors' },
+    { to: '/billing',   icon: CreditCard,      label: 'Billing'    },
+    { to: '/settings',  icon: Settings,        label: 'Settings'   },
   ]
 
   return (
@@ -67,11 +62,9 @@ export default function Layout() {
         <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
         {/* Active scan banner */}
         {activeScan && (
-          <button
-            onClick={() => navigate('/scanner')}
-            className="mx-2 mb-2 w-auto flex items-center gap-2 px-3 py-2 rounded-md text-left transition-all"
-            style={{ background: 'var(--xbox-subtle)', border: '1px solid var(--xbox-border)', cursor: 'pointer' }}
-          >
+          <NavLink to={`/scanner/results/${activeScan.id}`}
+            className="mx-2 mb-2 flex items-center gap-2 px-3 py-2 rounded-md text-left transition-all"
+            style={{ background: 'var(--xbox-subtle)', border: '1px solid var(--xbox-border)', textDecoration: 'none' }}>
             <Loader size={11} className="animate-spin flex-shrink-0" style={{ color: 'var(--xbox)' }} />
             <div className="min-w-0">
               <div className="text-xs font-semibold" style={{ color: 'var(--xbox)' }}>Scan running</div>
@@ -79,21 +72,15 @@ export default function Layout() {
                 {activeScan.scanned_articles || 0}/{activeScan.total_articles || '?'} articles
               </div>
             </div>
-          </button>
+          </NavLink>
         )}
 
         <p className="section-header px-2 mb-2" style={{ fontSize: 9 }}>Navigation</p>
-          {navItems.map(({ to, icon: Icon, label, locked }) => (
-            locked
-              ? <div key={to} className="nav-item" title="Add a Zendesk connector first"
-                  style={{ opacity: 0.35, cursor: 'not-allowed', pointerEvents: 'none' }}>
-                  <Icon size={15} className="flex-shrink-0" />
-                  {label}
-                </div>
-              : <NavLink key={to} to={to} className={({ isActive }) => clsx('nav-item', isActive && 'active')}>
-                  <Icon size={15} className="nav-icon flex-shrink-0" />
-                  {label}
-                </NavLink>
+          {navItems.map(({ to, icon: Icon, label }) => (
+            <NavLink key={to} to={to} className={({ isActive }) => clsx('nav-item', isActive && 'active')}>
+              <Icon size={15} className="nav-icon flex-shrink-0" />
+              {label}
+            </NavLink>
           ))}
 
           {profile?.is_admin && (

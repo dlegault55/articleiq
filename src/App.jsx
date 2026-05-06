@@ -4,7 +4,6 @@ import { useAuth } from './hooks/useAuth'
 import Layout from './components/layout/Layout'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
-import ScannerPage from './pages/ScannerPage'
 import ScanResultsPage from './pages/ScanResultsPage'
 import ConnectorPage from './pages/ConnectorPage'
 import SettingsPage from './pages/SettingsPage'
@@ -67,8 +66,8 @@ export default function App() {
         <Route path="/share/:scanId" element={<SharedReportPage />} />
         <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
           <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="scanner" element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="scanner" element={<ScannerPage />} />
           <Route path="scanner/results/:scanId" element={<ScanResultsPage />} />
           <Route path="connector" element={<ConnectorPage />} />
           <Route path="billing" element={<BillingPage />} />
