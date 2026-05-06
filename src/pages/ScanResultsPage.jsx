@@ -513,7 +513,7 @@ export default function ScanResultsPage() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20, marginBottom: 24 }}>
         <div>
           <p className="section-label">Scan Report</p>
-          <h1 style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 700, marginBottom: 4 }}>{format(new Date(scan.created_at), "MMM d, yyyy — h:mm a")}</h1>
+          <h1 style={{ fontFamily: "Plus Jakarta Sans, sans-serif", fontSize: 22, fontWeight: 700, marginBottom: 4 }}>{format(new Date(scan.created_at), "MMM d, yyyy — h:mm a")}</h1>
           <p style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
             {articles.length} articles
             {scan.preset && <span style={{ fontSize: 11, fontFamily: 'DM Mono', padding: '1px 7px', background: 'var(--green-light)', color: 'var(--green)', border: '1px solid var(--green-border)', borderRadius: 10 }}>{scan.preset}</span>}

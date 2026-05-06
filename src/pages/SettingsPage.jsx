@@ -5,7 +5,7 @@ export default function SettingsPage() {
 
   return (
     <div style={{ maxWidth: 560, margin: '0 auto', padding: '24px' }}>
-      <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 20, color: 'var(--text)', marginBottom: 2 }}>Account settings</p>
+      <p style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700, fontSize: 20, color: 'var(--text)', marginBottom: 2 }}>Account settings</p>
       <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 20 }}>Your account details</p>
 
       <div className="card" style={{ padding: '20px 22px' }}>

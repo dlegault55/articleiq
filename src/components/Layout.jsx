@@ -90,7 +90,7 @@ export default function Layout() {
           <div style={{ width: 28, height: 28, background: 'var(--green)', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Scan size={15} color="white" />
           </div>
-          <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 15, color: 'var(--text)', letterSpacing: -0.3 }}>
+          <span style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 800, fontSize: 15, color: 'var(--text)', letterSpacing: -0.3 }}>
             Article<span style={{ color: 'var(--green)' }}>IQ</span>
           </span>
         </div>

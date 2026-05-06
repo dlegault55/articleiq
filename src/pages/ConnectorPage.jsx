@@ -57,7 +57,7 @@ export default function ConnectorPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
-          <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 20, color: 'var(--text)', marginBottom: 2 }}>Connectors</p>
+          <p style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700, fontSize: 20, color: 'var(--text)', marginBottom: 2 }}>Connectors</p>
           <p style={{ fontSize: 13, color: 'var(--text-2)' }}>Connect your knowledge base platforms.</p>
         </div>
         {connectors.length > 0 && !showForm && (
@@ -85,7 +85,7 @@ export default function ConnectorPage() {
       {/* Form */}
       {showForm && (
         <div className="card animate-in" style={{ padding: '20px 22px', maxWidth: 480 }}>
-          <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, marginBottom: 2 }}>Connect Zendesk</p>
+          <p style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700, fontSize: 15, marginBottom: 2 }}>Connect Zendesk</p>
           <p style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 18 }}>Read-only — we never modify your articles.</p>
 
           <div style={{ marginBottom: 12 }}>

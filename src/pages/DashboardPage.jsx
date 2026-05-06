@@ -100,7 +100,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
-                <span style={{ fontFamily:'Syne,sans-serif', fontSize:24, fontWeight:800, color:'white' }}>
+                <span style={{ fontFamily:'Plus Jakarta Sans,sans-serif', fontSize:24, fontWeight:800, color:'white' }}>
                   {activeScan.total_articles ? `${Math.round((activeScan.scanned_articles/activeScan.total_articles)*100)}%` : '...'}
                 </span>
                 <ArrowRight size={18} color="white" />
@@ -120,7 +120,7 @@ export default function DashboardPage() {
           <div style={{ borderRadius:'var(--radius-xl)', background:'var(--green)', padding:'32px 32px 28px', marginBottom:16, position:'relative', overflow:'hidden' }}>
             <div style={{ position:'absolute', top:-40, right:-40, width:200, height:200, borderRadius:'50%', background:'rgba(255,255,255,0.06)' }} />
             <p style={{ fontSize:11, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(255,255,255,0.55)', marginBottom:8 }}>Welcome to ArticleIQ</p>
-            <h1 style={{ fontFamily:'Syne,sans-serif', fontSize:28, fontWeight:800, color:'white', marginBottom:8, letterSpacing:-0.5 }}>
+            <h1 style={{ fontFamily:'Plus Jakarta Sans,sans-serif', fontSize:28, fontWeight:800, color:'white', marginBottom:8, letterSpacing:-0.5 }}>
               Let's get your knowledge base set up
             </h1>
             <p style={{ fontSize:15, color:'rgba(255,255,255,0.75)', maxWidth:480, lineHeight:1.6 }}>
@@ -140,9 +140,9 @@ export default function DashboardPage() {
                   <div style={{ width:32, height:32, borderRadius:8, background: action ? 'var(--green-light)' : 'var(--bg)', border:`1px solid ${action ? 'var(--green-border)' : 'var(--border)'}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                     {icon}
                   </div>
-                  <span style={{ fontSize:11, fontWeight:700, color: action ? 'var(--green)' : 'var(--text-3)', fontFamily:'Syne,sans-serif' }}>Step {step}</span>
+                  <span style={{ fontSize:11, fontWeight:700, color: action ? 'var(--green)' : 'var(--text-3)', fontFamily:'Plus Jakarta Sans,sans-serif' }}>Step {step}</span>
                 </div>
-                <p style={{ fontSize:14, fontWeight:700, color: action ? 'var(--text)' : 'var(--text-3)', marginBottom:6, fontFamily:'Syne,sans-serif' }}>{title}</p>
+                <p style={{ fontSize:14, fontWeight:700, color: action ? 'var(--text)' : 'var(--text-3)', marginBottom:6, fontFamily:'Plus Jakarta Sans,sans-serif' }}>{title}</p>
                 <p style={{ fontSize:12, color:'var(--text-2)', lineHeight:1.6, marginBottom: action ? 16 : 0 }}>{desc}</p>
                 {action && (
                   <Link to="/connector" className="btn btn-primary btn-sm" style={{ width:'100%', justifyContent:'center' }}>
@@ -176,7 +176,7 @@ export default function DashboardPage() {
           {lastScan ? (
             <>
               <div style={{ display:'flex', alignItems:'flex-end', gap:16, marginBottom:4 }}>
-                <div style={{ fontFamily:'Syne,sans-serif', fontSize:96, fontWeight:800, color:'white', lineHeight:1, letterSpacing:-4 }}>{lastH}</div>
+                <div style={{ fontFamily:'Plus Jakarta Sans,sans-serif', fontSize:96, fontWeight:800, color:'white', lineHeight:1, letterSpacing:-4 }}>{lastH}</div>
                 <div style={{ paddingBottom:12 }}>
                   <div style={{ fontSize:18, fontWeight:700, color:'rgba(255,255,255,0.9)', marginBottom:4 }}>{healthLabel(lastH)}</div>
                   {trend !== null && (
@@ -209,7 +209,7 @@ export default function DashboardPage() {
             </>
           ) : (
             <div>
-              <div style={{ fontFamily:'Syne,sans-serif', fontSize:96, fontWeight:800, color:'rgba(255,255,255,0.2)', lineHeight:1, letterSpacing:-4 }}>—</div>
+              <div style={{ fontFamily:'Plus Jakarta Sans,sans-serif', fontSize:96, fontWeight:800, color:'rgba(255,255,255,0.2)', lineHeight:1, letterSpacing:-4 }}>—</div>
               <p style={{ color:'rgba(255,255,255,0.6)', fontSize:15, marginTop:8 }}>Run your first scan to see your health score</p>
             </div>
           )}
@@ -226,7 +226,7 @@ export default function DashboardPage() {
           ].map(({ label, value, sub }) => (
             <div key={label} className="card" style={{ padding:'18px 20px' }}>
               <p style={{ fontSize:12, color:'var(--text-3)', fontWeight:600, marginBottom:6 }}>{label}</p>
-              <p style={{ fontFamily:'Syne,sans-serif', fontSize:28, fontWeight:700, color:'var(--text)', lineHeight:1, marginBottom:4 }}>{value}</p>
+              <p style={{ fontFamily:'Plus Jakarta Sans,sans-serif', fontSize:28, fontWeight:700, color:'var(--text)', lineHeight:1, marginBottom:4 }}>{value}</p>
               <p style={{ fontSize:11, color:'var(--text-3)' }}>{sub}</p>
             </div>
           ))}
@@ -237,7 +237,7 @@ export default function DashboardPage() {
       {!activeScan && hasConn && (
         <div className="card animate-in" style={{ padding:'22px 24px', marginBottom:16 }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-            <p style={{ fontFamily:'Syne,sans-serif', fontSize:15, fontWeight:700, color:'var(--text)' }}>Run a new scan</p>
+            <p style={{ fontFamily:'Plus Jakarta Sans,sans-serif', fontSize:15, fontWeight:700, color:'var(--text)' }}>Run a new scan</p>
             {connector && (
               <span style={{ fontSize:12, color:'var(--text-3)', display:'flex', alignItems:'center', gap:5 }}>
                 <CheckCircle size={12} style={{ color:'var(--green)' }} />
@@ -272,7 +272,7 @@ export default function DashboardPage() {
       {recentScans.length > 0 && (
         <div className="card animate-in">
           <div style={{ padding:'16px 22px 14px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'1px solid var(--border)' }}>
-            <p style={{ fontFamily:'Syne,sans-serif', fontSize:14, fontWeight:700, color:'var(--text)' }}>Recent scans</p>
+            <p style={{ fontFamily:'Plus Jakarta Sans,sans-serif', fontSize:14, fontWeight:700, color:'var(--text)' }}>Recent scans</p>
             <span style={{ fontSize:12, color:'var(--text-3)' }}>{recentScans.length} total</span>
           </div>
           {recentScans.map(scan => {
@@ -285,7 +285,7 @@ export default function DashboardPage() {
                 onMouseLeave={e => { e.currentTarget.style.background='transparent'; const d=e.currentTarget.querySelector('.del'); if(d) d.style.opacity='0' }}>
 
                 {/* Score box */}
-                <div style={{ width:44, height:44, borderRadius:12, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Syne,sans-serif', fontSize:17, fontWeight:800,
+                <div style={{ width:44, height:44, borderRadius:12, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Plus Jakarta Sans,sans-serif', fontSize:17, fontWeight:800,
                   background: isActive ? 'var(--green-light)' : h>=80 ? 'var(--green-light)' : h>=60 ? 'var(--amber-light)' : 'var(--red-light)',
                   color: isActive ? 'var(--green)' : healthColor(h),
                 }}>
