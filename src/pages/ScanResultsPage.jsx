@@ -579,13 +579,24 @@ export default function ScanResultsPage() {
               </p>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 120, height: 4, borderRadius: 2, background: 'var(--bg-overlay)', overflow: 'hidden' }}>
-              <div style={{ height: '100%', background: 'var(--xbox)', borderRadius: 2, transition: 'width 1s ease', width: scan.total_articles ? `${Math.round((scan.scanned_articles / scan.total_articles) * 100)}%` : '0%' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 120, height: 4, borderRadius: 2, background: 'var(--bg-overlay)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', background: 'var(--xbox)', borderRadius: 2, transition: 'width 1s ease', width: scan.total_articles ? `${Math.round((scan.scanned_articles / scan.total_articles) * 100)}%` : '0%' }} />
+              </div>
+              <span style={{ fontSize: 11, fontFamily: 'Fira Code, monospace', color: 'var(--xbox)', minWidth: 32 }}>
+                {scan.total_articles ? `${Math.round((scan.scanned_articles / scan.total_articles) * 100)}%` : '...'}
+              </span>
             </div>
-            <span style={{ fontSize: 11, fontFamily: 'Fira Code, monospace', color: 'var(--xbox)', minWidth: 32 }}>
-              {scan.total_articles ? `${Math.round((scan.scanned_articles / scan.total_articles) * 100)}%` : '...'}
-            </span>
+            <button
+              onClick={async () => {
+                await supabase.from('scan_jobs').update({ status: 'failed', error_message: 'Cancelled by user', completed_at: new Date().toISOString() }).eq('id', scanId)
+                setScan(s => ({ ...s, status: 'failed' }))
+              }}
+              className="btn-ghost"
+              style={{ fontSize: 12, color: 'var(--badge-critical-color)', padding: '4px 10px', flexShrink: 0 }}>
+              Stop scan
+            </button>
           </div>
         </div>
       )}
