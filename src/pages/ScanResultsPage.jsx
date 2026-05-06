@@ -381,39 +381,43 @@ export default function ScanResultsPage() {
   const [sort,   setSort]   = useState('severity')
   const [page,   setPage]   = useState(1)
 
-  // Load data
-  useEffect(() => {
-    const load = async () => {
-      const [{ data: s }, { data: a }, { data: i }] = await Promise.all([
-        supabase.from('scan_jobs').select('*').eq('id', scanId).single(),
-        supabase.from('scanned_articles').select('*').eq('scan_job_id', scanId),
-        supabase.from('article_issues').select('*').eq('scan_job_id', scanId),
-      ])
-      setScan(s)
-      setArticles(a || [])
-      setIssues(i || [])
-      setResolvedIssues(new Set((i || []).filter(x => x.resolved).map(x => x.id)))
-      setLoading(false)
-    }
-    load()
-  }, [scanId])
+  // Initial load + resolved state handled by polling effect below
 
   // Poll while scan is still running
   useEffect(() => {
-    if (!scan) return
-    if (scan.status !== 'running' && scan.status !== 'pending') return
-    const interval = setInterval(async () => {
+    if (!scanId) return
+
+    const poll = async () => {
       const [{ data: s }, { data: a }, { data: i }] = await Promise.all([
         supabase.from('scan_jobs').select('*').eq('id', scanId).single(),
         supabase.from('scanned_articles').select('*').eq('scan_job_id', scanId),
         supabase.from('article_issues').select('*').eq('scan_job_id', scanId),
       ])
-      setScan(s)
-      setArticles(a || [])
-      setIssues(i || [])
-    }, 3000)
+      if (s) setScan(s)
+      if (a) setArticles(a)
+      if (i) {
+        setIssues(i)
+        setResolvedIssues(new Set(i.filter(x => x.resolved).map(x => x.id)))
+      }
+      // Return true if still running
+      return s?.status === 'running' || s?.status === 'pending'
+    }
+
+    let interval
+    const start = async () => {
+      const stillRunning = await poll()
+      setLoading(false)
+      if (stillRunning) {
+        interval = setInterval(async () => {
+          const stillGoing = await poll()
+          if (!stillGoing) clearInterval(interval)
+        }, 2000)
+      }
+    }
+
+    start()
     return () => clearInterval(interval)
-  }, [scan?.status, scanId])
+  }, [scanId])
 
   // Mark issue resolved
   const resolveIssue = useCallback(async (issueId, resolved) => {

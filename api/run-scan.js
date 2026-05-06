@@ -254,8 +254,8 @@ async function runScanAsync({ scanJobId, userId, connector, preset }) {
       })
     }
 
-    // Update progress every 10 articles
-    if (i % 10 === 0 || i === articles.length - 1) {
+    // Update progress every 5 articles
+    if (i % 5 === 0 || i === articles.length - 1) {
       await supabase.from('scan_jobs').update({ scanned_articles: i + 1 }).eq('id', scanJobId)
     }
   }
