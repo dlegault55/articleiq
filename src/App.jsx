@@ -8,6 +8,7 @@ import DashboardPage from '@/pages/DashboardPage'
 import ScanResultsPage from '@/pages/ScanResultsPage'
 import ConnectorPage from '@/pages/ConnectorPage'
 import SettingsPage from '@/pages/SettingsPage'
+import LandingPage from '@/pages/LandingPage'
 
 // Error boundary
 class ErrorBoundary extends Component {
@@ -44,16 +45,18 @@ export default function App() {
   return (
     <ErrorBoundary>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<PublicOnly><LoginPage /></PublicOnly>} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/" element={<Guard><Layout /></Guard>}>
           <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="scanner" element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard"          element={<DashboardPage />} />
           <Route path="scanner/results/:id" element={<ScanResultsPage />} />
           <Route path="connector"          element={<ConnectorPage />} />
           <Route path="settings"           element={<SettingsPage />} />
         </Route>
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ErrorBoundary>
   )
