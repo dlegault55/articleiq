@@ -152,11 +152,28 @@ export default function DashboardPage() {
     if (!userId || !conn) return
     setStarting(true); setError(null)
     try {
+      // Create scan job
       const { data: job, error: jobErr } = await supabase
         .from('scan_jobs').insert({ user_id: userId, connector_id: conn.id, status: 'pending', preset })
         .select().single()
       if (jobErr) throw new Error(jobErr.message)
+
+      // Navigate to results — scan runs server-side via Supabase Edge Function
       navigate(`/scanner/results/${job.id}`)
+
+      // Call Edge Function (fire and forget — scan runs independently)
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+      fetch(`${supabaseUrl}/functions/v1/run-scan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${anonKey}`,
+          'apikey': anonKey,
+        },
+        body: JSON.stringify({ scanJobId: job.id, userId, connectorId: conn.id, preset }),
+      }).catch(e => console.error('Edge function error:', e))
+
     } catch (e) { setError(e.message); setStarting(false) }
   }
 
