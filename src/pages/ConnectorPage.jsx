@@ -45,7 +45,7 @@ export default function ConnectorPage() {
 
   useEffect(() => {
     if (userId) loadConnectors()
-  }, [profile, user])
+  }, [userId])
 
   const saveConnector = async () => {
     const uid = userId

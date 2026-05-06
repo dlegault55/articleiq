@@ -23,8 +23,8 @@ class ErrorBoundary extends Component {
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)', padding: 24 }}>
         <div style={{ maxWidth: 480, textAlign: 'center' }}>
           <div style={{ fontSize: 32, marginBottom: 16 }}>⚠️</div>
-          <h2 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Something went wrong</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>{this.state.error?.message}</p>
+          <h2 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Initializing...</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>If this keeps happening, try refreshing the page.</p>
           <button onClick={() => window.location.reload()} style={{ padding: '8px 20px', background: 'var(--xbox)', color: '#fff', border: 'none', borderRadius: 7, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
             Reload page
           </button>
