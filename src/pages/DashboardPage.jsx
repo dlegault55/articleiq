@@ -439,7 +439,7 @@ export default function DashboardPage() {
                           {format(new Date(scan.created_at), 'h:mm a')}
                         </span>
                         {scan.preset && (
-                          <span style={{ marginLeft: 8, fontSize: 10, padding: '1px 6px', background: 'var(--bg-overlay)', color: 'var(--text-muted)', border: '1px solid var(--border)', borderRadius: 4, fontFamily: 'Fira Code, monospace', textTransform: 'capitalize' }}>
+                          <span style={{ marginLeft: 8, fontSize: 10, padding: '1px 6px', background: 'var(--xbox-subtle)', color: 'var(--xbox)', border: '1px solid var(--xbox-border)', borderRadius: 4, fontFamily: 'Fira Code, monospace', textTransform: 'capitalize' }}>
                             {scan.preset}
                           </span>
                         )}
