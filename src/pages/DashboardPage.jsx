@@ -172,13 +172,8 @@ export default function DashboardPage() {
         .select().single()
       if (jobErr) throw new Error(jobErr.message)
 
+      // ScanContext detects pending scan and drives chunks automatically
       navigate(`/scanner/results/${job.id}`)
-
-      fetch('/api/scan-chunk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scanJobId: job.id, userId, connectorId: conn.id, preset, page: 1 }),
-      }).catch(e => console.error('Scan error:', e))
 
     } catch (e) {
       setError(e.message)
