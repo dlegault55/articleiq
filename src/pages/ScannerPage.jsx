@@ -46,8 +46,8 @@ const CHECKS = [
   { label: 'Broken Links',      desc: 'Detects dead or invalid hyperlinks',       presets: ['standard','full'] },
   { label: 'Missing Metadata',  desc: 'Checks for missing labels and sections',   presets: ['standard','full'] },
   { label: 'Readability Score', desc: 'Flesch-Kincaid readability analysis',      presets: ['standard','full'] },
-  { label: 'AI Grammar Fix',    desc: 'Available on all scans (Pro)',              presets: ['fast','standard','full'], paid: true },
-  { label: 'AI Quality Score',  desc: 'Available on all scans (Pro)',              presets: ['fast','standard','full'], paid: true },
+  { label: 'AI Grammar Fix',    desc: 'Fix grammar on any completed scan (Pro)',   presets: ['fast','standard','full'], paid: true },
+  { label: 'AI Quality Score',  desc: 'Score articles on any completed scan (Pro)', presets: ['fast','standard','full'], paid: true },
   { label: 'Duplicate Detection', desc: 'Flags articles with similar titles or content', presets: ['standard','full'] },
 ]
 
