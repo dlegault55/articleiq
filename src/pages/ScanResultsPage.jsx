@@ -403,15 +403,64 @@ export default function ScanResultsPage() {
       return s?.status === 'running' || s?.status === 'pending'
     }
 
-    let interval
+    // Drive chunks — browser calls API sequentially page by page
+    const runChunks = async (scanJobId, connectorId, userId, preset) => {
+      if (!scanJobId || !connectorId || !userId) return
+      let page = 1
+      let done = false
+      while (!done) {
+        try {
+          const res = await fetch('/api/scan-chunk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ scanJobId, connectorId, userId, preset, page }),
+          })
+          if (!res.ok) break
+          const data = await res.json()
+          if (data.done || data.cancelled || !data.hasMore) done = true
+          else page = data.nextPage || page + 1
+        } catch (e) {
+          console.error('Chunk error:', e)
+          break
+        }
+      }
+    }
+
     const start = async () => {
-      const stillRunning = await poll()
-      setLoading(false)
-      if (stillRunning) {
-        interval = setInterval(async () => {
-          const stillGoing = await poll()
-          if (!stillGoing) clearInterval(interval)
-        }, 2000)
+      // First poll to get scan details
+      const [{ data: s }] = await Promise.all([
+        supabase.from('scan_jobs').select('*').eq('id', scanId).single(),
+      ])
+      if (s) {
+        setScan(s)
+        setLoading(false)
+
+        if (s.status === 'pending' || s.status === 'running') {
+          // Get connector info to drive chunks
+          const { data: connector } = await supabase
+            .from('zendesk_connectors')
+            .select('id')
+            .eq('user_id', s.user_id)
+            .eq('is_active', true)
+            .limit(1)
+            .single()
+
+          if (connector && s.status === 'pending') {
+            // Start driving chunks
+            runChunks(scanId, connector.id, s.user_id, s.preset || 'standard')
+          }
+
+          // Poll for progress
+          interval = setInterval(async () => {
+            const stillGoing = await poll()
+            if (!stillGoing) clearInterval(interval)
+          }, 2000)
+        } else {
+          // Already done, just load data
+          await poll()
+        }
+      } else {
+        setLoading(false)
       }
     }
 

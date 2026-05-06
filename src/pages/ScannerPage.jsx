@@ -257,21 +257,24 @@ export default function ScannerPage() {
     prevActiveScan.current = activeScan
   }, [activeScan, recentScans])
 
-  // ── Start scan (server-side) ───────────────────────────────
+  // ── Start scan (chunked server-side) ───────────────────────
   const startScan = async () => {
     if (!userId)            { setError('Not signed in. Please refresh.'); return }
     if (!selectedConnector) { setError('No connector selected.'); return }
     setError(null)
     try {
-      // Create scan job in DB
+      // Create scan job
       const { data: job, error: jobErr } = await supabase
         .from('scan_jobs')
         .insert({ user_id: userId, connector_id: selectedConnector.id, status: 'pending', preset: scanPreset })
         .select().single()
       if (jobErr) throw new Error(jobErr.message)
 
-      // Hand off to server — scan runs independently of this browser tab
-      const res = await fetch('/api/run-scan', {
+      // Navigate to results immediately — scan runs via chunked API calls
+      navigate(`/scanner/results/${job.id}`)
+
+      // Kick off first chunk (subsequent chunks called from results page polling)
+      fetch('/api/scan-chunk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -279,18 +282,12 @@ export default function ScannerPage() {
           userId,
           connectorId: selectedConnector.id,
           preset:      scanPreset,
+          page:        1,
         }),
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        throw new Error(err.error || 'Failed to start server-side scan')
-      }
+      }).catch(e => console.error('Scan chunk error:', e))
 
-      reloadScans()
-      navigate(`/scanner/results/${job.id}`)
     } catch (e) {
       setError(e.message)
-      reloadScans()
     }
   }
 
