@@ -3,29 +3,26 @@ import { supabase } from '@/lib/supabase'
 
 const AuthContext = createContext(null)
 
-const fetchProfile = async (userId) => {
-  const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
-  return data ?? null
-}
-
 export const AuthProvider = ({ children }) => {
-  const [user, setUser]       = useState(undefined) // undefined = not yet known
+  const [user,    setUser]    = useState(undefined) // undefined = loading
   const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let mounted = true
+
+    const loadProfile = async (uid) => {
+      const { data } = await supabase.from('profiles').select('*').eq('id', uid).single()
+      if (mounted) setProfile(data ?? null)
+    }
 
     const init = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!mounted) return
       if (session?.user) {
         setUser(session.user)
-        const p = await fetchProfile(session.user.id)
-        if (mounted) { setProfile(p); setLoading(false) }
+        await loadProfile(session.user.id)
       } else {
         setUser(null)
-        setLoading(false)
       }
     }
 
@@ -33,16 +30,12 @@ export const AuthProvider = ({ children }) => {
       if (!mounted) return
       if (session?.user) {
         setUser(session.user)
-        const p = await fetchProfile(session.user.id)
-        if (mounted) setProfile(p)
+        loadProfile(session.user.id)
       } else {
         setUser(null)
         setProfile(null)
-        if (event === 'SIGNED_OUT') {
-          window.location.replace('/login')
-        }
+        if (event === 'SIGNED_OUT') window.location.replace('/login')
       }
-      setLoading(false)
     })
 
     init()
@@ -50,21 +43,13 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const userId = profile?.id ?? user?.id ?? null
-  const refreshProfile = async () => {
-    if (!userId) return
-    const p = await fetchProfile(userId)
-    setProfile(p)
-  }
+  const loading = user === undefined
 
   return (
-    <AuthContext.Provider value={{ user, profile, userId, loading, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, userId, loading }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
-export const useAuth = () => {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
-  return ctx
-}
+export const useAuth = () => useContext(AuthContext)

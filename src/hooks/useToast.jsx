@@ -1,22 +1,7 @@
-import { createContext, useContext, useState, useCallback, useRef } from 'react'
-import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react'
+import { createContext, useContext, useState, useCallback, useRef, useMemo } from 'react'
+import { X, CheckCircle, XCircle, AlertTriangle, Info } from 'lucide-react'
 
 const ToastContext = createContext(null)
-
-const ICONS = {
-  success: CheckCircle,
-  error:   XCircle,
-  warning: AlertTriangle,
-  info:    Info,
-}
-
-const STYLES = {
-  success: { bg: 'rgba(16,124,16,0.12)',  border: 'rgba(16,124,16,0.3)',  color: 'var(--xbox)' },
-  error:   { bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)',  color: 'var(--badge-critical-color)' },
-  warning: { bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)', color: 'var(--badge-warning-color)' },
-  info:    { bg: 'rgba(96,165,250,0.12)', border: 'rgba(96,165,250,0.3)', color: 'var(--badge-info-color)' },
-}
-
 let nextId = 1
 
 export const ToastProvider = ({ children }) => {
@@ -28,93 +13,78 @@ export const ToastProvider = ({ children }) => {
     setToasts(prev => prev.filter(t => t.id !== id))
   }, [])
 
-  const toast = useCallback((message, type = 'info', duration = 3500) => {
+  const add = useCallback((message, type = 'info', duration = 4000) => {
     const id = nextId++
     setToasts(prev => [...prev, { id, message, type }])
     timers.current[id] = setTimeout(() => dismiss(id), duration)
-    return id
   }, [dismiss])
 
-  // Confirmation toast — returns a promise resolving to true/false
-  const confirm = useCallback((message, confirmLabel = 'Delete', cancelLabel = 'Cancel') => {
-    return new Promise((resolve) => {
+  const confirm = useCallback((message, confirmLabel = 'Confirm', cancelLabel = 'Cancel') =>
+    new Promise(resolve => {
       const id = nextId++
-      const handleChoice = (result) => {
-        setToasts(prev => prev.filter(t => t.id !== id))
-        resolve(result)
-      }
-      setToasts(prev => [...prev, { id, message, type: 'confirm', onConfirm: () => handleChoice(true), onCancel: () => handleChoice(false), confirmLabel, cancelLabel }])
-    })
-  }, [])
+      const handle = (val) => { setToasts(prev => prev.filter(t => t.id !== id)); resolve(val) }
+      setToasts(prev => [...prev, { id, message, type: 'confirm', onConfirm: () => handle(true), onCancel: () => handle(false), confirmLabel, cancelLabel }])
+    }), [])
 
-  toast.success = (msg, dur) => toast(msg, 'success', dur)
-  toast.error   = (msg, dur) => toast(msg, 'error',   dur ?? 5000)
-  toast.warning = (msg, dur) => toast(msg, 'warning', dur)
-  toast.info    = (msg, dur) => toast(msg, 'info',    dur)
-  toast.confirm = confirm
+  const toast = useMemo(() => ({
+    success: (m, d) => add(m, 'success', d),
+    error:   (m, d) => add(m, 'error',   d ?? 6000),
+    warning: (m, d) => add(m, 'warning', d),
+    info:    (m, d) => add(m, 'info',    d),
+    confirm,
+  }), [add, confirm])
+
+  const icons = { success: CheckCircle, error: XCircle, warning: AlertTriangle, info: Info }
+  const colors = {
+    success: { bg: 'var(--green-light)',  border: 'var(--green-border)',  text: 'var(--green)' },
+    error:   { bg: 'var(--red-light)',    border: 'var(--red-border)',    text: 'var(--red)'   },
+    warning: { bg: 'var(--amber-light)',  border: 'var(--amber-border)',  text: 'var(--amber)' },
+    info:    { bg: 'var(--blue-light)',   border: 'var(--blue-border)',   text: 'var(--blue)'  },
+  }
 
   return (
     <ToastContext.Provider value={toast}>
       {children}
-      {/* Toast container */}
-      <div style={{
-        position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
-        display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 360,
-        pointerEvents: 'none',
-      }}>
-        {toasts.map(t => (
-          <div key={t.id} style={{
-            pointerEvents: 'all',
-            background: t.type === 'confirm' ? 'var(--bg-elevated)' : STYLES[t.type]?.bg,
-            border: `1px solid ${t.type === 'confirm' ? 'var(--border-bright)' : STYLES[t.type]?.border}`,
-            borderRadius: 10,
-            padding: '12px 14px',
-            boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
-            display: 'flex',
-            flexDirection: t.type === 'confirm' ? 'column' : 'row',
-            alignItems: t.type === 'confirm' ? 'flex-start' : 'flex-start',
-            gap: t.type === 'confirm' ? 10 : 10,
-            animation: 'toast-in 0.2s ease-out',
-          }}>
-            {t.type === 'confirm' ? (
-              <>
-                <p style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500, margin: 0 }}>{t.message}</p>
-                <div style={{ display: 'flex', gap: 8, alignSelf: 'flex-end' }}>
-                  <button onClick={t.onCancel} style={{
-                    padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: 'pointer',
-                    background: 'var(--bg-sunken)', border: '1px solid var(--border)', color: 'var(--text-secondary)',
-                    fontFamily: 'Inter, sans-serif',
-                  }}>
-                    {t.cancelLabel}
+      <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 380 }}>
+        {toasts.map(t => {
+          const Icon = icons[t.type]
+          const c = colors[t.type] || colors.info
+          return (
+            <div key={t.id} style={{
+              background: t.type === 'confirm' ? 'var(--bg-card)' : c.bg,
+              border: `1px solid ${t.type === 'confirm' ? 'var(--border-dark)' : c.border}`,
+              borderRadius: 'var(--radius)',
+              padding: '14px 16px',
+              boxShadow: 'var(--shadow-lg)',
+              display: 'flex',
+              flexDirection: t.type === 'confirm' ? 'column' : 'row',
+              alignItems: t.type === 'confirm' ? 'stretch' : 'center',
+              gap: 10,
+              animation: 'fade-up 0.2s ease',
+            }}>
+              {t.type === 'confirm' ? (
+                <>
+                  <p style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 500 }}>{t.message}</p>
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
+                    <button onClick={t.onCancel}  className="btn btn-secondary btn-sm">{t.cancelLabel}</button>
+                    <button onClick={t.onConfirm} className="btn btn-danger btn-sm">{t.confirmLabel}</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {Icon && <Icon size={16} style={{ color: c.text, flexShrink: 0 }} />}
+                  <span style={{ fontSize: 13, color: 'var(--text-primary)', flex: 1 }}>{t.message}</span>
+                  <button onClick={() => dismiss(t.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 0, display: 'flex' }}>
+                    <X size={14} />
                   </button>
-                  <button onClick={t.onConfirm} style={{
-                    padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                    background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)',
-                    color: 'var(--badge-critical-color)', fontFamily: 'Inter, sans-serif',
-                  }}>
-                    {t.confirmLabel}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                {(() => { const Icon = ICONS[t.type]; return Icon ? <Icon size={15} style={{ color: STYLES[t.type].color, flexShrink: 0, marginTop: 1 }} /> : null })()}
-                <span style={{ fontSize: 13, color: 'var(--text-primary)', flex: 1, lineHeight: 1.4 }}>{t.message}</span>
-                <button onClick={() => dismiss(t.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--text-muted)', flexShrink: 0 }}>
-                  <X size={13} />
-                </button>
-              </>
-            )}
-          </div>
-        ))}
+                </>
+              )}
+            </div>
+          )
+        })}
       </div>
-      <style>{`@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }`}</style>
     </ToastContext.Provider>
   )
 }
 
-export const useToast = () => {
-  const ctx = useContext(ToastContext)
-  if (!ctx) throw new Error('useToast must be used within ToastProvider')
-  return ctx
-}
+export const useToast = () => useContext(ToastContext)
