@@ -437,7 +437,7 @@ export default function ScanResultsPage() {
   const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: 400 }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}>
       <div style={{ textAlign: 'center' }}>
         <Loader size={20} style={{ color: 'var(--green)', animation: 'spin 0.7s linear infinite', marginBottom: 10 }} />
         <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Loading report...</p>
@@ -458,7 +458,7 @@ export default function ScanResultsPage() {
   const isStalled = isRunning && (Date.now() - lastActivity.getTime()) > 3 * 60 * 1000
 
   return (
-    <div className="page-wide">
+    <div style={{ maxWidth: 960, margin: "0 auto", padding: "24px 24px" }}>
       {/* Back + actions */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <Link to="/dashboard" className="btn btn-ghost btn-sm"><ArrowLeft size={14} /> Back</Link>
@@ -513,7 +513,7 @@ export default function ScanResultsPage() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20, marginBottom: 24 }}>
         <div>
           <p className="section-label">Scan Report</p>
-          <h1 style={{ marginBottom: 4 }}>{format(new Date(scan.created_at), 'MMM d, yyyy — h:mm a')}</h1>
+          <h1 style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 700, marginBottom: 4 }}>{format(new Date(scan.created_at), "MMM d, yyyy — h:mm a")}</h1>
           <p style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
             {articles.length} articles
             {scan.preset && <span style={{ fontSize: 11, fontFamily: 'DM Mono', padding: '1px 7px', background: 'var(--green-light)', color: 'var(--green)', border: '1px solid var(--green-border)', borderRadius: 10 }}>{scan.preset}</span>}
@@ -547,7 +547,7 @@ export default function ScanResultsPage() {
       </div>
 
       {/* Filters + sort */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {filterOpts.map(({ key, label, count }) => (
             <button key={key} onClick={() => setFilter(key)}
@@ -564,7 +564,7 @@ export default function ScanResultsPage() {
       </div>
 
       {/* Readability legend */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 11, fontFamily: 'DM Mono', color: 'var(--text-muted)' }}>Readability:</span>
         {[['70–100', 'Easy', 'var(--green)'], ['50–69', 'Moderate', 'var(--amber)'], ['30–49', 'Difficult', '#ea580c'], ['0–29', 'Very hard', 'var(--red)']].map(([range, label, color]) => (
           <div key={range} style={{ display: 'flex', gap: 4 }}>
@@ -578,7 +578,7 @@ export default function ScanResultsPage() {
       </div>
 
       {/* Article list */}
-      <div className="card" style={{ overflow: 'hidden', marginBottom: 20 }}>
+      <div className="card" style={{ overflow: "hidden", marginBottom: 16 }}>
         {paginated.length === 0 ? (
           <div style={{ padding: '48px', textAlign: 'center' }}>
             <CheckCircle size={28} style={{ color: 'var(--green)', marginBottom: 10 }} />
