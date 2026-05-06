@@ -174,8 +174,8 @@ const AIPanel = ({ article, isPaid }) => {
     if (!isPaid) return
     setLoading(action); setResult(null)
     try {
-      if (action === 'grammar')  setResult({ type: 'grammar',  content: await grammarFix(article.title, article.title) })
-      if (action === 'rewrite')  setResult({ type: 'rewrite',  content: await fullRewrite(article.title, article.title) })
+      if (action === 'grammar')  setResult({ type: 'grammar',  original: article.title, content: await grammarFix(article.title, article.title) })
+      if (action === 'rewrite')  setResult({ type: 'rewrite',  original: article.title, content: await fullRewrite(article.title, article.title) })
       if (action === 'quality')  setResult({ type: 'quality',  score:   await getQualityScore(article.title, article.title) })
     } catch (e) {
       setResult({ type: 'error', content: e.message })
@@ -208,12 +208,30 @@ const AIPanel = ({ article, isPaid }) => {
           {result.type === 'error' && <p style={{ color: 'var(--badge-critical-color)', fontSize: 12, margin: 0 }}>{result.content}</p>}
           {(result.type === 'grammar' || result.type === 'rewrite') && (
             <>
-              <p style={{ fontSize: 11, fontFamily: 'Fira Code, monospace', color: 'var(--xbox)', margin: '0 0 6px 0' }}>
-                ✓ {result.type === 'grammar' ? 'Grammar fixed' : 'Article rewritten'}
-              </p>
-              <p style={{ fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', margin: 0, lineHeight: 1.6 }}>
-                {result.content.slice(0, 600)}{result.content.length > 600 ? '…' : ''}
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <p style={{ fontSize: 11, fontFamily: 'Fira Code, monospace', color: 'var(--xbox)', margin: 0 }}>
+                  ✓ {result.type === 'grammar' ? 'Grammar suggestions' : 'Rewrite preview'}
+                </p>
+                <button
+                  onClick={() => navigator.clipboard.writeText(result.content)}
+                  style={{ fontSize: 11, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Fira Code, monospace' }}>
+                  Copy
+                </button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div>
+                  <div style={{ fontSize: 10, fontFamily: 'Fira Code, monospace', color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Before</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6, padding: '8px 10px', background: 'var(--bg-elevated)', borderRadius: 5, border: '1px solid var(--border)' }}>
+                    {result.original?.slice(0, 400)}{result.original?.length > 400 ? '…' : ''}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 10, fontFamily: 'Fira Code, monospace', color: 'var(--xbox)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.1em' }}>After</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-primary)', lineHeight: 1.6, padding: '8px 10px', background: 'var(--xbox-subtle)', borderRadius: 5, border: '1px solid var(--xbox-border)' }}>
+                    {result.content?.slice(0, 400)}{result.content?.length > 400 ? '…' : ''}
+                  </div>
+                </div>
+              </div>
             </>
           )}
           {result.type === 'quality' && result.score && (
