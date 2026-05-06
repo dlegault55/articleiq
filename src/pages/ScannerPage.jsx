@@ -37,7 +37,7 @@ const FREQUENCIES = [
 const PRESETS = [
   { value: 'fast',     label: 'Fast',     desc: 'Outdated + word count', icon: '⚡', checks: 2 },
   { value: 'standard', label: 'Standard', desc: 'All quality checks',    icon: '🔍', checks: 5 },
-  { value: 'full',     label: 'Full',     desc: 'All checks + AI',       icon: '🤖', checks: 8, paid: true },
+  { value: 'full',     label: 'Full',     desc: 'All checks + duplicates', icon: '🔬', checks: 8 },
 ]
 
 const CHECKS = [
@@ -46,8 +46,8 @@ const CHECKS = [
   { label: 'Broken Links',      desc: 'Detects dead or invalid hyperlinks',       presets: ['standard','full'] },
   { label: 'Missing Metadata',  desc: 'Checks for missing labels and sections',   presets: ['standard','full'] },
   { label: 'Readability Score', desc: 'Flesch-Kincaid readability analysis',      presets: ['standard','full'] },
-  { label: 'AI Grammar Fix',    desc: 'AI-powered grammar and clarity',           presets: ['full'], paid: true },
-  { label: 'AI Quality Score',  desc: 'AI scores clarity, completeness, structure', presets: ['full'], paid: true },
+  { label: 'AI Grammar Fix',    desc: 'Available on all scans (Pro)',              presets: ['fast','standard','full'], paid: true },
+  { label: 'AI Quality Score',  desc: 'Available on all scans (Pro)',              presets: ['fast','standard','full'], paid: true },
   { label: 'Duplicate Detection', desc: 'Flags articles with similar titles or content', presets: ['standard','full'] },
 ]
 
