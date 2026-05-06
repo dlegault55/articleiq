@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
+import { useScan } from '@/hooks/useScan'
 import { supabase } from '@/lib/supabase'
 import { grammarFix, fullRewrite, getQualityScore } from '@/lib/claude'
 import { canUseAI } from '@/lib/stripe'
@@ -376,10 +377,73 @@ const Pagination = ({ page, totalPages, onChange }) => {
   )
 }
 
+// ─── Scan progress banner ─────────────────────────────────────
+const ScanProgressBanner = ({ scan, scanId, setScan, resumeScan }) => {
+  const lastActivity = scan.last_activity ? new Date(scan.last_activity) : new Date(scan.created_at)
+  const stalledMs    = Date.now() - lastActivity.getTime()
+  const isStalled    = stalledMs > 3 * 60 * 1000
+  const pct          = scan.total_articles ? Math.round((scan.scanned_articles / scan.total_articles) * 100) : 0
+
+  return (
+    <div style={{ marginBottom: 24, borderRadius: 10, overflow: 'hidden',
+      background: isStalled ? 'rgba(245,158,11,0.06)' : 'var(--xbox-subtle)',
+      border: `2px solid ${isStalled ? 'rgba(245,158,11,0.3)' : 'var(--xbox-border)'}`,
+    }}>
+      {isStalled && (
+        <div style={{ padding: '10px 20px', background: 'rgba(245,158,11,0.1)', borderBottom: '1px solid rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--badge-warning-color)' }}>
+            ⚠ Scan stalled — no activity for {Math.round(stalledMs / 60000)} min
+          </span>
+          <button onClick={() => resumeScan(scan)} className="btn-primary" style={{ fontSize: 12, flexShrink: 0 }}>
+            Resume scan
+          </button>
+        </div>
+      )}
+      <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {!isStalled && <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--xbox)', boxShadow: '0 0 8px var(--xbox)', animation: 'aiq-pulse 1.5s ease-in-out infinite' }} />}
+          <div>
+            <p style={{ fontSize: 16, fontWeight: 700, color: isStalled ? 'var(--badge-warning-color)' : 'var(--xbox)', margin: 0 }}>
+              {isStalled ? 'Scan paused' : 'Scan in progress'}
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+              <strong style={{ color: 'var(--text-primary)' }}>{scan.scanned_articles || 0}</strong> of <strong style={{ color: 'var(--text-primary)' }}>{scan.total_articles || '?'}</strong> articles analyzed
+            </p>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          <span style={{ fontSize: 32, fontWeight: 800, color: isStalled ? 'var(--badge-warning-color)' : 'var(--xbox)', fontFamily: 'Inter, sans-serif', lineHeight: 1 }}>
+            {scan.total_articles ? `${pct}%` : '...'}
+          </span>
+          <button
+            onClick={async () => {
+              await supabase.from('scan_jobs').update({ status: 'failed', error_message: 'Cancelled by user', completed_at: new Date().toISOString() }).eq('id', scanId)
+              setScan(s => ({ ...s, status: 'failed' }))
+            }}
+            className="btn-ghost"
+            style={{ fontSize: 12, color: 'var(--badge-critical-color)', padding: '4px 10px' }}>
+            Stop
+          </button>
+        </div>
+      </div>
+      <div style={{ height: 5, background: 'var(--bg-overlay)' }}>
+        <div style={{ height: '100%', background: isStalled ? 'var(--badge-warning-color)' : 'var(--xbox)', boxShadow: isStalled ? 'none' : '0 0 6px var(--xbox)', transition: 'width 1s ease', width: `${Math.max(pct, 1)}%` }} />
+      </div>
+      {!isStalled && (
+        <div style={{ padding: '7px 20px', background: 'rgba(16,124,16,0.04)' }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--xbox)' }}>⚠ Keep this tab open</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 6 }}>— closing it will pause the scan</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main page ────────────────────────────────────────────────
 export default function ScanResultsPage() {
   const { scanId }  = useParams()
   const { profile } = useAuth()
+  const { resumeScan } = useScan()
   const isPaid      = canUseAI(profile?.plan)
 
   const [scan,     setScan]     = useState(null)
@@ -594,46 +658,7 @@ export default function ScanResultsPage() {
 
       {/* Live progress banner — shown while scan is running */}
       {(scan.status === 'running' || scan.status === 'pending') && (
-        <div style={{ marginBottom: 24, borderRadius: 10, background: 'var(--xbox-subtle)', border: '2px solid var(--xbox-border)', overflow: 'hidden' }}>
-          {/* Top bar */}
-          <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--xbox)', boxShadow: '0 0 8px var(--xbox)', animation: 'aiq-pulse 1.5s ease-in-out infinite', flexShrink: 0 }} />
-              <div>
-                <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--xbox)', margin: 0, letterSpacing: -0.3 }}>Scan in progress</p>
-                <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, marginTop: 2 }}>
-                  <strong style={{ color: 'var(--text-primary)' }}>{scan.scanned_articles || 0}</strong> of <strong style={{ color: 'var(--text-primary)' }}>{scan.total_articles || '?'}</strong> articles analyzed
-                </p>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 28, fontWeight: 800, fontFamily: 'Inter, sans-serif', color: 'var(--xbox)', lineHeight: 1 }}>
-                  {scan.total_articles ? `${Math.round((scan.scanned_articles / scan.total_articles) * 100)}%` : '...'}
-                </div>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Fira Code, monospace' }}>complete</div>
-              </div>
-              <button
-                onClick={async () => {
-                  await supabase.from('scan_jobs').update({ status: 'failed', error_message: 'Cancelled by user', completed_at: new Date().toISOString() }).eq('id', scanId)
-                  setScan(s => ({ ...s, status: 'failed' }))
-                }}
-                className="btn-ghost"
-                style={{ fontSize: 12, color: 'var(--badge-critical-color)', padding: '6px 12px' }}>
-                Stop scan
-              </button>
-            </div>
-          </div>
-          {/* Progress bar */}
-          <div style={{ height: 6, background: 'var(--bg-overlay)' }}>
-            <div style={{ height: '100%', background: 'var(--xbox)', transition: 'width 1s ease', width: scan.total_articles ? `${Math.round((scan.scanned_articles / scan.total_articles) * 100)}%` : '0%', boxShadow: '0 0 8px var(--xbox)' }} />
-          </div>
-          {/* Warning */}
-          <div style={{ padding: '8px 20px', background: 'rgba(16,124,16,0.05)', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 12, color: 'var(--xbox)', fontWeight: 600 }}>⚠️ Keep this tab open</span>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>— closing it will pause the scan</span>
-          </div>
-        </div>
+        <ScanProgressBanner scan={scan} scanId={scanId} setScan={setScan} resumeScan={resumeScan} />
       )}
       <style>{`@keyframes aiq-pulse{0%,100%{opacity:1}50%{opacity:0.35}}`}</style>
 

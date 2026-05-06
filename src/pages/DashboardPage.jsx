@@ -109,7 +109,7 @@ function ConnectorForm({ onSaved }) {
 export default function DashboardPage() {
   const { profile, userId } = useAuth()
   const { hasConnector, connector, reload: reloadConnector } = useConnector()
-  const { activeScan, recentScans, reload: reloadScans } = useScan()
+  const { activeScan, recentScans, reload: reloadScans, resumeScan } = useScan()
   const toast    = useToast()
   const navigate = useNavigate()
 
@@ -158,21 +158,8 @@ export default function DashboardPage() {
         .select().single()
       if (jobErr) throw new Error(jobErr.message)
 
-      // Navigate to results — scan runs server-side via Supabase Edge Function
+      // ScanContext detects pending job and drives chunks automatically
       navigate(`/scanner/results/${job.id}`)
-
-      // Call Edge Function (fire and forget — scan runs independently)
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-      fetch(`${supabaseUrl}/functions/v1/run-scan`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${anonKey}`,
-          'apikey': anonKey,
-        },
-        body: JSON.stringify({ scanJobId: job.id, userId, connectorId: conn.id, preset }),
-      }).catch(e => console.error('Edge function error:', e))
 
     } catch (e) { setError(e.message); setStarting(false) }
   }

@@ -135,7 +135,12 @@ export default async function handler(req, res) {
       try { analysis = analyzeArticle(zdArticle, preset) }
       catch (e) { analysis = { wordCount: 0, readabilityScore: null, issues: [], hasMissingMeta: false } }
 
-      const { data: savedArticle } = await supabase.from('scanned_articles').insert({
+      // Skip if already saved (resume safety)
+    const { data: existing } = await supabase.from('scanned_articles')
+      .select('id').eq('scan_job_id', scanJobId).eq('zendesk_article_id', zdArticle.id).single()
+    if (existing) continue
+
+    const { data: savedArticle } = await supabase.from('scanned_articles').insert({
         scan_job_id:          scanJobId,
         user_id:              userId,
         zendesk_article_id:   zdArticle.id,
