@@ -180,30 +180,29 @@ export default async function handler(req, res) {
     }).eq('id', scanJobId)
 
     if (!hasMore) {
-      // Final page — complete the scan
-      const { data: finalJob } = await supabase.from('scan_jobs').select('critical_count, warning_count, info_count, issues_found').eq('id', scanJobId).single()
+      // Count from article_issues — the source of truth
+      const { data: issueCounts } = await supabase
+        .from('article_issues')
+        .select('severity')
+        .eq('scan_job_id', scanJobId)
+
+      const criticalCount = (issueCounts || []).filter(i => i.severity === 'critical').length
+      const warningCount  = (issueCounts || []).filter(i => i.severity === 'warning').length
+      const infoCount     = (issueCounts || []).filter(i => i.severity === 'info').length
+      const totalIssues   = (issueCounts || []).length
+
       await supabase.from('scan_jobs').update({
-        status:        'completed',
-        completed_at:  new Date().toISOString(),
-        // Accumulate counts from all chunks
-        critical_count: (finalJob?.critical_count || 0) + criticalCount,
-        warning_count:  (finalJob?.warning_count  || 0) + warningCount,
-        info_count:     (finalJob?.info_count     || 0) + infoCount,
-        issues_found:   (finalJob?.issues_found   || 0) + totalIssues,
+        status:         'completed',
+        completed_at:   new Date().toISOString(),
+        critical_count: criticalCount,
+        warning_count:  warningCount,
+        info_count:     infoCount,
+        issues_found:   totalIssues,
       }).eq('id', scanJobId)
 
-      // Send email
       await sendCompletionEmail(supabase, scanJobId, userId)
-
       return res.status(200).json({ done: true, page, scannedSoFar, totalCount })
     }
-
-    // Accumulate counts for this chunk
-    await supabase.from('scan_jobs').update({
-      critical_count: supabase.rpc ? undefined : undefined, // handled at end
-    }).eq('id', scanJobId)
-
-    return res.status(200).json({ done: false, page, hasMore, scannedSoFar, totalCount, nextPage: page + 1 })
 
   } catch (err) {
     console.error('Chunk failed:', err)

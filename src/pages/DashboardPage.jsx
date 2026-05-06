@@ -159,6 +159,7 @@ export default function DashboardPage() {
   const [error,           setError]           = useState(null)
   const [preset,          setPreset]          = useState('standard')
   const [showPresets,     setShowPresets]     = useState(false)
+  const [lastScanCounts,  setLastScanCounts]  = useState(null)
 
   useEffect(() => {
     if (!userId) { setLoading(false); return }
@@ -170,6 +171,25 @@ export default function DashboardPage() {
     }
     load()
   }, [userId, connector])
+
+  // Load real issue counts for last completed scan
+  useEffect(() => {
+    const lastCompleted = recentScans.find(s => s.status === 'completed')
+    if (!lastCompleted) return
+    const load = async () => {
+      const { data } = await supabase
+        .from('article_issues')
+        .select('severity')
+        .eq('scan_job_id', lastCompleted.id)
+      if (!data) return
+      setLastScanCounts({
+        critical: data.filter(i => i.severity === 'critical').length,
+        warning:  data.filter(i => i.severity === 'warning').length,
+        info:     data.filter(i => i.severity === 'info').length,
+      })
+    }
+    load()
+  }, [recentScans])
 
   const startScan = async () => {
     const conn = activeConnector || connector
@@ -201,7 +221,18 @@ export default function DashboardPage() {
   const completed  = recentScans.filter(s => s.status === 'completed')
   const lastScan   = completed[0]
   const prevScan   = completed[1]
-  const lastHealth = calcHealth(lastScan)
+  // Use real counts from article_issues, fall back to scan_jobs columns
+  const lastCounts = lastScanCounts || {
+    critical: lastScan?.critical_count || 0,
+    warning:  lastScan?.warning_count  || 0,
+    info:     lastScan?.info_count     || 0,
+  }
+  const calcHealthFromCounts = (counts, articles) => {
+    if (!articles) return null
+    const penalty = (counts.critical * 3 + counts.warning + counts.info * 0.2) / articles
+    return Math.max(0, Math.min(100, Math.round(100 - penalty * 20)))
+  }
+  const lastHealth = lastScan ? calcHealthFromCounts(lastCounts, lastScan.scanned_articles) : null
   const prevHealth = calcHealth(prevScan)
   const trend      = lastHealth != null && prevHealth != null ? lastHealth - prevHealth : null
   const selectedPreset = PRESETS.find(p => p.value === preset)
@@ -286,9 +317,9 @@ export default function DashboardPage() {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   {[
-                    { label: 'Critical', value: lastScan.critical_count || 0, color: 'var(--badge-critical-color)', icon: AlertOctagon },
-                    { label: 'Warnings', value: lastScan.warning_count  || 0, color: 'var(--badge-warning-color)',  icon: AlertTriangle },
-                    { label: 'Info',     value: lastScan.info_count     || 0, color: 'var(--badge-info-color)',     icon: Info },
+                    { label: 'Critical', value: lastCounts.critical, color: 'var(--badge-critical-color)', icon: AlertOctagon },
+                    { label: 'Warnings', value: lastCounts.warning,  color: 'var(--badge-warning-color)',  icon: AlertTriangle },
+                    { label: 'Info',     value: lastCounts.info,     color: 'var(--badge-info-color)',     icon: Info },
                   ].map(({ label, value, color, icon: Icon }) => (
                     <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                       <Icon size={13} style={{ color }} />
