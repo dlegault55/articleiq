@@ -624,7 +624,7 @@ export default function ScanResultsPage() {
             <div>
               <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--xbox)', margin: 0 }}>Scan in progress</p>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0 }}>
-                {scan.scanned_articles || 0} of {scan.total_articles || '?'} articles analyzed — results updating live
+                {scan.scanned_articles || 0} of {scan.total_articles || '?'} articles analyzed — keep this tab open
               </p>
             </div>
           </div>
