@@ -113,19 +113,53 @@ export default function DashboardPage() {
         </Link>
       )}
 
-      {/* No connector */}
+      {/* Onboarding — new user, no connector */}
       {!activeScan && hasConn === false && (
-        <div className="card animate-in" style={{ padding:'48px 32px', textAlign:'center', marginBottom: 20 }}>
-          <div style={{ width:52, height:52, background:'var(--green-light)', border:'1.5px solid var(--green-border)', borderRadius:14, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
-            <Plug size={24} style={{ color:'var(--green)' }} />
+        <div className="animate-in">
+          {/* Welcome hero */}
+          <div style={{ borderRadius:'var(--radius-xl)', background:'var(--green)', padding:'32px 32px 28px', marginBottom:16, position:'relative', overflow:'hidden' }}>
+            <div style={{ position:'absolute', top:-40, right:-40, width:200, height:200, borderRadius:'50%', background:'rgba(255,255,255,0.06)' }} />
+            <p style={{ fontSize:11, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(255,255,255,0.55)', marginBottom:8 }}>Welcome to ArticleIQ</p>
+            <h1 style={{ fontFamily:'Syne,sans-serif', fontSize:28, fontWeight:800, color:'white', marginBottom:8, letterSpacing:-0.5 }}>
+              Let's get your knowledge base set up
+            </h1>
+            <p style={{ fontSize:15, color:'rgba(255,255,255,0.75)', maxWidth:480, lineHeight:1.6 }}>
+              ArticleIQ scans your Zendesk articles for quality issues — outdated content, poor readability, duplicates, and more. Setup takes about 2 minutes.
+            </p>
           </div>
-          <h2 style={{ fontFamily:'Syne,sans-serif', fontSize:20, fontWeight:700, marginBottom:8 }}>Connect your knowledge base</h2>
-          <p style={{ fontSize:14, color:'var(--text-2)', marginBottom:24, maxWidth:340, margin:'0 auto 24px' }}>
-            Connect Zendesk to start scanning your articles for quality issues.
+
+          {/* Steps */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12, marginBottom:16 }}>
+            {[
+              { step:1, icon:<Plug size={20} style={{ color:'var(--green)' }} />, title:'Connect Zendesk', desc:'Add your subdomain and API token. Read-only access — we never modify your articles.', action: true },
+              { step:2, icon:<Scan size={20} style={{ color:'var(--text-3)' }} />, title:'Run your first scan', desc:"Choose Fast, Standard, or Full. We'll analyze every article and flag issues automatically.", action: false },
+              { step:3, icon:<CheckCircle size={20} style={{ color:'var(--text-3)' }} />, title:'Review results', desc:'See your health score, browse issues by severity, and use AI to fix problems in one click.', action: false },
+            ].map(({ step, icon, title, desc, action }) => (
+              <div key={step} className="card" style={{ padding:'20px', borderTop: action ? '3px solid var(--green)' : '3px solid var(--border)' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
+                  <div style={{ width:32, height:32, borderRadius:8, background: action ? 'var(--green-light)' : 'var(--bg)', border:`1px solid ${action ? 'var(--green-border)' : 'var(--border)'}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    {icon}
+                  </div>
+                  <span style={{ fontSize:11, fontWeight:700, color: action ? 'var(--green)' : 'var(--text-3)', fontFamily:'Syne,sans-serif' }}>Step {step}</span>
+                </div>
+                <p style={{ fontSize:14, fontWeight:700, color: action ? 'var(--text)' : 'var(--text-3)', marginBottom:6, fontFamily:'Syne,sans-serif' }}>{title}</p>
+                <p style={{ fontSize:12, color:'var(--text-2)', lineHeight:1.6, marginBottom: action ? 16 : 0 }}>{desc}</p>
+                {action && (
+                  <Link to="/connector" className="btn btn-primary btn-sm" style={{ width:'100%', justifyContent:'center' }}>
+                    <Plug size={13} /> Connect Zendesk →
+                  </Link>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Help link */}
+          <p style={{ fontSize:12, color:'var(--text-3)', textAlign:'center' }}>
+            Need help finding your API token?{' '}
+            <a href="https://support.zendesk.com/hc/en-us/articles/4408889192858" target="_blank" rel="noreferrer" style={{ color:'var(--green)', fontWeight:600 }}>
+              View Zendesk guide →
+            </a>
           </p>
-          <Link to="/connector" className="btn btn-primary btn-lg">
-            <Plug size={16} /> Connect Zendesk
-          </Link>
         </div>
       )}
 
