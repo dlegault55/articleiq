@@ -386,6 +386,7 @@ export default function ScanResultsPage() {
   // Poll while scan is still running
   useEffect(() => {
     if (!scanId) return
+    let intervalRef = null
 
     const poll = async () => {
       const [{ data: s }, { data: a }, { data: i }] = await Promise.all([
@@ -428,9 +429,8 @@ export default function ScanResultsPage() {
 
     const start = async () => {
       // First poll to get scan details
-      const [{ data: s }] = await Promise.all([
-        supabase.from('scan_jobs').select('*').eq('id', scanId).single(),
-      ])
+      const { data: s } = await supabase.from('scan_jobs').select('*').eq('id', scanId).single()
+
       if (s) {
         setScan(s)
         setLoading(false)
@@ -446,17 +446,15 @@ export default function ScanResultsPage() {
             .single()
 
           if (connector && s.status === 'pending') {
-            // Start driving chunks
             runChunks(scanId, connector.id, s.user_id, s.preset || 'standard')
           }
 
           // Poll for progress
-          interval = setInterval(async () => {
+          intervalRef = setInterval(async () => {
             const stillGoing = await poll()
-            if (!stillGoing) clearInterval(interval)
+            if (!stillGoing) clearInterval(intervalRef)
           }, 2000)
         } else {
-          // Already done, just load data
           await poll()
         }
       } else {
@@ -465,7 +463,7 @@ export default function ScanResultsPage() {
     }
 
     start()
-    return () => clearInterval(interval)
+    return () => { if (intervalRef) clearInterval(intervalRef) }
   }, [scanId])
 
   // Mark issue resolved
