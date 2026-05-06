@@ -634,34 +634,44 @@ export default function ScanResultsPage() {
 
       {/* Live progress banner — shown while scan is running */}
       {(scan.status === 'running' || scan.status === 'pending') && (
-        <div style={{ marginBottom: 20, padding: '14px 18px', borderRadius: 9, background: 'var(--xbox-subtle)', border: '1px solid var(--xbox-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--xbox)', boxShadow: '0 0 6px var(--xbox)', animation: 'aiq-pulse 1.5s ease-in-out infinite', flexShrink: 0 }} />
-            <div>
-              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--xbox)', margin: 0 }}>Scan in progress</p>
-              <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0 }}>
-                {scan.scanned_articles || 0} of {scan.total_articles || '?'} articles analyzed — keep this tab open
-              </p>
+        <div style={{ marginBottom: 24, borderRadius: 10, background: 'var(--xbox-subtle)', border: '2px solid var(--xbox-border)', overflow: 'hidden' }}>
+          {/* Top bar */}
+          <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--xbox)', boxShadow: '0 0 8px var(--xbox)', animation: 'aiq-pulse 1.5s ease-in-out infinite', flexShrink: 0 }} />
+              <div>
+                <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--xbox)', margin: 0, letterSpacing: -0.3 }}>Scan in progress</p>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, marginTop: 2 }}>
+                  <strong style={{ color: 'var(--text-primary)' }}>{scan.scanned_articles || 0}</strong> of <strong style={{ color: 'var(--text-primary)' }}>{scan.total_articles || '?'}</strong> articles analyzed
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 28, fontWeight: 800, fontFamily: 'Inter, sans-serif', color: 'var(--xbox)', lineHeight: 1 }}>
+                  {scan.total_articles ? `${Math.round((scan.scanned_articles / scan.total_articles) * 100)}%` : '...'}
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Fira Code, monospace' }}>complete</div>
+              </div>
+              <button
+                onClick={async () => {
+                  await supabase.from('scan_jobs').update({ status: 'failed', error_message: 'Cancelled by user', completed_at: new Date().toISOString() }).eq('id', scanId)
+                  setScan(s => ({ ...s, status: 'failed' }))
+                }}
+                className="btn-ghost"
+                style={{ fontSize: 12, color: 'var(--badge-critical-color)', padding: '6px 12px' }}>
+                Stop scan
+              </button>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 120, height: 4, borderRadius: 2, background: 'var(--bg-overlay)', overflow: 'hidden' }}>
-                <div style={{ height: '100%', background: 'var(--xbox)', borderRadius: 2, transition: 'width 1s ease', width: scan.total_articles ? `${Math.round((scan.scanned_articles / scan.total_articles) * 100)}%` : '0%' }} />
-              </div>
-              <span style={{ fontSize: 11, fontFamily: 'Fira Code, monospace', color: 'var(--xbox)', minWidth: 32 }}>
-                {scan.total_articles ? `${Math.round((scan.scanned_articles / scan.total_articles) * 100)}%` : '...'}
-              </span>
-            </div>
-            <button
-              onClick={async () => {
-                await supabase.from('scan_jobs').update({ status: 'failed', error_message: 'Cancelled by user', completed_at: new Date().toISOString() }).eq('id', scanId)
-                setScan(s => ({ ...s, status: 'failed' }))
-              }}
-              className="btn-ghost"
-              style={{ fontSize: 12, color: 'var(--badge-critical-color)', padding: '4px 10px', flexShrink: 0 }}>
-              Stop scan
-            </button>
+          {/* Progress bar */}
+          <div style={{ height: 6, background: 'var(--bg-overlay)' }}>
+            <div style={{ height: '100%', background: 'var(--xbox)', transition: 'width 1s ease', width: scan.total_articles ? `${Math.round((scan.scanned_articles / scan.total_articles) * 100)}%` : '0%', boxShadow: '0 0 8px var(--xbox)' }} />
+          </div>
+          {/* Warning */}
+          <div style={{ padding: '8px 20px', background: 'rgba(16,124,16,0.05)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 12, color: 'var(--xbox)', fontWeight: 600 }}>⚠️ Keep this tab open</span>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>— closing it will pause the scan</span>
           </div>
         </div>
       )}
