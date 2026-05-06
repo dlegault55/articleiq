@@ -5,7 +5,6 @@ import { useConnector } from '@/hooks/useConnector'
 import { useScan } from '@/hooks/useScan'
 import { useToast } from '@/hooks/useToast'
 import { supabase } from '@/lib/supabase'
-import { runScan } from '@/lib/scanner'
 import { sendScanCompleteEmail } from '@/lib/email'
 import { PageShell, PageSkeleton, EmptyState } from '@/components/ui'
 import {
@@ -258,43 +257,36 @@ export default function ScannerPage() {
     prevActiveScan.current = activeScan
   }, [activeScan, recentScans])
 
-  // ── Start scan ─────────────────────────────────────────────
+  // ── Start scan (server-side) ───────────────────────────────
   const startScan = async () => {
     if (!userId)            { setError('Not signed in. Please refresh.'); return }
     if (!selectedConnector) { setError('No connector selected.'); return }
     setError(null)
     try {
+      // Create scan job in DB
       const { data: job, error: jobErr } = await supabase
         .from('scan_jobs')
         .insert({ user_id: userId, connector_id: selectedConnector.id, status: 'pending', preset: scanPreset })
         .select().single()
       if (jobErr) throw new Error(jobErr.message)
 
-      await runScan({
-        scanJobId:   job.id,
-        userId,
-        connector:   selectedConnector,
-        articleLimit: Infinity,
-        preset:      scanPreset,
-        onProgress:  () => reloadScans(),
+      // Hand off to server — scan runs independently of this browser tab
+      const res = await fetch('/api/run-scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scanJobId:   job.id,
+          userId,
+          connectorId: selectedConnector.id,
+          preset:      scanPreset,
+        }),
       })
-
-      reloadScans()
-
-      // Send completion email (non-blocking)
-      const { data: done } = await supabase.from('scan_jobs').select('*').eq('id', job.id).single()
-      if (profile?.email && done) {
-        sendScanCompleteEmail({
-          to:        profile.email,
-          firstName: profile.full_name?.split(' ')[0],
-          scanId:    job.id,
-          articles:  done.scanned_articles || 0,
-          critical:  done.critical_count   || 0,
-          warning:   done.warning_count    || 0,
-          scanDate:  new Date(done.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-        })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || 'Failed to start server-side scan')
       }
 
+      reloadScans()
       navigate(`/scanner/results/${job.id}`)
     } catch (e) {
       setError(e.message)
