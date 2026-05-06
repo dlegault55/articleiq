@@ -1,15 +1,14 @@
 import { useAuth } from '@/hooks/useAuth'
-import { signOut } from '@/lib/supabase'
 
 export default function SettingsPage() {
   const { profile, user } = useAuth()
 
   return (
     <div style={{ maxWidth: 560, margin: '0 auto', padding: '24px' }}>
-      <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 20, color: 'var(--text)', marginBottom: 2 }}>Settings</p>
-      <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 20 }}>Manage your account</p>
+      <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 20, color: 'var(--text)', marginBottom: 2 }}>Account settings</p>
+      <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 20 }}>Your account details</p>
 
-      <div className="card" style={{ padding: '20px 22px', marginBottom: 12 }}>
+      <div className="card" style={{ padding: '20px 22px' }}>
         {[
           { label: 'Name',  value: profile?.full_name || '—' },
           { label: 'Email', value: user?.email || '—' },
@@ -21,8 +20,6 @@ export default function SettingsPage() {
           </div>
         ))}
       </div>
-
-      <button onClick={() => signOut()} className="btn btn-danger btn-sm">Sign out</button>
     </div>
   )
 }
