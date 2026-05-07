@@ -20,9 +20,9 @@ const healthColor = (s) => s >= 80 ? 'var(--green)' : s >= 60 ? 'var(--amber)' :
 const healthLabel = (s) => s >= 80 ? 'Healthy' : s >= 60 ? 'Needs attention' : 'Critical'
 
 const PRESETS = [
-  { value: 'fast',     label: 'Fast',     icon: '⚡', time: '~10 min / 1k' },
-  { value: 'standard', label: 'Standard', icon: '🔍', time: '~20 min / 1k' },
-  { value: 'full',     label: 'Full',     icon: '🔬', time: '~30 min / 1k' },
+  { value: 'fast',     label: 'Fast',     icon: '⚡', time: '~10 min / 1k', checks: ['Outdated articles', 'Word count'] },
+  { value: 'standard', label: 'Standard', icon: '🔍', time: '~20 min / 1k', checks: ['Everything in Fast', 'Readability scores', 'Missing labels', 'Duplicate detection'] },
+  { value: 'full',     label: 'Full',     icon: '🔬', time: '~30 min / 1k', checks: ['Everything in Standard', 'Broken link detection', 'Deeper duplicate analysis'] },
 ]
 
 // Time saved calculation: ~18s per issue to manually find
@@ -272,21 +272,40 @@ export default function DashboardPage() {
               <p style={{ fontSize:14, fontWeight:700 }}>New Scan</p>
               {connector && <span style={{ fontSize:11, color:'var(--text-3)', display:'flex', alignItems:'center', gap:4 }}><CheckCircle size={11} style={{ color:'var(--green)' }} />{connector.subdomain}</span>}
             </div>
-            <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:14 }}>
-              {PRESETS.map(({ value, label, icon, time }) => (
+            <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:10 }}>
+              {PRESETS.map(({ value, label, icon, time, checks }) => (
                 <button key={value} onClick={() => setPreset(value)}
-                  style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', borderRadius:10, cursor:'pointer', textAlign:'left', border:'none', transition:'all 0.12s',
+                  style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'11px 12px', borderRadius:10, cursor:'pointer', textAlign:'left', border:'none', transition:'all 0.12s',
                     background: preset===value ? 'var(--green-light)' : 'var(--bg)',
                     outline: `1.5px solid ${preset===value ? 'var(--green-border)' : 'var(--border-md)'}`,
                   }}>
-                  <span style={{ fontSize:18 }}>{icon}</span>
+                  <span style={{ fontSize:16, flexShrink:0, marginTop:1 }}>{icon}</span>
                   <div style={{ flex:1 }}>
-                    <div style={{ fontSize:13, fontWeight:700, color: preset===value ? 'var(--green)' : 'var(--text)' }}>{label}</div>
-                    <div style={{ fontSize:10, color:'var(--text-3)', fontFamily:'monospace' }}>{time}</div>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:3 }}>
+                      <span style={{ fontSize:13, fontWeight:700, color: preset===value ? 'var(--green)' : 'var(--text)' }}>{label}</span>
+                      <span style={{ fontSize:10, color:'var(--text-3)', fontFamily:'monospace' }}>{time}</span>
+                    </div>
+                    {preset===value && (
+                      <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
+                        {checks.map(c => (
+                          <div key={c} style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'var(--green)' }}>
+                            <CheckCircle size={10} style={{ flexShrink:0 }} /> {c}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {preset===value && <CheckCircle size={13} style={{ color:'var(--green)', flexShrink:0 }} />}
+                  {preset===value && <CheckCircle size={13} style={{ color:'var(--green)', flexShrink:0, marginTop:2 }} />}
                 </button>
               ))}
+            </div>
+
+            {/* AI note */}
+            <div style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 10px', background:'var(--bg)', borderRadius:8, border:'1px solid var(--border)', marginBottom:12 }}>
+              <Zap size={13} style={{ color:'var(--amber)', flexShrink:0 }} />
+              <p style={{ fontSize:11, color:'var(--text-2)', margin:0, lineHeight:1.5 }}>
+                <strong>AI features</strong> (grammar fix, rewrite, quality score) are available on <strong>all presets</strong> for Pro users — not just Full.
+              </p>
             </div>
             {error && <p style={{ fontSize:12, color:'var(--red)', marginBottom:10 }}>{error}</p>}
             <button onClick={startScan} disabled={starting} className="btn btn-primary" style={{ width:'100%', justifyContent:'center', padding:'11px' }}>
