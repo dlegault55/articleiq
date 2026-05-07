@@ -812,7 +812,7 @@ export default function ScanResultsPage() {
 
   const filterOpts = [
     { key:'all',      label:'All',         count: articles.length },
-    { key:'issues',   label:'Has issues',  count: articles.filter(a => !resolvedArticles.has(a.id) && issues.some(i=>i.article_id===a.id && !resolvedIssues.has(i.id))).length },
+    { key:'issues',   label:'Has issues',  count: articles.filter(a => issues.some(i=>i.article_id===a.id && !resolvedIssues.has(i.id))).length },
     { key:'critical', label:'Critical',    count: articles.filter(a => issues.some(i=>i.article_id===a.id && i.severity==='critical' && !resolvedIssues.has(i.id))).length },
     { key:'clean',    label:'Clean',       count: articles.filter(a => !issues.some(i=>i.article_id===a.id)).length },
     { key:'resolved', label:'Resolved',    count: articles.filter(a => { const ai = issues.filter(i=>i.article_id===a.id); return ai.length > 0 && ai.every(i=>resolvedIssues.has(i.id)) }).length },
