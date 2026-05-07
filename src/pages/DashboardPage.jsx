@@ -19,23 +19,17 @@ const calcHealth = (scan) => {
 const healthColor = (s) => s >= 80 ? 'var(--green)' : s >= 60 ? 'var(--amber)' : 'var(--red)'
 const healthLabel = (s) => s >= 80 ? 'Healthy' : s >= 60 ? 'Needs attention' : 'Critical'
 
-const PRESETS = [
-  { value: 'fast', label: 'Fast', icon: '⚡', time: '~10 min / 1k', checks: [
-    { label: 'Outdated articles', desc: 'Not updated in 180+ days — customers may be following stale instructions' },
-    { label: 'Too short', desc: 'Under 150 words — likely not detailed enough to actually help' },
-  ]},
-  { value: 'standard', label: 'Standard', icon: '🔍', time: '~20 min / 1k', checks: [
-    { label: 'Outdated articles', desc: 'Not updated in 180+ days' },
-    { label: 'Too short', desc: 'Under 150 words' },
-    { label: 'Readability score', desc: 'How easy the article is to read and follow — low scores mean customers struggle and call support instead' },
-    { label: 'Duplicate detection', desc: 'Articles covering the same topic — confuses customers and splits your search results' },
-    { label: 'Missing labels', desc: 'No tags or category assigned — harder to find and harder to manage at scale' },
-  ]},
-  { value: 'full', label: 'Full', icon: '🔬', time: '~30 min / 1k', checks: [
-    { label: 'Everything in Standard', desc: '' },
-    { label: 'Broken links', desc: 'Dead hyperlinks inside articles — customers click them, hit a 404, and lose trust in your content' },
-  ]},
+const SCAN_CHECKS = [
+  { key: 'outdated',    label: 'Outdated articles',   desc: 'Not updated in 180+ days — customers may be following stale instructions', time: 'Fast' },
+  { key: 'wordCount',   label: 'Thin content',         desc: 'Under 150 words — likely not detailed enough to genuinely help anyone', time: 'Fast' },
+  { key: 'readability', label: 'Readability score',    desc: 'How easy articles are to read — low scores mean customers struggle and call support instead', time: 'Moderate' },
+  { key: 'labels',      label: 'Missing labels',       desc: 'No tags or category — harder for customers to find, harder for your team to manage', time: 'Fast' },
+  { key: 'duplicates',  label: 'Duplicate detection',  desc: 'Articles covering the same topic — confuses customers and splits search results', time: 'Moderate' },
+  { key: 'links',       label: 'Broken links',         desc: 'Dead hyperlinks inside articles — customers hit a 404 and lose trust in your content', time: 'Moderate' },
+  { key: 'ai',          label: 'AI analysis',          desc: 'Grammar fixes, rewrites, and quality scoring powered by Claude', time: 'Pro only', proOnly: true },
 ]
+
+const DEFAULT_CHECKS = { outdated: true, wordCount: true, readability: true, labels: true, duplicates: false, links: false, ai: false }
 
 // Time saved calculation: ~18s per issue to manually find
 const timeSaved = (total) => {
@@ -56,7 +50,7 @@ export default function DashboardPage() {
 
   const [connector,    setConnector]    = useState(null)
   const [hasConn,      setHasConn]      = useState(null)
-  const [preset,       setPreset]       = useState('standard')
+  const [checks,  setChecks]  = useState(DEFAULT_CHECKS)
   const [starting,     setStarting]     = useState(false)
   const [lastCounts,   setLastCounts]   = useState(null)
   const [quickWins,    setQuickWins]    = useState([])
@@ -107,7 +101,7 @@ export default function DashboardPage() {
     setStarting(true); setError(null)
     try {
       const { data: job, error: jobErr } = await supabase.from('scan_jobs')
-        .insert({ user_id: userId, connector_id: connector.id, status: 'pending', preset })
+        .insert({ user_id: userId, connector_id: connector.id, status: 'pending', preset: Object.entries(checks).filter(([,v])=>v).map(([k])=>k).join(',') })
         .select().single()
       if (jobErr) throw new Error(jobErr.message)
       reloadScans()
@@ -229,48 +223,49 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* 1/3 1/3 1/3 preset grid */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12, marginBottom:20 }}>
-            {PRESETS.map(({ value, label, icon, time, checks }) => (
-              <button key={value} onClick={() => setPreset(value)}
-                style={{ padding:'20px', borderRadius:12, cursor:'pointer', textAlign:'left', border:'none', transition:'all 0.15s',
-                  background: preset===value ? 'var(--green-light)' : 'var(--bg)',
-                  outline: `2px solid ${preset===value ? 'var(--green)' : 'var(--border-md)'}`,
-                }}>
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
-                  <span style={{ fontSize:22 }}>{icon}</span>
-                  {preset===value && <CheckCircle size={16} style={{ color:'var(--green)' }} />}
-                </div>
-                <div style={{ fontSize:15, fontWeight:700, color: preset===value ? 'var(--green)' : 'var(--text)', marginBottom:2 }}>{label}</div>
-                <div style={{ fontSize:11, color:'var(--text-3)', marginBottom:12, fontFamily:'monospace' }}>{time} · keep tab open</div>
-                <div style={{ borderTop:`1px solid ${preset===value ? 'var(--green-border)' : 'var(--border)'}`, paddingTop:10, display:'flex', flexDirection:'column', gap:8 }}>
-                  {checks.map(c => (
-                    <div key={c.label} style={{ display:'flex', alignItems:'flex-start', gap:6 }}>
-                      <CheckCircle size={11} style={{ flexShrink:0, marginTop:2, color: preset===value ? 'var(--green)' : 'var(--text-3)', opacity: preset===value ? 1 : 0.5 }} />
-                      <div>
-                        <div style={{ fontSize:12, fontWeight:600, color: preset===value ? 'var(--text)' : 'var(--text-2)' }}>{c.label}</div>
-                        {c.desc && <div style={{ fontSize:11, color:'var(--text-3)', lineHeight:1.4, marginTop:1 }}>{c.desc}</div>}
-                      </div>
+          {/* Checkbox check picker */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:20 }}>
+            {SCAN_CHECKS.map(({ key, label, desc, time, proOnly }) => {
+              const isChecked = checks[key]
+              const locked = proOnly && profile?.plan !== 'paid'
+              return (
+                <button key={key}
+                  onClick={() => !locked && setChecks(c => ({ ...c, [key]: !c[key] }))}
+                  style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'14px 16px', borderRadius:10, cursor: locked ? 'not-allowed' : 'pointer', textAlign:'left', border:'none', transition:'all 0.12s', opacity: locked ? 0.6 : 1,
+                    background: isChecked && !locked ? 'var(--green-light)' : 'var(--bg)',
+                    outline: `1.5px solid ${isChecked && !locked ? 'var(--green-border)' : 'var(--border-md)'}`,
+                  }}>
+                  {/* Checkbox */}
+                  <div style={{ width:18, height:18, borderRadius:5, flexShrink:0, marginTop:1, display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.12s',
+                    background: isChecked && !locked ? 'var(--green)' : 'white',
+                    border: `2px solid ${isChecked && !locked ? 'var(--green)' : 'var(--border-md)'}`,
+                  }}>
+                    {isChecked && !locked && <CheckCircle size={11} color="white" />}
+                  </div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
+                      <span style={{ fontSize:13, fontWeight:700, color: isChecked && !locked ? 'var(--green)' : 'var(--text)' }}>{label}</span>
+                      <span style={{ fontSize:10, fontWeight:600, padding:'1px 7px', borderRadius:100,
+                        background: proOnly ? 'var(--amber-light)' : 'var(--bg)',
+                        color: proOnly ? 'var(--amber)' : 'var(--text-3)',
+                        border: `1px solid ${proOnly ? 'var(--amber-border)' : 'var(--border)'}`,
+                      }}>
+                        {proOnly ? '★ Pro' : time}
+                      </span>
                     </div>
-                  ))}
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {/* AI note */}
-          <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 14px', background:'var(--amber-light)', borderRadius:8, border:'1px solid var(--amber-border)', marginBottom:16 }}>
-            <Zap size={14} style={{ color:'var(--amber)', flexShrink:0 }} />
-            <p style={{ fontSize:12, color:'var(--text-2)', margin:0 }}>
-              <strong style={{ color:'var(--text)' }}>AI features</strong> — grammar fix, rewrite, and quality scoring — are available on <strong style={{ color:'var(--text)' }}>all presets</strong> for Pro users.
-            </p>
+                    <p style={{ fontSize:12, color:'var(--text-2)', margin:0, lineHeight:1.5 }}>{desc}</p>
+                    {locked && <p style={{ fontSize:11, color:'var(--amber)', margin:'4px 0 0', fontWeight:600 }}>Upgrade to Pro to unlock</p>}
+                  </div>
+                </button>
+              )
+            })}
           </div>
 
           {error && <p style={{ fontSize:12, color:'var(--red)', marginBottom:12 }}>{error}</p>}
           <div style={{ display:'flex', alignItems:'center', gap:16 }}>
             <button onClick={startScan} disabled={starting} className="btn btn-primary btn-lg">
               {starting ? <Loader size={16} className="spin" /> : <Scan size={16} />}
-              {starting ? 'Starting...' : `Start ${PRESETS.find(p=>p.value===preset)?.label} Scan`}
+              {starting ? 'Starting...' : 'Start Scan'}
             </button>
             <p style={{ fontSize:12, color:'var(--text-3)', margin:0 }}>Keep this tab open while the scan runs</p>
           </div>
