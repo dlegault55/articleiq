@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Scan, CheckCircle, AlertOctagon, AlertTriangle, ArrowRight, Zap, TrendingUp, Shield, Clock, Users, BarChart3, Star, ChevronRight } from 'lucide-react'
+import { Scan, CheckCircle, AlertOctagon, AlertTriangle, ArrowRight, Zap, TrendingUp, Shield, Clock, Users, BarChart3, Star, ChevronRight, Plug } from 'lucide-react'
 
 const FONT = "@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');"
 
