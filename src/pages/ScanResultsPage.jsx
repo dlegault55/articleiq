@@ -673,7 +673,7 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
           style={{ display:'flex', alignItems:'center', flex:1, minWidth:0, background:'none', border:'none', cursor:'pointer', textAlign:'left', padding:0, gap:10 }}>
           <div style={{ flex:1, minWidth:0 }}>
             <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
-              <span style={{ fontSize:13, fontWeight:600, color:'var(--text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+              <span style={{ fontSize:15, fontWeight:700, color:'var(--text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', letterSpacing:-0.2 }}>
                 {article.title}
               </span>
               {article.url && (
@@ -711,7 +711,7 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
             <div style={{ padding:'12px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div>
                 <p style={{ fontSize:12, fontWeight:600, color:'var(--text-3)', marginBottom:2, textTransform:'uppercase', letterSpacing:'0.06em' }}>Article</p>
-                <p style={{ fontSize:13, fontWeight:600, color:'var(--text)', margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:400 }}>{article.title}</p>
+                <p style={{ fontSize:12, fontWeight:500, color:'var(--text-2)', margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:400 }}>{article.title}</p>
               </div>
               <a href={article.url} target="_blank" rel="noreferrer"
                 className="btn btn-secondary btn-sm" style={{ flexShrink:0 }}>
