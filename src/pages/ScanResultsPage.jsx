@@ -373,7 +373,7 @@ function AIDrawer({ article, connector, action, onClose }) {
         // Run AI on raw HTML — images and links must be preserved
         const systemPrompt = action === 'grammar'
           ? `You are a professional editor working with HTML knowledge base articles. Fix all grammar, spelling, punctuation, and clarity issues in the TEXT CONTENT ONLY. You MUST preserve every HTML tag exactly as-is — especially <img>, <a href>, <table>, <code>, <pre> tags and all their attributes. Never remove, add or modify any HTML tags or attributes. Only fix the words between the tags. Return only the corrected HTML with no commentary or markdown fences.`
-          : `You are a technical writer working with HTML knowledge base articles. Rewrite the text content to be clearer, more concise, and easier to follow — use simple language, active voice, and short sentences. You MUST preserve every HTML tag exactly as-is — especially <img>, <a href>, <table>, <code>, <pre> tags and all their attributes. Never remove, add, or modify any HTML tags or attributes. Use <h2> tags for section headings. Structure as: one summary sentence, then <h2>Problem</h2>, <h2>Why This Happens</h2>, <h2>Solution</h2>. Return only the rewritten HTML with no commentary or markdown fences.`
+          : `You are a professional editor and technical writer working with HTML knowledge base articles. In a single pass: fix all grammar, spelling, and punctuation errors AND rewrite the content to be clearer, more concise, and easier to follow. Use simple language, active voice, and short sentences. You MUST preserve every HTML tag exactly as-is — especially <img>, <a href>, <table>, <code>, <pre> tags and all their attributes. Never remove, add, or modify any HTML tags or attributes. Use <h2> tags for section headings. Structure as: one summary sentence, then <h2>Problem</h2>, <h2>Why This Happens</h2>, <h2>Solution</h2>. Return only the improved HTML with no commentary or markdown fences.`
 
         const aiResult = await callClaude(systemPrompt, rawHtml || article.title, 4096)
         setResult(aiResult)
@@ -420,7 +420,7 @@ function AIDrawer({ article, connector, action, onClose }) {
     }
   }
 
-  const actionLabel = action === 'grammar' ? 'Grammar Fix' : 'Rewrite'
+  const actionLabel = action === 'rewrite' ? 'Improve Article' : 'Grammar Fix'
 
   return (
     <>
@@ -660,23 +660,16 @@ function AIPanel({ article, isPaid, connector, onOpenDrawer }) {
 // ─── Article row ───────────────────────────────────────────────
 const AI_ACTIONS = [
   {
-    key: 'grammar',
-    label: 'Fix Grammar & Spelling',
-    desc: 'Claude reads the full article and corrects grammar, spelling, and punctuation errors — without changing the meaning or structure.',
+    key: 'improve',
+    label: 'Improve Article',
+    desc: 'Fixes grammar, spelling, and punctuation while rewriting for clarity — simpler language, active voice, and a clear structure. One click, fully improved.',
     icon: Wand2,
-    action: 'grammar',
-  },
-  {
-    key: 'rewrite',
-    label: 'Rewrite for Clarity',
-    desc: 'Claude rewrites the article using simpler language, active voice, and a clear structure (Problem → Why → Solution). Good for low readability scores.',
-    icon: RefreshCcw,
     action: 'rewrite',
   },
   {
     key: 'quality',
     label: 'Score Quality',
-    desc: 'Claude rates the article on clarity, completeness, structure, and tone — with specific suggestions for what to improve.',
+    desc: 'Scores the article on clarity, completeness, structure, and tone — with specific suggestions for what to improve before rewriting.',
     icon: Star,
     action: 'quality',
   },
