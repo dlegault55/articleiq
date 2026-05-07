@@ -230,6 +230,7 @@ async function sendEmail(supabase, scanJobId, userId) {
       supabase.from('scan_jobs').select('*').eq('id', scanJobId).single(),
     ])
     if (!profile?.email || !job) return
+    if (profile.email_notifications === false) return // user opted out
     const url = `${process.env.APP_URL || 'https://articleiq.vercel.app'}/scanner/results/${scanJobId}`
     const name = profile.full_name?.split(' ')[0]
     const critical = job.critical_count || 0

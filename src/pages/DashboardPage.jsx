@@ -56,6 +56,11 @@ export default function DashboardPage() {
   const [connector,    setConnector]    = useState(null)
   const [hasConn,      setHasConn]      = useState(null)
   const [checks,  setChecks]  = useState(DEFAULT_CHECKS)
+
+  // Load saved scan defaults from profile
+  useEffect(() => {
+    if (profile?.scan_defaults) setChecks({ ...DEFAULT_CHECKS, ...profile.scan_defaults })
+  }, [profile?.id])
   const [starting,     setStarting]     = useState(false)
   const [lastCounts,   setLastCounts]   = useState(null)
   const [quickWins,    setQuickWins]    = useState([])
