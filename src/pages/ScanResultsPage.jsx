@@ -11,6 +11,10 @@ import {
   FileText, Link2, Zap, Target
 } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import TipTapLink from '@tiptap/extension-link'
+import Image from '@tiptap/extension-image'
 
 const PAGE_SIZE = 25
 const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY
@@ -212,6 +216,78 @@ const inlineHtml = (text) =>
     .replace(/_(.+?)_/g, '<em>$1</em>')
     .replace(/`(.+?)`/g, '<code>$1</code>')
 
+// ─── WYSIWYG Editor ───────────────────────────────────────────
+function WYSIWYGEditor({ html, onChange }) {
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      TipTapLink.configure({ openOnClick: false }),
+      Image,
+    ],
+    content: html,
+    onUpdate: ({ editor }) => onChange(editor.getHTML()),
+  })
+
+  // Update content when html prop changes (new AI result)
+  useEffect(() => {
+    if (editor && html && editor.getHTML() !== html) {
+      editor.commands.setContent(html, false)
+    }
+  }, [html])
+
+  const btn = (action, icon, title, isActive) => (
+    <button key={title} onMouseDown={e => { e.preventDefault(); action() }}
+      title={title}
+      style={{ display:'flex', alignItems:'center', justifyContent:'center', width:28, height:28, borderRadius:5, border:'none', cursor:'pointer', fontSize:13, fontWeight:700, transition:'all 0.1s',
+        background: isActive ? 'var(--green-light)' : 'transparent',
+        color: isActive ? 'var(--green)' : 'var(--text-2)',
+      }}>
+      {icon}
+    </button>
+  )
+
+  if (!editor) return null
+
+  return (
+    <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+      {/* Toolbar */}
+      <div style={{ display:'flex', alignItems:'center', gap:2, padding:'6px 12px', borderBottom:'1px solid var(--border)', background:'var(--bg)', flexShrink:0, flexWrap:'wrap' }}>
+        {btn(() => editor.chain().focus().toggleBold().run(),      <b>B</b>,   'Bold',          editor.isActive('bold'))}
+        {btn(() => editor.chain().focus().toggleItalic().run(),    <i>I</i>,   'Italic',        editor.isActive('italic'))}
+        <div style={{ width:1, height:18, background:'var(--border)', margin:'0 4px' }} />
+        {btn(() => editor.chain().focus().toggleHeading({ level:1 }).run(), 'H1', 'Heading 1', editor.isActive('heading', { level:1 }))}
+        {btn(() => editor.chain().focus().toggleHeading({ level:2 }).run(), 'H2', 'Heading 2', editor.isActive('heading', { level:2 }))}
+        {btn(() => editor.chain().focus().toggleHeading({ level:3 }).run(), 'H3', 'Heading 3', editor.isActive('heading', { level:3 }))}
+        <div style={{ width:1, height:18, background:'var(--border)', margin:'0 4px' }} />
+        {btn(() => editor.chain().focus().toggleBulletList().run(),  '• —', 'Bullet list',   editor.isActive('bulletList'))}
+        {btn(() => editor.chain().focus().toggleOrderedList().run(), '1.', 'Numbered list',  editor.isActive('orderedList'))}
+        <div style={{ width:1, height:18, background:'var(--border)', margin:'0 4px' }} />
+        {btn(() => editor.chain().focus().undo().run(), '↩', 'Undo', false)}
+        {btn(() => editor.chain().focus().redo().run(), '↪', 'Redo', false)}
+      </div>
+
+      {/* Editor area */}
+      <style>{`
+        .tiptap-editor { flex:1; overflow-y:auto; padding:20px; outline:none; cursor:text; }
+        .tiptap-editor h1 { font-size:18px; font-weight:800; margin:16px 0 8px; color:var(--text); }
+        .tiptap-editor h2 { font-size:15px; font-weight:700; margin:14px 0 6px; color:var(--text); }
+        .tiptap-editor h3 { font-size:13px; font-weight:700; margin:10px 0 4px; color:var(--text); }
+        .tiptap-editor p  { font-size:13px; line-height:1.8; margin:0 0 8px; color:var(--text); }
+        .tiptap-editor ul, .tiptap-editor ol { padding-left:20px; margin:8px 0; }
+        .tiptap-editor li { font-size:13px; line-height:1.7; margin-bottom:4px; color:var(--text); }
+        .tiptap-editor a  { color:var(--green); text-decoration:underline; }
+        .tiptap-editor img { max-width:100%; border-radius:6px; margin:8px 0; border:1px solid var(--border); }
+        .tiptap-editor strong { font-weight:700; }
+        .tiptap-editor em { font-style:italic; }
+        .tiptap-editor code { font-family:monospace; font-size:12px; background:var(--bg); padding:1px 5px; border-radius:3px; }
+        .tiptap-editor pre { background:var(--bg); padding:12px; border-radius:8px; overflow-x:auto; font-size:12px; margin:10px 0; }
+        .tiptap-editor p.is-editor-empty:first-child::before { content:attr(data-placeholder); color:var(--text-3); float:left; pointer-events:none; height:0; }
+      `}</style>
+      <EditorContent editor={editor} className="tiptap-editor" style={{ flex:1, overflowY:'auto' }} />
+    </div>
+  )
+}
+
 // ─── AI Drawer ─────────────────────────────────────────────────
 function AIDrawer({ article, connector, action, onClose }) {
   const [loading,  setLoading]  = useState(true)
@@ -221,7 +297,6 @@ function AIDrawer({ article, connector, action, onClose }) {
   const [publishing,  setPublishing]  = useState(false)
   const [published,   setPublished]   = useState(false)
   const [confirmPub,  setConfirmPub]  = useState(false)
-  const [editMode,    setEditMode]    = useState(false)
   const [editedText,  setEditedText]  = useState('')
   const [error,       setError]       = useState(null)
 
@@ -362,40 +437,12 @@ function AIDrawer({ article, connector, action, onClose }) {
                 </div>
               </div>
 
-              {/* After — editable */}
+              {/* After — WYSIWYG editor */}
               <div style={{ display:'flex', flexDirection:'column', overflow:'hidden' }}>
-                <div style={{ padding:'10px 20px', background:'var(--green-light)', borderBottom:'1px solid var(--green-border)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                  <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--green)' }}>ArticleIQ {actionLabel}</span>
-                  <div style={{ display:'flex', gap:4 }}>
-                    <button onClick={() => setEditMode(false)}
-                      style={{ fontSize:11, fontWeight:600, padding:'3px 10px', borderRadius:6, border:'none', cursor:'pointer', transition:'all 0.12s',
-                        background: !editMode ? 'var(--green)' : 'transparent',
-                        color: !editMode ? 'white' : 'var(--green)',
-                      }}>Preview</button>
-                    <button onClick={() => setEditMode(true)}
-                      style={{ fontSize:11, fontWeight:600, padding:'3px 10px', borderRadius:6, border:'none', cursor:'pointer', transition:'all 0.12s',
-                        background: editMode ? 'var(--green)' : 'transparent',
-                        color: editMode ? 'white' : 'var(--green)',
-                      }}>Edit</button>
-                  </div>
+                <div style={{ padding:'10px 20px', background:'var(--green-light)', borderBottom:'1px solid var(--green-border)', flexShrink:0 }}>
+                  <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--green)' }}>ArticleIQ {actionLabel} — click to edit</span>
                 </div>
-
-                {editMode ? (
-                  /* Edit mode — textarea */
-                  <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
-                    <textarea
-                      value={editedText}
-                      onChange={e => setEditedText(e.target.value)}
-                      style={{ flex:1, padding:'20px', fontSize:13, color:'var(--text)', lineHeight:1.8, border:'none', outline:'none', resize:'none', fontFamily:'DM Mono, monospace', background:'#FAFFF9', overflowY:'auto' }}
-                    />
-                    <div style={{ padding:'8px 16px', background:'var(--green-light)', borderTop:'1px solid var(--green-border)', fontSize:11, color:'var(--green)', fontWeight:500 }}>
-                      Editing markdown — switch to Preview to see formatted output
-                    </div>
-                  </div>
-                ) : (
-                  /* Preview mode — rendered */
-                  <div className="article-html" style={{ flex:1, overflowY:'auto', padding:'20px' }} dangerouslySetInnerHTML={{ __html: editedText || result }} />
-                )}
+                <WYSIWYGEditor html={editedText || result} onChange={setEditedText} />
               </div>
             </div>
 
