@@ -3,12 +3,14 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
 
 const ScanContext = createContext(null)
+const CHUNK_SIZE = 50
 
 export const ScanProvider = ({ children }) => {
   const { userId } = useAuth()
   const [recentScans, setRecentScans] = useState([])
   const [activeScan,  setActiveScan]  = useState(null)
-  const driving = useRef(null) // scan ID currently being driven
+  const running = useRef(false)  // is the loop running right now?
+  const scanId  = useRef(null)   // which scan are we driving?
 
   const reload = useCallback(async () => {
     if (!userId) return
@@ -24,25 +26,30 @@ export const ScanProvider = ({ children }) => {
     return active
   }, [userId])
 
-  // Drive scan chunks — simple loop, one chunk at a time
   const drive = useCallback(async (scan) => {
-    if (!scan?.id || driving.current === scan.id) return
-    driving.current = scan.id
+    if (running.current) return   // already looping
+    if (!scan?.id) return
 
     // Get connector
     const { data: connector } = await supabase
       .from('zendesk_connectors').select('id')
       .eq('user_id', scan.user_id).eq('is_active', true)
       .order('created_at', { ascending: false }).limit(1).single()
+    if (!connector) return
 
-    if (!connector) { driving.current = null; return }
+    running.current = true
+    scanId.current  = scan.id
 
     // Resume from where we left off
-    const startPage = Math.max(1, Math.floor((scan.scanned_articles || 0) / 50) + 1)
+    const startPage = Math.max(1, Math.floor((scan.scanned_articles || 0) / CHUNK_SIZE) + 1)
     let page = startPage
-    let done = false
 
-    while (!done) {
+    while (true) {
+      // Check scan hasn't been cancelled externally
+      const { data: current } = await supabase
+        .from('scan_jobs').select('status').eq('id', scan.id).single()
+      if (!current || current.status === 'failed' || current.status === 'completed') break
+
       try {
         const res = await fetch('/api/scan-chunk', {
           method: 'POST',
@@ -51,42 +58,43 @@ export const ScanProvider = ({ children }) => {
             scanJobId:   scan.id,
             userId:      scan.user_id,
             connectorId: connector.id,
-            preset:      scan.preset || 'standard',
+            preset:      scan.preset || 'outdated,wordCount,readability,labels',
             page,
           }),
         })
-        if (!res.ok) break
+
+        if (!res.ok) { console.error('Chunk HTTP error:', res.status); break }
         const data = await res.json()
-        if (data.done || data.cancelled || !data.hasMore) done = true
-        else page = data.nextPage || page + 1
+        if (data.cancelled || data.done || !data.hasMore) break
+        page = data.nextPage || page + 1
       } catch (e) {
-        console.error('Scan chunk error:', e.message)
+        console.error('Chunk fetch error:', e.message)
         break
       }
     }
 
-    driving.current = null
+    running.current = false
+    scanId.current  = null
     reload()
   }, [reload])
 
   // Resume a stalled scan
   const resumeScan = useCallback(async (scan) => {
+    running.current = false // allow re-drive
     await supabase.from('scan_jobs').update({ status: 'running' }).eq('id', scan.id)
-    driving.current = null // allow re-drive
-    const fresh = await reload()
-    if (fresh) drive(fresh)
+    const active = await reload()
+    if (active) drive(active)
   }, [reload, drive])
 
   useEffect(() => { reload() }, [reload])
 
+  // Start driving when active scan detected, poll for UI updates
   useEffect(() => {
     if (!activeScan) return
-    // Start driving if not already
-    if (driving.current !== activeScan.id) drive(activeScan)
-    // Poll for UI updates
+    if (!running.current) drive(activeScan)
     const id = setInterval(reload, 3000)
     return () => clearInterval(id)
-  }, [!!activeScan, activeScan?.id])
+  }, [activeScan?.id])
 
   return (
     <ScanContext.Provider value={{ recentScans, activeScan, reload, resumeScan }}>
