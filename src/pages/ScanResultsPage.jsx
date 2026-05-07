@@ -16,6 +16,7 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import TipTapLink from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
+import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
 
 const PAGE_SIZE = 25
 
@@ -213,6 +214,10 @@ function WYSIWYGEditor({ html, onChange }) {
       StarterKit,
       TipTapLink.configure({ openOnClick: false }),
       Image,
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableCell,
+      TableHeader,
     ],
     content: html,
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
@@ -326,6 +331,11 @@ function WYSIWYGEditor({ html, onChange }) {
         .tiptap-editor em { font-style:italic; }
         .tiptap-editor code { font-family:monospace; font-size:12px; background:var(--bg); padding:1px 5px; border-radius:3px; }
         .tiptap-editor pre { background:var(--bg); padding:12px; border-radius:8px; overflow-x:auto; font-size:12px; margin:10px 0; }
+        .tiptap-editor table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13px; }
+        .tiptap-editor th, .tiptap-editor td { border:1px solid var(--border-md); padding:8px 12px; text-align:left; vertical-align:top; }
+        .tiptap-editor th { background:var(--bg); font-weight:700; color:var(--text); }
+        .tiptap-editor td { color:var(--text-2); }
+        .tiptap-editor tr:nth-child(even) td { background:#fafafa; }
         .tiptap-editor p.is-editor-empty:first-child::before { content:attr(data-placeholder); color:var(--text-3); float:left; pointer-events:none; height:0; }
       `}</style>
       <EditorContent editor={editor} className="tiptap-editor" style={{ flex:1, overflowY:'auto' }} />
