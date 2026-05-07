@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useScan } from '@/hooks/useScan'
 import { supabase } from '@/lib/supabase'
 import {
-  AlertOctagon, AlertTriangle, Info, CheckCircle, ArrowLeft,
+  AlertOctagon, AlertTriangle, Info, CheckCircle, ArrowLeft, X,
   ChevronDown, ChevronUp, ExternalLink, Download, Share2, Check,
   ChevronLeft, ChevronRight, Square, CheckSquare,
   Loader, Wand2, RefreshCcw, Star, BookOpen, Type, Clock, Tag,
@@ -95,34 +95,158 @@ const exportExcel = async (scan, articles, issues) => {
   XLSX.writeFile(wb, `ArticleIQ_${format(new Date(scan.created_at), 'yyyy-MM-dd')}.xlsx`)
 }
 
+// ─── AI Drawer ─────────────────────────────────────────────────
+function AIDrawer({ article, connector, action, onClose }) {
+  const [loading,  setLoading]  = useState(true)
+  const [body,     setBody]     = useState('')
+  const [result,   setResult]   = useState('')
+  const [copying,  setCopying]  = useState(false)
+  const [error,    setError]    = useState(null)
+
+  // Fetch article body from Zendesk then run AI
+  useEffect(() => {
+    if (!article || !connector || !action) return
+    const run = async () => {
+      setLoading(true); setError(null)
+      try {
+        // Fetch article body from Zendesk
+        const authHeader = `Basic ${btoa(connector.api_key_encrypted)}`
+        const res = await fetch(
+          `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${article.zendesk_article_id}`,
+          { headers: { Authorization: authHeader } }
+        )
+        const rawBody = res.ok ? ((await res.json()).article?.body || '') : ''
+        // Strip HTML for display
+        const plain = rawBody.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+        setBody(plain || article.title)
+
+        // Run AI on the content
+        let aiResult = ''
+        if (action === 'grammar') {
+          aiResult = await callClaude(
+            'You are a professional editor. Fix all grammar, spelling, punctuation, and clarity issues in this knowledge base article. Preserve the meaning and structure exactly. Return only the corrected text with no commentary.',
+            plain || article.title,
+            2048
+          )
+        } else if (action === 'rewrite') {
+          aiResult = await callClaude(
+            'You are a technical writer specializing in customer support content. Rewrite this knowledge base article to be clearer, more concise, and easier to follow. Use simple language, active voice, and short sentences. Preserve all the information. Return only the rewritten text with no commentary.',
+            plain || article.title,
+            2048
+          )
+        }
+        setResult(aiResult)
+      } catch (e) {
+        setError(e.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+    run()
+  }, [article?.id, action])
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(result)
+    setCopying(true)
+    setTimeout(() => setCopying(false), 2000)
+  }
+
+  const actionLabel = action === 'grammar' ? 'Grammar Fix' : 'Rewrite'
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div onClick={onClose}
+        style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.4)', zIndex:200, animation:'fade-in 0.2s ease' }} />
+
+      {/* Drawer */}
+      <div style={{ position:'fixed', top:0, right:0, bottom:0, width:'min(820px, 90vw)', background:'var(--bg-card)', zIndex:201, display:'flex', flexDirection:'column', boxShadow:'-8px 0 40px rgba(0,0,0,0.15)', animation:'slide-in 0.25s ease' }}>
+        <style>{`@keyframes slide-in { from { transform: translateX(100%) } to { transform: translateX(0) } }`}</style>
+
+        {/* Header */}
+        <div style={{ padding:'16px 24px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <div style={{ width:32, height:32, borderRadius:8, background:'linear-gradient(135deg, #0A5A0A, #107C10)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              {action === 'grammar' ? <Wand2 size={15} color="white" /> : <RefreshCcw size={15} color="white" />}
+            </div>
+            <div>
+              <p style={{ fontSize:14, fontWeight:700, color:'var(--text)', margin:0 }}>AI {actionLabel}</p>
+              <p style={{ fontSize:12, color:'var(--text-3)', margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:400 }}>{article.title}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="btn btn-ghost btn-sm"><X size={16} /></button>
+        </div>
+
+        {loading ? (
+          <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:12 }}>
+            <Loader size={24} style={{ color:'var(--green)', animation:'spin 0.7s linear infinite' }} />
+            <p style={{ fontSize:13, color:'var(--text-3)' }}>Fetching article and running AI...</p>
+          </div>
+        ) : error ? (
+          <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:32 }}>
+            <div style={{ textAlign:'center' }}>
+              <p style={{ color:'var(--red)', marginBottom:12 }}>{error}</p>
+              <button onClick={onClose} className="btn btn-secondary btn-sm">Close</button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Before / After columns */}
+            <div style={{ flex:1, display:'grid', gridTemplateColumns:'1fr 1fr', overflow:'hidden' }}>
+              {/* Before */}
+              <div style={{ display:'flex', flexDirection:'column', borderRight:'1px solid var(--border)', overflow:'hidden' }}>
+                <div style={{ padding:'12px 20px', background:'var(--bg)', borderBottom:'1px solid var(--border)', flexShrink:0 }}>
+                  <span style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)' }}>Before</span>
+                </div>
+                <div style={{ flex:1, overflowY:'auto', padding:'20px', fontSize:13, color:'var(--text-2)', lineHeight:1.8 }}>
+                  {body}
+                </div>
+              </div>
+
+              {/* After */}
+              <div style={{ display:'flex', flexDirection:'column', overflow:'hidden' }}>
+                <div style={{ padding:'12px 20px', background:'var(--green-light)', borderBottom:'1px solid var(--green-border)', flexShrink:0 }}>
+                  <span style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--green)' }}>After · AI {actionLabel}</span>
+                </div>
+                <div style={{ flex:1, overflowY:'auto', padding:'20px', fontSize:13, color:'var(--text)', lineHeight:1.8 }}>
+                  {result}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer actions */}
+            <div style={{ padding:'14px 24px', borderTop:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0, background:'var(--bg)' }}>
+              <p style={{ fontSize:12, color:'var(--text-3)', margin:0 }}>
+                Copy the improved text and paste it into Zendesk
+              </p>
+              <div style={{ display:'flex', gap:8 }}>
+                <button onClick={onClose} className="btn btn-secondary btn-sm">Close</button>
+                <button onClick={copy} className="btn btn-primary btn-sm">
+                  {copying ? <><Check size={13} /> Copied!</> : <><CheckSquare size={13} /> Copy improved text</>}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </>
+  )
+}
+
 // ─── AI Panel ──────────────────────────────────────────────────
-function AIPanel({ article, isPaid }) {
+function AIPanel({ article, isPaid, connector, onOpenDrawer }) {
   const [loading, setLoading] = useState(null)
   const [result,  setResult]  = useState(null)
 
-  const run = async (action) => {
+  const runQuality = async () => {
     if (!isPaid) return
-    setLoading(action); setResult(null)
+    setLoading('quality'); setResult(null)
     try {
-      if (action === 'grammar') {
-        const fixed = await callClaude(
-          'You are a professional editor. Fix grammar, spelling, and clarity in this article title. Return ONLY the corrected title, nothing else.',
-          `Article title: ${article.title}`
-        )
-        setResult({ type: 'grammar', original: article.title, fixed })
-      } else if (action === 'rewrite') {
-        const fixed = await callClaude(
-          'You are a technical writer. Rewrite this article title to be clearer, more helpful, and action-oriented. Return ONLY the rewritten title.',
-          `Article title: ${article.title}`
-        )
-        setResult({ type: 'rewrite', original: article.title, fixed })
-      } else if (action === 'quality') {
-        const raw = await callClaude(
-          'Evaluate this knowledge base article title. Return JSON only: {"score": 0-100, "verdict": "one sentence", "suggestions": ["s1","s2","s3"]}',
-          `Article title: ${article.title}`, 512
-        )
-        setResult({ type: 'quality', data: JSON.parse(raw.replace(/```json|```/g,'').trim()) })
-      }
+      const raw = await callClaude(
+        'Evaluate this knowledge base article title. Return JSON only: {"score": 0-100, "verdict": "one sentence", "suggestions": ["s1","s2","s3"]}',
+        `Article title: ${article.title}`, 512
+      )
+      setResult({ type: 'quality', data: JSON.parse(raw.replace(/```json|```/g,'').trim()) })
     } catch (e) {
       setResult({ type: 'error', message: e.message })
     } finally { setLoading(null) }
@@ -155,61 +279,51 @@ function AIPanel({ article, isPaid }) {
         <span style={{ fontSize:10, fontWeight:700, padding:'1px 7px', borderRadius:100, background:'rgba(255,255,255,0.2)', color:'white' }}>Pro</span>
       </div>
       <div style={{ display:'flex', gap:6, marginBottom: result ? 12 : 0 }}>
-        {[
-          { key:'grammar', label:'Fix Grammar',    icon:Wand2 },
-          { key:'rewrite', label:'Rewrite',        icon:RefreshCcw },
-          { key:'quality', label:'Quality Score',  icon:Star },
-        ].map(({ key, label, icon: Icon }) => (
-          <button key={key} onClick={() => run(key)} disabled={!!loading}
-            style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 10px', borderRadius:7, border:'none', cursor:'pointer', fontSize:12, fontWeight:600, transition:'all 0.12s',
-              background: loading===key ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.15)',
-              color:'white',
-            }}>
-            {loading===key ? <Loader size={11} style={{ animation:'spin 0.7s linear infinite' }} /> : <Icon size={11} />}
-            {label}
-          </button>
-        ))}
+        {/* Grammar + Rewrite open the drawer */}
+        <button onClick={() => onOpenDrawer('grammar')} disabled={!!loading}
+          style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 10px', borderRadius:7, border:'none', cursor:'pointer', fontSize:12, fontWeight:600, background:'rgba(255,255,255,0.15)', color:'white' }}>
+          <Wand2 size={11} /> Fix Grammar
+          <span style={{ fontSize:9, opacity:0.7 }}>↗</span>
+        </button>
+        <button onClick={() => onOpenDrawer('rewrite')} disabled={!!loading}
+          style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 10px', borderRadius:7, border:'none', cursor:'pointer', fontSize:12, fontWeight:600, background:'rgba(255,255,255,0.15)', color:'white' }}>
+          <RefreshCcw size={11} /> Rewrite
+          <span style={{ fontSize:9, opacity:0.7 }}>↗</span>
+        </button>
+        {/* Quality score stays inline */}
+        <button onClick={runQuality} disabled={!!loading}
+          style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 10px', borderRadius:7, border:'none', cursor:'pointer', fontSize:12, fontWeight:600,
+            background: loading==='quality' ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.15)', color:'white' }}>
+          {loading==='quality' ? <Loader size={11} style={{ animation:'spin 0.7s linear infinite' }} /> : <Star size={11} />}
+          Quality Score
+        </button>
       </div>
 
-      {result && (
-        <div style={{ background:'rgba(255,255,255,0.1)', borderRadius:8, padding:'12px' }}>
-          {result.type === 'error' && <p style={{ fontSize:12, color:'#FFD93D', margin:0 }}>{result.message}</p>}
-          {(result.type === 'grammar' || result.type === 'rewrite') && (
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-              <div>
-                <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'rgba(255,255,255,0.5)', marginBottom:5 }}>Before</p>
-                <p style={{ fontSize:12, color:'rgba(255,255,255,0.75)', lineHeight:1.5, margin:0, padding:'8px 10px', background:'rgba(0,0,0,0.2)', borderRadius:6 }}>{result.original}</p>
-              </div>
-              <div>
-                <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#FFD93D', marginBottom:5 }}>After</p>
-                <p style={{ fontSize:12, color:'white', lineHeight:1.5, margin:0, padding:'8px 10px', background:'rgba(255,255,255,0.15)', borderRadius:6 }}>{result.fixed}</p>
-              </div>
+      {result?.type === 'quality' && result.data && (
+        <div style={{ background:'rgba(255,255,255,0.1)', borderRadius:8, padding:'12px', marginTop:10 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:10 }}>
+            <div style={{ textAlign:'center' }}>
+              <div style={{ fontSize:36, fontWeight:800, color:'white', lineHeight:1 }}>{result.data.score}</div>
+              <div style={{ fontSize:10, color:'rgba(255,255,255,0.5)' }}>/100</div>
             </div>
-          )}
-          {result.type === 'quality' && result.data && (
-            <div>
-              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:10 }}>
-                <div style={{ textAlign:'center' }}>
-                  <div style={{ fontSize:36, fontWeight:800, color:'white', lineHeight:1 }}>{result.data.score}</div>
-                  <div style={{ fontSize:10, color:'rgba(255,255,255,0.5)' }}>/100</div>
-                </div>
-                <p style={{ fontSize:13, color:'rgba(255,255,255,0.85)', margin:0, flex:1 }}>{result.data.verdict}</p>
-              </div>
-              {result.data.suggestions?.map((s,i) => (
-                <div key={i} style={{ fontSize:12, color:'rgba(255,255,255,0.7)', display:'flex', gap:6, marginBottom:4 }}>
-                  <span style={{ color:'#FFD93D', flexShrink:0 }}>→</span>{s}
-                </div>
-              ))}
+            <p style={{ fontSize:13, color:'rgba(255,255,255,0.85)', margin:0, flex:1 }}>{result.data.verdict}</p>
+          </div>
+          {result.data.suggestions?.map((s,i) => (
+            <div key={i} style={{ fontSize:12, color:'rgba(255,255,255,0.7)', display:'flex', gap:6, marginBottom:4 }}>
+              <span style={{ color:'#FFD93D', flexShrink:0 }}>→</span>{s}
             </div>
-          )}
+          ))}
         </div>
+      )}
+      {result?.type === 'error' && (
+        <p style={{ fontSize:12, color:'#FFD93D', margin:'8px 0 0' }}>{result.message}</p>
       )}
     </div>
   )
 }
 
 // ─── Article row ───────────────────────────────────────────────
-function ArticleRow({ article, issues, isPaid, resolvedIssues, resolvedArticles, onResolveIssue, onResolveArticle }) {
+function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolvedIssues, resolvedArticles, onResolveIssue, onResolveArticle }) {
   const [open, setOpen] = useState(false)
 
   const activeIssues   = issues.filter(i => !resolvedIssues.has(i.id))
@@ -313,7 +427,7 @@ function ArticleRow({ article, issues, isPaid, resolvedIssues, resolvedArticles,
             )
           })}
 
-          <AIPanel article={article} isPaid={isPaid} />
+          <AIPanel article={article} isPaid={isPaid} connector={connector} onOpenDrawer={onOpenDrawer} />
         </div>
       )}
     </div>
@@ -362,9 +476,19 @@ export default function ScanResultsPage() {
   const [shared,   setShared]   = useState(false)
   const [resolvedIssues,   setResolvedIssues]   = useState(new Set())
   const [resolvedArticles, setResolvedArticles] = useState(new Set())
+  const [drawer,           setDrawer]           = useState(null) // { article, action }
+  const [connector,        setConnector]        = useState(null)
   const intervalRef = useRef(null)
 
   const isPaid = profile?.plan === 'paid'
+
+  // Load connector for AI drawer
+  useEffect(() => {
+    if (!scan?.user_id) return
+    supabase.from('zendesk_connectors').select('*').eq('user_id', scan.user_id).eq('is_active', true)
+      .order('created_at', { ascending: false }).limit(1).single()
+      .then(({ data }) => setConnector(data || null))
+  }, [scan?.user_id])
 
   const fetchAll = useCallback(async () => {
     const [{ data:s }, { data:a }, { data:i }] = await Promise.all([
@@ -629,6 +753,8 @@ export default function ScanResultsPage() {
           <ArticleRow key={a.id} article={a}
             issues={issues.filter(i=>i.article_id===a.id)}
             isPaid={isPaid}
+            connector={connector}
+            onOpenDrawer={(action) => setDrawer({ article: a, action })}
             resolvedIssues={resolvedIssues}
             resolvedArticles={resolvedArticles}
             onResolveIssue={resolveIssue}
@@ -638,6 +764,16 @@ export default function ScanResultsPage() {
       </div>
 
       <Pagination page={page} totalPages={totalPages} onChange={p => { setPage(p); window.scrollTo(0,0) }} />
+
+      {/* AI Drawer */}
+      {drawer && (
+        <AIDrawer
+          article={drawer.article}
+          connector={connector}
+          action={drawer.action}
+          onClose={() => setDrawer(null)}
+        />
+      )}
     </div>
   )
 }
