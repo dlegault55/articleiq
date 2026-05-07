@@ -9,6 +9,7 @@ import ScanResultsPage from '@/pages/ScanResultsPage'
 import ConnectorPage from '@/pages/ConnectorPage'
 import SettingsPage from '@/pages/SettingsPage'
 import LandingPage from '@/pages/LandingPage'
+import HelpPage from '@/pages/HelpPage'
 
 // Error boundary
 class ErrorBoundary extends Component {

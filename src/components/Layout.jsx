@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useScan } from '@/hooks/useScan'
 import { signOut } from '@/lib/supabase'
-import { Scan, Loader, ChevronDown, Plug, LogOut, User } from 'lucide-react'
+import { Scan, Loader, ChevronDown, Plug, LogOut, User, HelpCircle } from 'lucide-react'
 
 function AvatarMenu({ name, email, plan, initials }) {
   const [open, setOpen] = useState(false)
@@ -48,6 +48,12 @@ function AvatarMenu({ name, email, plan, initials }) {
               onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
               onMouseLeave={e => e.currentTarget.style.background = 'none'}>
               <Plug size={15} style={{ color: 'var(--text-3)' }} /> Manage connectors
+            </button>
+            <button onClick={() => go('/help')}
+              style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 10px', borderRadius: 8, border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, color: 'var(--text-2)', textAlign: 'left', transition: 'background 0.1s' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+              <HelpCircle size={15} style={{ color: 'var(--text-3)' }} /> Help & docs
             </button>
             <button onClick={() => go('/settings')}
               style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 10px', borderRadius: 8, border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, color: 'var(--text-2)', textAlign: 'left', transition: 'background 0.1s' }}
