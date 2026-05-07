@@ -169,13 +169,59 @@ function renderInline(text) {
   })
 }
 
+// ─── Markdown to HTML (for Zendesk publish) ───────────────────
+const markdownToHtml = (text) => {
+  if (!text) return ''
+  const lines = text.split('\n')
+  const out = []
+  let i = 0
+  while (i < lines.length) {
+    const line = lines[i]
+    if (line.startsWith('# '))       { out.push(`<h1>${line.slice(2)}</h1>`); i++; continue }
+    if (line.startsWith('## '))      { out.push(`<h2>${line.slice(3)}</h2>`); i++; continue }
+    if (line.startsWith('### '))     { out.push(`<h3>${line.slice(4)}</h3>`); i++; continue }
+    if (/^[-*+] /.test(line)) {
+      const items = []
+      while (i < lines.length && /^[-*+] /.test(lines[i])) {
+        items.push(`<li>${inlineHtml(lines[i].slice(2))}</li>`)
+        i++
+      }
+      out.push(`<ul>${items.join('')}</ul>`)
+      continue
+    }
+    if (/^\d+\. /.test(line)) {
+      const items = []
+      while (i < lines.length && /^\d+\. /.test(lines[i])) {
+        items.push(`<li>${inlineHtml(lines[i].replace(/^\d+\. /, ''))}</li>`)
+        i++
+      }
+      out.push(`<ol>${items.join('')}</ol>`)
+      continue
+    }
+    if (line.trim() === '') { i++; continue }
+    out.push(`<p>${inlineHtml(line)}</p>`)
+    i++
+  }
+  return out.join('\n')
+}
+
+const inlineHtml = (text) =>
+  text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/_(.+?)_/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+
 // ─── AI Drawer ─────────────────────────────────────────────────
 function AIDrawer({ article, connector, action, onClose }) {
   const [loading,  setLoading]  = useState(true)
   const [body,     setBody]     = useState('')
   const [result,   setResult]   = useState('')
-  const [copying,  setCopying]  = useState(false)
-  const [error,    setError]    = useState(null)
+  const [copying,   setCopying]   = useState(false)
+  const [publishing, setPublishing] = useState(false)
+  const [published,  setPublished]  = useState(false)
+  const [confirmPub, setConfirmPub] = useState(false)
+  const [error,      setError]      = useState(null)
 
   // Fetch article body from Zendesk then run AI
   useEffect(() => {
@@ -223,6 +269,33 @@ function AIDrawer({ article, connector, action, onClose }) {
     await navigator.clipboard.writeText(result)
     setCopying(true)
     setTimeout(() => setCopying(false), 2000)
+  }
+
+  const publish = async () => {
+    if (!confirmPub) { setConfirmPub(true); return }
+    setPublishing(true); setConfirmPub(false)
+    try {
+      const authHeader = `Basic ${btoa(connector.api_key_encrypted)}`
+      const html = markdownToHtml(result)
+      const res = await fetch(
+        `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${article.zendesk_article_id}/translations/en-us`,
+        {
+          method: 'PUT',
+          headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ translation: { body: html } }),
+        }
+      )
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}))
+        throw new Error(e.error || `Zendesk error ${res.status}`)
+      }
+      setPublished(true)
+      setTimeout(() => setPublished(false), 4000)
+    } catch (e) {
+      setError(`Publish failed: ${e.message}`)
+    } finally {
+      setPublishing(false)
+    }
   }
 
   const actionLabel = action === 'grammar' ? 'Grammar Fix' : 'Rewrite'
@@ -292,15 +365,63 @@ function AIDrawer({ article, connector, action, onClose }) {
             </div>
 
             {/* Footer actions */}
-            <div style={{ padding:'14px 24px', borderTop:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0, background:'var(--bg)' }}>
-              <p style={{ fontSize:12, color:'var(--text-3)', margin:0 }}>
-                Copy the improved text and paste it into Zendesk
-              </p>
-              <div style={{ display:'flex', gap:8 }}>
-                <button onClick={onClose} className="btn btn-secondary btn-sm">Close</button>
-                <button onClick={copy} className="btn btn-primary btn-sm">
-                  {copying ? <><Check size={13} /> Copied!</> : <><CheckSquare size={13} /> Copy improved text</>}
-                </button>
+            <div style={{ padding:'14px 24px', borderTop:'1px solid var(--border)', flexShrink:0, background:'var(--bg)' }}>
+
+              {/* Confirmation warning */}
+              {confirmPub && (
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', background:'var(--red-light)', border:'1px solid var(--red-border)', borderRadius:8, marginBottom:12 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <AlertOctagon size={14} style={{ color:'var(--red)', flexShrink:0 }} />
+                    <p style={{ fontSize:12, color:'var(--red)', fontWeight:600, margin:0 }}>
+                      This will permanently overwrite the article in Zendesk. Are you sure?
+                    </p>
+                  </div>
+                  <button onClick={() => setConfirmPub(false)} className="btn btn-ghost btn-sm" style={{ color:'var(--red)', flexShrink:0 }}>Cancel</button>
+                </div>
+              )}
+
+              {/* Published success */}
+              {published && (
+                <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 14px', background:'var(--green-light)', border:'1px solid var(--green-border)', borderRadius:8, marginBottom:12 }}>
+                  <CheckCircle size={14} style={{ color:'var(--green)' }} />
+                  <p style={{ fontSize:12, color:'var(--green)', fontWeight:600, margin:0 }}>
+                    Article updated in Zendesk successfully
+                  </p>
+                  <a href={article.url} target="_blank" rel="noreferrer"
+                    style={{ fontSize:12, color:'var(--green)', fontWeight:600, marginLeft:'auto', display:'flex', alignItems:'center', gap:4, textDecoration:'none' }}>
+                    View in Zendesk <ExternalLink size={11} />
+                  </a>
+                </div>
+              )}
+
+              {error && (
+                <div style={{ padding:'8px 14px', background:'var(--red-light)', border:'1px solid var(--red-border)', borderRadius:8, marginBottom:12 }}>
+                  <p style={{ fontSize:12, color:'var(--red)', margin:0 }}>{error}</p>
+                </div>
+              )}
+
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <p style={{ fontSize:12, color:'var(--text-3)', margin:0 }}>
+                  Copy to clipboard or publish directly to Zendesk
+                </p>
+                <div style={{ display:'flex', gap:8 }}>
+                  <button onClick={onClose} className="btn btn-ghost btn-sm">Close</button>
+                  {/* Copy — primary action */}
+                  <button onClick={copy} className="btn btn-secondary btn-sm">
+                    {copying ? <><Check size={13} /> Copied!</> : <><CheckSquare size={13} /> Copy text</>}
+                  </button>
+                  {/* Publish — secondary, destructive */}
+                  <button onClick={publish} disabled={publishing || !result}
+                    className="btn btn-sm"
+                    style={{ background: confirmPub ? 'var(--red)' : 'var(--green)', color:'white', fontWeight:700, opacity: publishing ? 0.7 : 1 }}>
+                    {publishing
+                      ? <><Loader size={13} style={{ animation:'spin 0.7s linear infinite' }} /> Publishing...</>
+                      : confirmPub
+                        ? <><AlertOctagon size={13} /> Yes, publish to Zendesk</>
+                        : <><ExternalLink size={13} /> Publish to Zendesk</>
+                    }
+                  </button>
+                </div>
               </div>
             </div>
           </>
