@@ -95,19 +95,78 @@ const exportExcel = async (scan, articles, issues) => {
   XLSX.writeFile(wb, `ArticleIQ_${format(new Date(scan.created_at), 'yyyy-MM-dd')}.xlsx`)
 }
 
-// ─── Strip markdown formatting ────────────────────────────────
-const stripMarkdown = (text) => {
-  return text
-    .replace(/^#{1,6}\s+/gm, '')        // headings
-    .replace(/\*\*(.+?)\*\*/g, '$1')   // bold
-    .replace(/\*(.+?)\*/g, '$1')        // italic
-    .replace(/`(.+?)`/g, '$1')           // inline code
-    .replace(/^[-*+]\s+/gm, '• ')       // bullet lists
-    .replace(/^\d+\.\s+/gm, '')        // numbered lists
-    .replace(/\[(.+?)\]\(.+?\)/g, '$1') // links
-    .replace(/^>\s+/gm, '')             // blockquotes
-    .replace(/\n{3,}/g, '\n\n')        // excess newlines
-    .trim()
+// ─── Markdown renderer ────────────────────────────────────────
+function MarkdownContent({ text, muted = false }) {
+  if (!text) return null
+  const baseColor = muted ? 'var(--text-2)' : 'var(--text)'
+  const lines = text.split('\n')
+  const elements = []
+  let i = 0
+
+  while (i < lines.length) {
+    const line = lines[i]
+
+    // H1
+    if (line.startsWith('# ')) {
+      elements.push(<h2 key={i} style={{ fontSize: 15, fontWeight: 800, color: baseColor, margin: '16px 0 6px', letterSpacing: -0.3 }}>{line.slice(2)}</h2>)
+    }
+    // H2
+    else if (line.startsWith('## ')) {
+      elements.push(<h3 key={i} style={{ fontSize: 13, fontWeight: 700, color: baseColor, margin: '14px 0 4px', textTransform: 'uppercase', letterSpacing: '0.06em', opacity: 0.7 }}>{line.slice(3)}</h3>)
+    }
+    // H3
+    else if (line.startsWith('### ')) {
+      elements.push(<h4 key={i} style={{ fontSize: 13, fontWeight: 700, color: baseColor, margin: '10px 0 4px' }}>{line.slice(4)}</h4>)
+    }
+    // Bullet list
+    else if (/^[-*+] /.test(line)) {
+      const bullets = []
+      while (i < lines.length && /^[-*+] /.test(lines[i])) {
+        bullets.push(<li key={i} style={{ fontSize: 13, color: baseColor, lineHeight: 1.7, marginBottom: 3 }}>{renderInline(lines[i].slice(2))}</li>)
+        i++
+      }
+      elements.push(<ul key={`ul-${i}`} style={{ paddingLeft: 18, margin: '6px 0' }}>{bullets}</ul>)
+      continue
+    }
+    // Numbered list
+    else if (/^\d+\. /.test(line)) {
+      const items = []
+      while (i < lines.length && /^\d+\. /.test(lines[i])) {
+        items.push(<li key={i} style={{ fontSize: 13, color: baseColor, lineHeight: 1.7, marginBottom: 3 }}>{renderInline(lines[i].replace(/^\d+\. /, ''))}</li>)
+        i++
+      }
+      elements.push(<ol key={`ol-${i}`} style={{ paddingLeft: 18, margin: '6px 0' }}>{items}</ol>)
+      continue
+    }
+    // Empty line
+    else if (line.trim() === '') {
+      elements.push(<div key={i} style={{ height: 8 }} />)
+    }
+    // Regular paragraph
+    else {
+      elements.push(<p key={i} style={{ fontSize: 13, color: baseColor, lineHeight: 1.8, margin: '0 0 6px' }}>{renderInline(line)}</p>)
+    }
+    i++
+  }
+  return <div>{elements}</div>
+}
+
+function renderInline(text) {
+  // Bold
+  const parts = text.split(/(\*\*[^*]+\*\*)/g)
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>
+    }
+    // Italic within non-bold parts
+    const italicParts = part.split(/(_[^_]+_|\*[^*]+\*)/g)
+    return italicParts.map((ip, j) => {
+      if ((ip.startsWith('_') && ip.endsWith('_')) || (ip.startsWith('*') && ip.endsWith('*'))) {
+        return <em key={j}>{ip.slice(1, -1)}</em>
+      }
+      return ip
+    })
+  })
 }
 
 // ─── AI Drawer ─────────────────────────────────────────────────
@@ -139,18 +198,18 @@ function AIDrawer({ article, connector, action, onClose }) {
         let aiResult = ''
         if (action === 'grammar') {
           aiResult = await callClaude(
-            'You are a professional editor. Fix all grammar, spelling, punctuation, and clarity issues in this knowledge base article. Preserve the meaning and structure exactly. Return only plain text — no markdown, no asterisks, no hash symbols, no commentary.',
+            'You are a professional editor. Fix all grammar, spelling, punctuation, and clarity issues in this knowledge base article. Preserve the meaning, structure, and formatting exactly. Use markdown for headings (##), bold (**text**), and bullet points (- item). Return only the corrected article with no commentary.',
             plain || article.title,
             2048
           )
         } else if (action === 'rewrite') {
           aiResult = await callClaude(
-            'You are a technical writer specializing in customer support content. Rewrite this knowledge base article to be clearer, more concise, and easier to follow. Use simple language, active voice, and short sentences. Preserve all the information. Return only plain text — no markdown, no asterisks, no hash symbols, no commentary.',
+            'You are a technical writer specializing in customer support content. Rewrite this knowledge base article to be clearer, more concise, and easier to follow. Use simple language, active voice, and short sentences. Use markdown formatting: ## for section headings, **bold** for key terms, and - for bullet lists. Start with a one-line summary of the issue. Then use sections: ## Problem, ## Why This Happens, ## Solution. Return only the rewritten article with no commentary.',
             plain || article.title,
             2048
           )
         }
-        setResult(stripMarkdown(aiResult))
+        setResult(aiResult)
       } catch (e) {
         setError(e.message)
       } finally {
@@ -210,21 +269,24 @@ function AIDrawer({ article, connector, action, onClose }) {
             <div style={{ flex:1, display:'grid', gridTemplateColumns:'1fr 1fr', overflow:'hidden' }}>
               {/* Before */}
               <div style={{ display:'flex', flexDirection:'column', borderRight:'1px solid var(--border)', overflow:'hidden' }}>
-                <div style={{ padding:'12px 20px', background:'var(--bg)', borderBottom:'1px solid var(--border)', flexShrink:0 }}>
-                  <span style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)' }}>Before</span>
+                <div style={{ padding:'10px 20px', background:'var(--bg)', borderBottom:'1px solid var(--border)', flexShrink:0 }}>
+                  <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)' }}>Original</span>
                 </div>
-                <div style={{ flex:1, overflowY:'auto', padding:'20px', fontSize:13, color:'var(--text-2)', lineHeight:1.8 }}>
-                  {body}
+                <div style={{ flex:1, overflowY:'auto', padding:'20px' }}>
+                  <p style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 6px' }}>Title</p>
+                  <p style={{ fontSize:14, fontWeight:700, color:'var(--text)', margin:'0 0 18px', lineHeight:1.4 }}>{article.title}</p>
+                  <p style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 8px' }}>Content</p>
+                  <MarkdownContent text={body} muted />
                 </div>
               </div>
 
               {/* After */}
               <div style={{ display:'flex', flexDirection:'column', overflow:'hidden' }}>
-                <div style={{ padding:'12px 20px', background:'var(--green-light)', borderBottom:'1px solid var(--green-border)', flexShrink:0 }}>
-                  <span style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--green)' }}>ArticleIQ {actionLabel}</span>
+                <div style={{ padding:'10px 20px', background:'var(--green-light)', borderBottom:'1px solid var(--green-border)', flexShrink:0 }}>
+                  <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--green)' }}>ArticleIQ {actionLabel}</span>
                 </div>
-                <div style={{ flex:1, overflowY:'auto', padding:'20px', fontSize:13, color:'var(--text)', lineHeight:1.8, whiteSpace:'pre-wrap' }}>
-                  {result}
+                <div style={{ flex:1, overflowY:'auto', padding:'20px' }}>
+                  <MarkdownContent text={result} />
                 </div>
               </div>
             </div>
