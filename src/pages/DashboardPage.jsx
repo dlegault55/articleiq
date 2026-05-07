@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useScan } from '@/hooks/useScan'
 import { useToast } from '@/hooks/useToast'
+import { useUpgrade } from '@/hooks/useUpgrade'
 import { supabase } from '@/lib/supabase'
 import {
   AlertOctagon, AlertTriangle, CheckCircle, Scan, Plug, ArrowRight,
@@ -50,8 +51,18 @@ const pointsToHealthy = (score) => score >= 80 ? 0 : 80 - score
 export default function DashboardPage() {
   const { userId, profile } = useAuth()
   const { activeScan, recentScans, reload: reloadScans } = useScan()
-  const toast   = useToast()
-  const navigate = useNavigate()
+  const toast    = useToast()
+  const navigate  = useNavigate()
+  const upgrade   = useUpgrade()
+
+  // Show success message if returning from Stripe
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('upgraded') === 'true') {
+      toast.success('Welcome to Pro! AI features are now unlocked.', 6000)
+      window.history.replaceState({}, '', '/dashboard')
+    }
+  }, [])
 
   const [connector,    setConnector]    = useState(null)
   const [hasConn,      setHasConn]      = useState(null)
@@ -331,7 +342,7 @@ export default function DashboardPage() {
                     </div>
                   ))}
                 </div>
-                <button className="btn" style={{ background:'#FFD93D', color:'#0A1A0A', fontWeight:700, fontSize:13, display:'flex', alignItems:'center', gap:6 }}>
+                <button onClick={upgrade} className="btn" style={{ background:'#FFD93D', color:'#0A1A0A', fontWeight:700, fontSize:13, display:'flex', alignItems:'center', gap:6 }}>
                   <Zap size={14} /> Upgrade to Pro — $49/mo
                 </button>
               </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
+import { useUpgrade } from '@/hooks/useUpgrade'
 import { useScan } from '@/hooks/useScan'
 import { supabase } from '@/lib/supabase'
 import {
@@ -585,7 +586,7 @@ function AIPanel({ article, isPaid, connector, onOpenDrawer }) {
         <p style={{ fontSize:12, color:'rgba(255,255,255,0.7)', margin:'0 0 10px', lineHeight:1.5 }}>
           Fix grammar, rewrite unclear content, and score quality — powered by Claude.
         </p>
-        <button className="btn btn-sm" style={{ background:'#FFD93D', color:'#0A1A0A', fontWeight:700, fontSize:12 }}>
+        <button onClick={upgrade} className="btn btn-sm" style={{ background:'#FFD93D', color:'#0A1A0A', fontWeight:700, fontSize:12 }}>
           <Zap size={12} /> Upgrade to Pro
         </button>
       </div>
@@ -910,6 +911,7 @@ export default function ScanResultsPage() {
   const { id: scanId } = useParams()
   const { profile }    = useAuth()
   const { resumeScan } = useScan()
+  const upgrade        = useUpgrade()
 
   const [scan,     setScan]     = useState(null)
   const [articles, setArticles] = useState([])
