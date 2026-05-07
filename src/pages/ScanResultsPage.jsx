@@ -218,10 +218,12 @@ function AIDrawer({ article, connector, action, onClose }) {
   const [body,     setBody]     = useState('')
   const [result,   setResult]   = useState('')
   const [copying,   setCopying]   = useState(false)
-  const [publishing, setPublishing] = useState(false)
-  const [published,  setPublished]  = useState(false)
-  const [confirmPub, setConfirmPub] = useState(false)
-  const [error,      setError]      = useState(null)
+  const [publishing,  setPublishing]  = useState(false)
+  const [published,   setPublished]   = useState(false)
+  const [confirmPub,  setConfirmPub]  = useState(false)
+  const [editMode,    setEditMode]    = useState(false)
+  const [editedText,  setEditedText]  = useState('')
+  const [error,       setError]       = useState(null)
 
   // Fetch article body from Zendesk then run AI
   useEffect(() => {
@@ -256,6 +258,7 @@ function AIDrawer({ article, connector, action, onClose }) {
           )
         }
         setResult(aiResult)
+        setEditedText(aiResult)
       } catch (e) {
         setError(e.message)
       } finally {
@@ -266,7 +269,7 @@ function AIDrawer({ article, connector, action, onClose }) {
   }, [article?.id, action])
 
   const copy = async () => {
-    await navigator.clipboard.writeText(result)
+    await navigator.clipboard.writeText(editedText || result)
     setCopying(true)
     setTimeout(() => setCopying(false), 2000)
   }
@@ -276,7 +279,7 @@ function AIDrawer({ article, connector, action, onClose }) {
     setPublishing(true); setConfirmPub(false)
     try {
       const authHeader = `Basic ${btoa(connector.api_key_encrypted)}`
-      const html = markdownToHtml(result)
+      const html = markdownToHtml(editedText || result)
       const res = await fetch(
         `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${article.zendesk_article_id}/translations/en-us`,
         {
@@ -353,14 +356,42 @@ function AIDrawer({ article, connector, action, onClose }) {
                 </div>
               </div>
 
-              {/* After */}
+              {/* After — editable */}
               <div style={{ display:'flex', flexDirection:'column', overflow:'hidden' }}>
-                <div style={{ padding:'10px 20px', background:'var(--green-light)', borderBottom:'1px solid var(--green-border)', flexShrink:0 }}>
+                <div style={{ padding:'10px 20px', background:'var(--green-light)', borderBottom:'1px solid var(--green-border)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                   <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--green)' }}>ArticleIQ {actionLabel}</span>
+                  <div style={{ display:'flex', gap:4 }}>
+                    <button onClick={() => setEditMode(false)}
+                      style={{ fontSize:11, fontWeight:600, padding:'3px 10px', borderRadius:6, border:'none', cursor:'pointer', transition:'all 0.12s',
+                        background: !editMode ? 'var(--green)' : 'transparent',
+                        color: !editMode ? 'white' : 'var(--green)',
+                      }}>Preview</button>
+                    <button onClick={() => setEditMode(true)}
+                      style={{ fontSize:11, fontWeight:600, padding:'3px 10px', borderRadius:6, border:'none', cursor:'pointer', transition:'all 0.12s',
+                        background: editMode ? 'var(--green)' : 'transparent',
+                        color: editMode ? 'white' : 'var(--green)',
+                      }}>Edit</button>
+                  </div>
                 </div>
-                <div style={{ flex:1, overflowY:'auto', padding:'20px' }}>
-                  <MarkdownContent text={result} />
-                </div>
+
+                {editMode ? (
+                  /* Edit mode — textarea */
+                  <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+                    <textarea
+                      value={editedText}
+                      onChange={e => setEditedText(e.target.value)}
+                      style={{ flex:1, padding:'20px', fontSize:13, color:'var(--text)', lineHeight:1.8, border:'none', outline:'none', resize:'none', fontFamily:'DM Mono, monospace', background:'#FAFFF9', overflowY:'auto' }}
+                    />
+                    <div style={{ padding:'8px 16px', background:'var(--green-light)', borderTop:'1px solid var(--green-border)', fontSize:11, color:'var(--green)', fontWeight:500 }}>
+                      Editing markdown — switch to Preview to see formatted output
+                    </div>
+                  </div>
+                ) : (
+                  /* Preview mode — rendered */
+                  <div style={{ flex:1, overflowY:'auto', padding:'20px' }}>
+                    <MarkdownContent text={editedText || result} />
+                  </div>
+                )}
               </div>
             </div>
 
