@@ -237,26 +237,15 @@ function AIDrawer({ article, connector, action, onClose }) {
           `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${article.zendesk_article_id}`,
           { headers: { Authorization: authHeader } }
         )
-        const rawBody = res.ok ? ((await res.json()).article?.body || '') : ''
-        // Strip HTML for display
-        const plain = rawBody.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
-        setBody(plain || article.title)
+        const rawHtml = res.ok ? ((await res.json()).article?.body || '') : ''
+        setBody(rawHtml || `<p>${article.title}</p>`)
 
-        // Run AI on the content
-        let aiResult = ''
-        if (action === 'grammar') {
-          aiResult = await callClaude(
-            'You are a professional editor. Fix all grammar, spelling, punctuation, and clarity issues in this knowledge base article. Preserve the meaning, structure, and formatting exactly. Use markdown for headings (##), bold (**text**), and bullet points (- item). Return only the corrected article with no commentary.',
-            plain || article.title,
-            2048
-          )
-        } else if (action === 'rewrite') {
-          aiResult = await callClaude(
-            'You are a technical writer specializing in customer support content. Rewrite this knowledge base article to be clearer, more concise, and easier to follow. Use simple language, active voice, and short sentences. Use markdown formatting: ## for section headings, **bold** for key terms, and - for bullet lists. Start with a one-line summary of the issue. Then use sections: ## Problem, ## Why This Happens, ## Solution. Return only the rewritten article with no commentary.',
-            plain || article.title,
-            2048
-          )
-        }
+        // Run AI on raw HTML — images and links must be preserved
+        const systemPrompt = action === 'grammar'
+          ? `You are a professional editor working with HTML knowledge base articles. Fix all grammar, spelling, punctuation, and clarity issues in the TEXT CONTENT ONLY. You MUST preserve every HTML tag exactly as-is — especially <img>, <a href>, <table>, <code>, <pre> tags and all their attributes. Never remove, add or modify any HTML tags or attributes. Only fix the words between the tags. Return only the corrected HTML with no commentary or markdown fences.`
+          : `You are a technical writer working with HTML knowledge base articles. Rewrite the text content to be clearer, more concise, and easier to follow — use simple language, active voice, and short sentences. You MUST preserve every HTML tag exactly as-is — especially <img>, <a href>, <table>, <code>, <pre> tags and all their attributes. Never remove, add, or modify any HTML tags or attributes. Use <h2> tags for section headings. Structure as: one summary sentence, then <h2>Problem</h2>, <h2>Why This Happens</h2>, <h2>Solution</h2>. Return only the rewritten HTML with no commentary or markdown fences.`
+
+        const aiResult = await callClaude(systemPrompt, rawHtml || article.title, 4096)
         setResult(aiResult)
         setEditedText(aiResult)
       } catch (e) {
@@ -279,7 +268,7 @@ function AIDrawer({ article, connector, action, onClose }) {
     setPublishing(true); setConfirmPub(false)
     try {
       const authHeader = `Basic ${btoa(connector.api_key_encrypted)}`
-      const html = markdownToHtml(editedText || result)
+      const html = editedText || result // already HTML from Zendesk → Claude → editor
       const res = await fetch(
         `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${article.zendesk_article_id}/translations/en-us`,
         {
@@ -311,7 +300,24 @@ function AIDrawer({ article, connector, action, onClose }) {
 
       {/* Drawer */}
       <div style={{ position:'fixed', top:0, right:0, bottom:0, width:'min(820px, 90vw)', background:'var(--bg-card)', zIndex:201, display:'flex', flexDirection:'column', boxShadow:'-8px 0 40px rgba(0,0,0,0.15)', animation:'slide-in 0.25s ease' }}>
-        <style>{`@keyframes slide-in { from { transform: translateX(100%) } to { transform: translateX(0) } }`}</style>
+        <style>{`
+          @keyframes slide-in { from { transform: translateX(100%) } to { transform: translateX(0) } }
+          .article-html h1 { font-size:18px; font-weight:800; margin:16px 0 8px; color:var(--text); }
+          .article-html h2 { font-size:15px; font-weight:700; margin:14px 0 6px; color:var(--text); }
+          .article-html h3 { font-size:13px; font-weight:700; margin:10px 0 4px; color:var(--text); }
+          .article-html p  { font-size:13px; line-height:1.8; margin:0 0 10px; color:inherit; }
+          .article-html ul, .article-html ol { padding-left:20px; margin:8px 0; }
+          .article-html li { font-size:13px; line-height:1.7; margin-bottom:4px; }
+          .article-html a  { color:var(--green); text-decoration:underline; }
+          .article-html img { max-width:100%; border-radius:6px; margin:8px 0; border:1px solid var(--border); }
+          .article-html code { font-family:monospace; font-size:12px; background:var(--bg); padding:1px 5px; border-radius:3px; }
+          .article-html pre { background:var(--bg); padding:12px; border-radius:8px; overflow-x:auto; font-size:12px; margin:10px 0; }
+          .article-html table { width:100%; border-collapse:collapse; font-size:13px; margin:10px 0; }
+          .article-html th, .article-html td { padding:8px 10px; border:1px solid var(--border); text-align:left; }
+          .article-html th { background:var(--bg); font-weight:700; }
+          .article-html strong { font-weight:700; }
+          .article-html em { font-style:italic; }
+        `}</style>
 
         {/* Header */}
         <div style={{ padding:'16px 24px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
@@ -352,7 +358,7 @@ function AIDrawer({ article, connector, action, onClose }) {
                   <p style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 6px' }}>Title</p>
                   <p style={{ fontSize:14, fontWeight:700, color:'var(--text)', margin:'0 0 18px', lineHeight:1.4 }}>{article.title}</p>
                   <p style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 8px' }}>Content</p>
-                  <MarkdownContent text={body} muted />
+                  <div className="article-html" style={{ fontSize:13, color:'var(--text-2)' }} dangerouslySetInnerHTML={{ __html: body }} />
                 </div>
               </div>
 
@@ -388,9 +394,7 @@ function AIDrawer({ article, connector, action, onClose }) {
                   </div>
                 ) : (
                   /* Preview mode — rendered */
-                  <div style={{ flex:1, overflowY:'auto', padding:'20px' }}>
-                    <MarkdownContent text={editedText || result} />
-                  </div>
+                  <div className="article-html" style={{ flex:1, overflowY:'auto', padding:'20px' }} dangerouslySetInnerHTML={{ __html: editedText || result }} />
                 )}
               </div>
             </div>
