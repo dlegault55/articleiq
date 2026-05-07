@@ -95,6 +95,21 @@ const exportExcel = async (scan, articles, issues) => {
   XLSX.writeFile(wb, `ArticleIQ_${format(new Date(scan.created_at), 'yyyy-MM-dd')}.xlsx`)
 }
 
+// ─── Strip markdown formatting ────────────────────────────────
+const stripMarkdown = (text) => {
+  return text
+    .replace(/^#{1,6}\s+/gm, '')        // headings
+    .replace(/\*\*(.+?)\*\*/g, '$1')   // bold
+    .replace(/\*(.+?)\*/g, '$1')        // italic
+    .replace(/`(.+?)`/g, '$1')           // inline code
+    .replace(/^[-*+]\s+/gm, '• ')       // bullet lists
+    .replace(/^\d+\.\s+/gm, '')        // numbered lists
+    .replace(/\[(.+?)\]\(.+?\)/g, '$1') // links
+    .replace(/^>\s+/gm, '')             // blockquotes
+    .replace(/\n{3,}/g, '\n\n')        // excess newlines
+    .trim()
+}
+
 // ─── AI Drawer ─────────────────────────────────────────────────
 function AIDrawer({ article, connector, action, onClose }) {
   const [loading,  setLoading]  = useState(true)
@@ -124,18 +139,18 @@ function AIDrawer({ article, connector, action, onClose }) {
         let aiResult = ''
         if (action === 'grammar') {
           aiResult = await callClaude(
-            'You are a professional editor. Fix all grammar, spelling, punctuation, and clarity issues in this knowledge base article. Preserve the meaning and structure exactly. Return only the corrected text with no commentary.',
+            'You are a professional editor. Fix all grammar, spelling, punctuation, and clarity issues in this knowledge base article. Preserve the meaning and structure exactly. Return only plain text — no markdown, no asterisks, no hash symbols, no commentary.',
             plain || article.title,
             2048
           )
         } else if (action === 'rewrite') {
           aiResult = await callClaude(
-            'You are a technical writer specializing in customer support content. Rewrite this knowledge base article to be clearer, more concise, and easier to follow. Use simple language, active voice, and short sentences. Preserve all the information. Return only the rewritten text with no commentary.',
+            'You are a technical writer specializing in customer support content. Rewrite this knowledge base article to be clearer, more concise, and easier to follow. Use simple language, active voice, and short sentences. Preserve all the information. Return only plain text — no markdown, no asterisks, no hash symbols, no commentary.',
             plain || article.title,
             2048
           )
         }
-        setResult(aiResult)
+        setResult(stripMarkdown(aiResult))
       } catch (e) {
         setError(e.message)
       } finally {
@@ -206,9 +221,9 @@ function AIDrawer({ article, connector, action, onClose }) {
               {/* After */}
               <div style={{ display:'flex', flexDirection:'column', overflow:'hidden' }}>
                 <div style={{ padding:'12px 20px', background:'var(--green-light)', borderBottom:'1px solid var(--green-border)', flexShrink:0 }}>
-                  <span style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--green)' }}>After · AI {actionLabel}</span>
+                  <span style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--green)' }}>ArticleIQ {actionLabel}</span>
                 </div>
-                <div style={{ flex:1, overflowY:'auto', padding:'20px', fontSize:13, color:'var(--text)', lineHeight:1.8 }}>
+                <div style={{ flex:1, overflowY:'auto', padding:'20px', fontSize:13, color:'var(--text)', lineHeight:1.8, whiteSpace:'pre-wrap' }}>
                   {result}
                 </div>
               </div>
