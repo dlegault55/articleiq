@@ -157,13 +157,17 @@ export default function SettingsPage() {
         ))}
       </Section>
 
-      {/* ── Danger zone ── */}
-      <Section title="Danger zone" desc="Permanent actions that cannot be undone">
-        <Row label="Sign out" desc="Sign out of your account on this device" border>
+      {/* ── Sign out ── */}
+      <Section title="Session" desc="Manage your current session">
+        <Row label="Sign out" desc="Sign out of your account on this device" border={false}>
           <button onClick={() => signOut()} className="btn btn-secondary btn-sm">
             Sign out
           </button>
         </Row>
+      </Section>
+
+      {/* ── Danger zone ── */}
+      <Section title="Danger zone" desc="Permanent actions that cannot be undone">
         <Row label="Delete account" desc="Permanently delete your account and all scan data" border={false}>
           {!confirmDelete ? (
             <button onClick={() => setConfirmDelete(true)} className="btn btn-danger btn-sm">
