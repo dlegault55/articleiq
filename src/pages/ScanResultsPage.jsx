@@ -267,20 +267,20 @@ function AIDrawer({ article, connector, action, onClose }) {
     if (!confirmPub) { setConfirmPub(true); return }
     setPublishing(true); setConfirmPub(false)
     try {
-      const authHeader = `Basic ${btoa(connector.api_key_encrypted)}`
-      const html = editedText || result // already HTML from Zendesk → Claude → editor
-      const res = await fetch(
-        `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${article.zendesk_article_id}/translations/en-us`,
-        {
-          method: 'PUT',
-          headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ translation: { body: html } }),
-        }
-      )
-      if (!res.ok) {
-        const e = await res.json().catch(() => ({}))
-        throw new Error(e.error || `Zendesk error ${res.status}`)
-      }
+      const html = editedText || result
+      // Route through our server to avoid browser CORS restrictions
+      const res = await fetch('/api/publish-article', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId:      connector.user_id,
+          connectorId: connector.id,
+          articleId:   article.zendesk_article_id,
+          html,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || `Server error ${res.status}`)
       setPublished(true)
       setTimeout(() => setPublished(false), 4000)
     } catch (e) {
