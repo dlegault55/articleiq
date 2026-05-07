@@ -556,111 +556,152 @@ function AIPanel({ article, isPaid, connector, onOpenDrawer }) {
 }
 
 // ─── Article row ───────────────────────────────────────────────
-function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolvedIssues, resolvedArticles, onResolveIssue, onResolveArticle }) {
+function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolvedIssues, onResolveIssue }) {
   const [open, setOpen] = useState(false)
 
-  const activeIssues   = issues.filter(i => !resolvedIssues.has(i.id))
-  const critical       = activeIssues.filter(i => i.severity === 'critical')
-  const warning        = activeIssues.filter(i => i.severity === 'warning')
-  const artResolved    = resolvedArticles.has(article.id)
-  const allResolved    = issues.length > 0 && issues.every(i => resolvedIssues.has(i.id))
-  const clean          = issues.length === 0
+  const activeIssues = issues.filter(i => !resolvedIssues.has(i.id))
+  const critical     = activeIssues.filter(i => i.severity === 'critical')
+  const warning      = activeIssues.filter(i => i.severity === 'warning')
+  const clean        = issues.length === 0
+  const allResolved  = issues.length > 0 && issues.every(i => resolvedIssues.has(i.id))
 
   const barColor = critical.length ? 'var(--red)' : warning.length ? 'var(--amber)' : (allResolved || clean) ? 'var(--green)' : 'var(--border-md)'
 
+  const SEVERITY = {
+    critical: { bg:'#FEF2F2', border:'#FECACA', color:'var(--red)',   label:'Critical' },
+    warning:  { bg:'#FFFBEB', border:'#FDE68A', color:'var(--amber)', label:'Warning'  },
+    info:     { bg:'#EFF6FF', border:'#BFDBFE', color:'var(--blue)',  label:'Info'     },
+  }
+
   return (
-    <div style={{ borderBottom:'1px solid var(--border)', opacity: artResolved ? 0.45 : 1 }}>
-      <div onClick={() => setOpen(v => !v)}
-        style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 20px', cursor:'pointer', transition:'background 0.1s' }}
+    <div style={{ borderBottom:'1px solid var(--border)' }}>
+      {/* Row */}
+      <div style={{ display:'flex', alignItems:'center', gap:10, padding:'13px 20px', transition:'background 0.1s' }}
         onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
 
         {/* Severity bar */}
         <div style={{ width:3, alignSelf:'stretch', borderRadius:2, background:barColor, flexShrink:0 }} />
 
-        <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
-            <span style={{ fontSize:13, fontWeight:600, color:'var(--text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
-              textDecoration: artResolved ? 'line-through' : 'none' }}>
-              {article.title}
-            </span>
-            {article.url && (
-              <a href={article.url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
-                style={{ color:'var(--text-3)', display:'flex', flexShrink:0 }}>
-                <ExternalLink size={11} />
-              </a>
-            )}
-          </div>
-          <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
-            <span style={{ fontSize:11, color:'var(--text-3)' }}>{article.word_count||0} words</span>
-            {article.last_updated && (
-              <span style={{ fontSize:11, color:'var(--text-3)' }}>
-                Updated {formatDistanceToNow(new Date(article.last_updated), { addSuffix:true })}
+        {/* Expand toggle */}
+        <button onClick={() => setOpen(v => !v)}
+          style={{ display:'flex', alignItems:'flex-start', gap:10, flex:1, minWidth:0, background:'none', border:'none', cursor:'pointer', textAlign:'left', padding:0 }}>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
+              <span style={{ fontSize:13, fontWeight:600, color:'var(--text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                {article.title}
               </span>
-            )}
-            {article.readability_score != null && (
-              <span style={{ fontSize:11, fontWeight:600, color:readColor(article.readability_score), background:`${readColor(article.readability_score)}18`, padding:'1px 6px', borderRadius:4 }}>
-                {article.readability_score} · {readLabel(article.readability_score)}
-              </span>
-            )}
+              {article.url && (
+                <a href={article.url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
+                  style={{ color:'var(--text-3)', display:'flex', flexShrink:0 }}>
+                  <ExternalLink size={11} />
+                </a>
+              )}
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
+              <span style={{ fontSize:11, color:'var(--text-3)' }}>{article.word_count||0} words</span>
+              {article.last_updated && (
+                <span style={{ fontSize:11, color:'var(--text-3)' }}>Updated {formatDistanceToNow(new Date(article.last_updated), { addSuffix:true })}</span>
+              )}
+              {article.readability_score != null && (
+                <span style={{ fontSize:11, fontWeight:600, color:readColor(article.readability_score), background:`${readColor(article.readability_score)}18`, padding:'1px 6px', borderRadius:4 }}>
+                  Readability: {article.readability_score} · {readLabel(article.readability_score)}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
 
-        <div style={{ display:'flex', alignItems:'center', gap:6, flexShrink:0 }}>
-          {critical.length > 0 && <span className="badge badge-critical"><AlertOctagon size={9} />{critical.length}</span>}
-          {warning.length  > 0 && <span className="badge badge-warning"><AlertTriangle size={9} />{warning.length}</span>}
-          {(clean || allResolved) && <CheckCircle size={14} style={{ color:'var(--green)' }} />}
-          {open ? <ChevronUp size={13} style={{ color:'var(--text-3)' }} /> : <ChevronDown size={13} style={{ color:'var(--text-3)' }} />}
-        </div>
-      </div>
+          <div style={{ display:'flex', alignItems:'center', gap:6, flexShrink:0 }}>
+            {critical.length > 0 && <span className="badge badge-critical"><AlertOctagon size={9} />{critical.length} critical</span>}
+            {warning.length  > 0 && <span className="badge badge-warning"><AlertTriangle size={9} />{warning.length} warning{warning.length !== 1 ? 's' : ''}</span>}
+            {(clean || allResolved) && <span className="badge badge-success"><CheckCircle size={9} />{allResolved ? 'Resolved' : 'Clean'}</span>}
+            {open ? <ChevronUp size={13} style={{ color:'var(--text-3)' }} /> : <ChevronDown size={13} style={{ color:'var(--text-3)' }} />}
+          </div>
+        </button>
 
-      {open && (
-        <div style={{ padding:'4px 20px 16px 36px', background:'var(--bg)' }}>
-          <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:8 }}>
-            <button onClick={() => onResolveArticle(article.id, !artResolved)}
-              style={{ display:'flex', alignItems:'center', gap:5, background:'none', border:'none', cursor:'pointer', fontSize:12, fontWeight:500, color: artResolved ? 'var(--green)' : 'var(--text-3)' }}>
-              {artResolved ? <CheckSquare size={13} /> : <Square size={13} />}
-              {artResolved ? 'Reviewed ✓' : 'Mark as reviewed'}
+        {/* AI button — always visible on the row */}
+        {isPaid && issues.length > 0 && (
+          <div style={{ display:'flex', gap:5, flexShrink:0 }}>
+            <button onClick={() => onOpenDrawer('grammar')}
+              style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', borderRadius:6, border:'none', cursor:'pointer', fontSize:11, fontWeight:600, background:'var(--green-light)', color:'var(--green)', transition:'all 0.12s' }}
+              title="Fix grammar with AI">
+              <Wand2 size={11} /> Fix
+            </button>
+            <button onClick={() => onOpenDrawer('rewrite')}
+              style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', borderRadius:6, border:'none', cursor:'pointer', fontSize:11, fontWeight:600, background:'var(--green-light)', color:'var(--green)', transition:'all 0.12s' }}
+              title="Rewrite with AI">
+              <RefreshCcw size={11} /> Rewrite
             </button>
           </div>
+        )}
+      </div>
 
-          {issues.length === 0 && (
-            <div style={{ display:'flex', alignItems:'center', gap:6, color:'var(--green)', fontSize:13, padding:'6px 0' }}>
-              <CheckCircle size={14} /> No issues found — this article looks good
+      {/* Expanded issues */}
+      {open && (
+        <div style={{ padding:'8px 20px 20px 36px', background:'var(--bg)' }}>
+          {issues.length === 0 ? (
+            <div style={{ display:'flex', alignItems:'center', gap:8, padding:'16px', borderRadius:10, background:'var(--green-light)', border:'1px solid var(--green-border)' }}>
+              <CheckCircle size={16} style={{ color:'var(--green)', flexShrink:0 }} />
+              <div>
+                <p style={{ fontSize:13, fontWeight:600, color:'var(--green)', margin:0 }}>No issues found</p>
+                <p style={{ fontSize:12, color:'var(--text-2)', margin:0 }}>This article looks good — no issues detected in this scan.</p>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {[...issues.filter(i=>i.severity==='critical'), ...issues.filter(i=>i.severity==='warning'), ...issues.filter(i=>i.severity==='info')].map(issue => {
+                const Icon    = ISSUE_ICONS[issue.issue_type] || Info
+                const s       = SEVERITY[issue.severity] || SEVERITY.info
+                const resolved = resolvedIssues.has(issue.id)
+                return (
+                  <div key={issue.id} style={{ borderRadius:10, border:`1px solid ${resolved ? 'var(--border)' : s.border}`, background: resolved ? 'var(--bg)' : s.bg, overflow:'hidden', transition:'all 0.15s' }}>
+                    <div style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'14px 16px' }}>
+                      <div style={{ width:32, height:32, borderRadius:8, background:'white', border:`1px solid ${resolved ? 'var(--border)' : s.border}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                        <Icon size={15} style={{ color: resolved ? 'var(--text-3)' : s.color }} />
+                      </div>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+                          <span style={{ fontSize:12, fontWeight:700, color: resolved ? 'var(--text-3)' : s.color, textTransform:'capitalize' }}>
+                            {issue.issue_type.replace(/_/g,' ')}
+                          </span>
+                          <span style={{ fontSize:10, fontWeight:600, padding:'1px 7px', borderRadius:100, background:'white', color: resolved ? 'var(--text-3)' : s.color, border:`1px solid ${resolved ? 'var(--border)' : s.border}` }}>
+                            {s.label}
+                          </span>
+                          {resolved && <span style={{ fontSize:10, fontWeight:600, color:'var(--green)' }}>✓ Resolved</span>}
+                        </div>
+                        <p style={{ fontSize:13, color: resolved ? 'var(--text-3)' : 'var(--text-2)', margin:0, lineHeight:1.6, textDecoration: resolved ? 'line-through' : 'none' }}>
+                          {issue.description}
+                        </p>
+                      </div>
+                      <button onClick={() => onResolveIssue(issue.id, !resolved)}
+                        style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:7, border:'none', cursor:'pointer', fontSize:12, fontWeight:600, flexShrink:0, transition:'all 0.12s',
+                          background: resolved ? 'var(--bg-card)' : 'white',
+                          color: resolved ? 'var(--text-3)' : s.color,
+                          outline: `1px solid ${resolved ? 'var(--border)' : s.border}`,
+                        }}>
+                        {resolved ? <><Square size={12} /> Unresolve</> : <><CheckSquare size={12} /> Mark resolved</>}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
 
-          {[...issues.filter(i=>i.severity==='critical'), ...issues.filter(i=>i.severity==='warning'), ...issues.filter(i=>i.severity==='info')].map(issue => {
-            const Icon = ISSUE_ICONS[issue.issue_type] || Info
-            const resolved = resolvedIssues.has(issue.id)
-            const colors = {
-              critical: { bg:'var(--red-light)',   border:'var(--red-border)',   color:'var(--red)'   },
-              warning:  { bg:'var(--amber-light)', border:'var(--amber-border)', color:'var(--amber)' },
-              info:     { bg:'var(--blue-light)',  border:'var(--blue-border)',  color:'var(--blue)'  },
-            }
-            const c = colors[issue.severity]
-            return (
-              <div key={issue.id} style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:8, padding:'10px 12px', borderRadius:8, marginBottom:6,
-                background:c.bg, border:`1px solid ${c.border}`, opacity: resolved ? 0.4 : 1 }}>
-                <div style={{ display:'flex', gap:8, flex:1 }}>
-                  <Icon size={13} style={{ color:c.color, flexShrink:0, marginTop:1 }} />
-                  <div>
-                    <div style={{ fontSize:12, fontWeight:700, color:c.color, marginBottom:2, textDecoration: resolved ? 'line-through' : 'none' }}>
-                      {issue.issue_type.replace(/_/g,' ')}
-                    </div>
-                    <div style={{ fontSize:12, color:'var(--text-2)', lineHeight:1.5 }}>{issue.description}</div>
-                  </div>
-                </div>
-                <button onClick={() => onResolveIssue(issue.id, !resolved)}
-                  title={resolved ? 'Mark unresolved' : 'Mark resolved'}
-                  style={{ background:'none', border:'none', cursor:'pointer', color: resolved ? c.color : 'var(--text-3)', flexShrink:0, padding:2, display:'flex' }}>
-                  {resolved ? <CheckSquare size={14} /> : <Square size={14} />}
-                </button>
+          {/* AI upsell for free users */}
+          {!isPaid && issues.length > 0 && (
+            <div style={{ marginTop:12, padding:'12px 14px', borderRadius:10, background:'linear-gradient(135deg, #0A5A0A, #107C10)', display:'flex', alignItems:'center', justifyContent:'space-between', gap:12 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <Zap size={14} style={{ color:'#FFD93D', flexShrink:0 }} />
+                <p style={{ fontSize:12, color:'rgba(255,255,255,0.85)', margin:0 }}>
+                  <strong style={{ color:'white' }}>Fix issues with AI</strong> — grammar, rewrites, and quality scoring
+                </p>
               </div>
-            )
-          })}
-
-          <AIPanel article={article} isPaid={isPaid} connector={connector} onOpenDrawer={onOpenDrawer} />
+              <button className="btn btn-sm" style={{ background:'#FFD93D', color:'#0A1A0A', fontWeight:700, fontSize:12, flexShrink:0 }}>
+                <Zap size={12} /> Upgrade to Pro
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -708,7 +749,6 @@ export default function ScanResultsPage() {
   const [exporting,setExporting]= useState(false)
   const [shared,   setShared]   = useState(false)
   const [resolvedIssues,   setResolvedIssues]   = useState(new Set())
-  const [resolvedArticles, setResolvedArticles] = useState(new Set())
   const [drawer,           setDrawer]           = useState(null) // { article, action }
   const [connector,        setConnector]        = useState(null)
   const intervalRef = useRef(null)
@@ -757,9 +797,6 @@ export default function ScanResultsPage() {
     setResolvedIssues(prev => { const n = new Set(prev); resolved ? n.add(issueId) : n.delete(issueId); return n })
   }
 
-  const resolveArticle = (articleId, resolved) => {
-    setResolvedArticles(prev => { const n = new Set(prev); resolved ? n.add(articleId) : n.delete(articleId); return n })
-  }
 
   const handleShare = async () => {
     await supabase.from('scan_jobs').update({ is_shared:true, shared_at:new Date().toISOString() }).eq('id', scanId)
@@ -778,16 +815,16 @@ export default function ScanResultsPage() {
     { key:'issues',   label:'Has issues',  count: articles.filter(a => !resolvedArticles.has(a.id) && issues.some(i=>i.article_id===a.id && !resolvedIssues.has(i.id))).length },
     { key:'critical', label:'Critical',    count: articles.filter(a => issues.some(i=>i.article_id===a.id && i.severity==='critical' && !resolvedIssues.has(i.id))).length },
     { key:'clean',    label:'Clean',       count: articles.filter(a => !issues.some(i=>i.article_id===a.id)).length },
-    { key:'resolved', label:'Resolved',    count: articles.filter(a => resolvedArticles.has(a.id) || (issues.some(i=>i.article_id===a.id) && issues.filter(i=>i.article_id===a.id).every(i=>resolvedIssues.has(i.id)))).length },
+    { key:'resolved', label:'Resolved',    count: articles.filter(a => { const ai = issues.filter(i=>i.article_id===a.id); return ai.length > 0 && ai.every(i=>resolvedIssues.has(i.id)) }).length },
   ]
 
   const filtered = articles
     .filter(a => {
-      const ai    = issues.filter(i => i.article_id===a.id)
-      const unrec = ai.filter(i => !resolvedIssues.has(i.id))
-      const artRes = resolvedArticles.has(a.id) || (ai.length > 0 && ai.every(i=>resolvedIssues.has(i.id)))
-      if (filter==='resolved') return artRes
-      if (artRes) return false
+      const ai      = issues.filter(i => i.article_id===a.id)
+      const unrec   = ai.filter(i => !resolvedIssues.has(i.id))
+      const allRes  = ai.length > 0 && ai.every(i => resolvedIssues.has(i.id))
+      if (filter==='resolved') return allRes
+      if (allRes) return false
       if (filter==='all')      return true
       if (filter==='issues')   return unrec.length > 0
       if (filter==='critical') return unrec.some(i=>i.severity==='critical')
@@ -989,9 +1026,7 @@ export default function ScanResultsPage() {
             connector={connector}
             onOpenDrawer={(action) => setDrawer({ article: a, action })}
             resolvedIssues={resolvedIssues}
-            resolvedArticles={resolvedArticles}
             onResolveIssue={resolveIssue}
-            onResolveArticle={resolveArticle}
           />
         ))}
       </div>
