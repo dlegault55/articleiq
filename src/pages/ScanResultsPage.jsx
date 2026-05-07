@@ -704,7 +704,7 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
 
       {/* Expanded */}
       {open && (
-        <div style={{ background:'var(--bg)', borderTop:'1px solid var(--border)' }}>
+        <div style={{ background:'var(--bg)', borderTop:'2px solid var(--green)', borderLeft:'4px solid var(--green)', margin:'0 12px 12px', borderRadius:'0 0 10px 10px', boxShadow:'0 2px 8px rgba(16,124,16,0.08)' }}>
 
           {/* Article link — prominent */}
           {article.url && (
