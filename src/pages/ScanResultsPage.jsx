@@ -780,7 +780,7 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
           <div style={{ padding:'16px 20px' }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
               <div>
-                <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', margin:'0 0 2px' }}>Fix with AI</p>
+                <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', margin:'0 0 2px' }}>Fix with ArticleIQ</p>
                 {!isPaid && <p style={{ fontSize:11, color:'var(--amber)', fontWeight:600, margin:0 }}>Pro feature — upgrade to unlock</p>}
               </div>
               {!isPaid && (
