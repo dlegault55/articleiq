@@ -26,10 +26,15 @@ const SCAN_CHECKS = [
   { key: 'labels',      label: 'Missing labels',       desc: 'No tags or category — harder for customers to find, harder for your team to manage', time: 'Fast' },
   { key: 'duplicates',  label: 'Duplicate detection',  desc: 'Articles covering the same topic — confuses customers and splits search results', time: 'Moderate' },
   { key: 'links',       label: 'Broken links',         desc: 'Dead hyperlinks inside articles — customers hit a 404 and lose trust in your content', time: 'Moderate' },
-  { key: 'ai',          label: 'AI analysis',          desc: 'Grammar fixes, rewrites, and quality scoring powered by Claude', time: 'Pro only', proOnly: true },
 ]
 
-const DEFAULT_CHECKS = { outdated: true, wordCount: true, readability: true, labels: true, duplicates: false, links: false, ai: false }
+const AI_CHECKS = [
+  { key: 'ai_grammar',  label: 'Grammar & spelling fix', desc: 'Catch every error your team missed. See exactly what changed before applying.' },
+  { key: 'ai_rewrite',  label: 'Article rewrite',        desc: 'Transform jargon and walls of text into clear, step-by-step content customers can actually follow.' },
+  { key: 'ai_quality',  label: 'Quality score',          desc: 'Get scored on clarity, completeness, structure, and tone — with specific suggestions to improve.' },
+]
+
+const DEFAULT_CHECKS = { outdated: true, wordCount: true, readability: true, labels: true, duplicates: false, links: false, ai_grammar: false, ai_rewrite: false, ai_quality: false }
 
 // Time saved calculation: ~18s per issue to manually find
 const timeSaved = (total) => {
@@ -223,43 +228,97 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Checkbox check picker */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:20 }}>
-            {SCAN_CHECKS.map(({ key, label, desc, time, proOnly }) => {
+          {/* Standard checks */}
+          <p style={{ fontSize:12, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:10 }}>Quality checks</p>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:24 }}>
+            {SCAN_CHECKS.map(({ key, label, desc, time }) => {
               const isChecked = checks[key]
-              const locked = proOnly && profile?.plan !== 'paid'
               return (
                 <button key={key}
-                  onClick={() => !locked && setChecks(c => ({ ...c, [key]: !c[key] }))}
-                  style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'14px 16px', borderRadius:10, cursor: locked ? 'not-allowed' : 'pointer', textAlign:'left', border:'none', transition:'all 0.12s', opacity: locked ? 0.6 : 1,
-                    background: isChecked && !locked ? 'var(--green-light)' : 'var(--bg)',
-                    outline: `1.5px solid ${isChecked && !locked ? 'var(--green-border)' : 'var(--border-md)'}`,
+                  onClick={() => setChecks(c => ({ ...c, [key]: !c[key] }))}
+                  style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'12px 14px', borderRadius:10, cursor:'pointer', textAlign:'left', border:'none', transition:'all 0.12s',
+                    background: isChecked ? 'var(--green-light)' : 'var(--bg)',
+                    outline: `1.5px solid ${isChecked ? 'var(--green-border)' : 'var(--border-md)'}`,
                   }}>
-                  {/* Checkbox */}
-                  <div style={{ width:18, height:18, borderRadius:5, flexShrink:0, marginTop:1, display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.12s',
-                    background: isChecked && !locked ? 'var(--green)' : 'white',
-                    border: `2px solid ${isChecked && !locked ? 'var(--green)' : 'var(--border-md)'}`,
+                  <div style={{ width:17, height:17, borderRadius:4, flexShrink:0, marginTop:2, display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.12s',
+                    background: isChecked ? 'var(--green)' : 'white',
+                    border: `2px solid ${isChecked ? 'var(--green)' : 'var(--border-md)'}`,
                   }}>
-                    {isChecked && !locked && <CheckCircle size={11} color="white" />}
+                    {isChecked && <CheckCircle size={10} color="white" />}
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
-                      <span style={{ fontSize:13, fontWeight:700, color: isChecked && !locked ? 'var(--green)' : 'var(--text)' }}>{label}</span>
-                      <span style={{ fontSize:10, fontWeight:600, padding:'1px 7px', borderRadius:100,
-                        background: proOnly ? 'var(--amber-light)' : 'var(--bg)',
-                        color: proOnly ? 'var(--amber)' : 'var(--text-3)',
-                        border: `1px solid ${proOnly ? 'var(--amber-border)' : 'var(--border)'}`,
-                      }}>
-                        {proOnly ? '★ Pro' : time}
-                      </span>
+                    <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
+                      <span style={{ fontSize:13, fontWeight:700, color: isChecked ? 'var(--green)' : 'var(--text)' }}>{label}</span>
+                      <span style={{ fontSize:10, fontWeight:600, padding:'1px 6px', borderRadius:100, background:'var(--bg-hover)', color:'var(--text-3)', border:'1px solid var(--border)' }}>{time}</span>
                     </div>
-                    <p style={{ fontSize:12, color:'var(--text-2)', margin:0, lineHeight:1.5 }}>{desc}</p>
-                    {locked && <p style={{ fontSize:11, color:'var(--amber)', margin:'4px 0 0', fontWeight:600 }}>Upgrade to Pro to unlock</p>}
+                    <p style={{ fontSize:11, color:'var(--text-2)', margin:0, lineHeight:1.5 }}>{desc}</p>
                   </div>
                 </button>
               )
             })}
           </div>
+
+          {/* AI section — highlighted */}
+          {profile?.plan === 'paid' ? (
+            <div style={{ borderRadius:12, background:'linear-gradient(135deg, #0A5A0A 0%, #107C10 100%)', padding:'20px 22px', marginBottom:20 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+                <Zap size={15} style={{ color:'#FFD93D' }} />
+                <p style={{ fontSize:13, fontWeight:800, color:'white', margin:0, letterSpacing:-0.2 }}>AI-Powered Analysis</p>
+                <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:100, background:'rgba(255,255,255,0.2)', color:'white' }}>Pro</span>
+              </div>
+              <p style={{ fontSize:12, color:'rgba(255,255,255,0.7)', marginBottom:14, lineHeight:1.5 }}>
+                Powered by Claude — fixes and improvements are applied directly inside your results.
+              </p>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8 }}>
+                {AI_CHECKS.map(({ key, label, desc }) => {
+                  const isChecked = checks[key]
+                  return (
+                    <button key={key} onClick={() => setChecks(c => ({ ...c, [key]: !c[key] }))}
+                      style={{ padding:'12px', borderRadius:9, cursor:'pointer', textAlign:'left', border:'none', transition:'all 0.12s',
+                        background: isChecked ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.08)',
+                        outline: `1.5px solid ${isChecked ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.15)'}`,
+                      }}>
+                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
+                        <span style={{ fontSize:12, fontWeight:700, color:'white' }}>{label}</span>
+                        <div style={{ width:15, height:15, borderRadius:3, background: isChecked ? 'white' : 'transparent', border:'2px solid rgba(255,255,255,0.5)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                          {isChecked && <CheckCircle size={10} color="var(--green)" />}
+                        </div>
+                      </div>
+                      <p style={{ fontSize:11, color:'rgba(255,255,255,0.65)', margin:0, lineHeight:1.4 }}>{desc}</p>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ) : (
+            /* Pro upsell */
+            <div style={{ borderRadius:12, padding:'20px 22px', marginBottom:20, position:'relative', overflow:'hidden',
+              background:'linear-gradient(135deg, #0A5A0A 0%, #107C10 100%)',
+            }}>
+              <div style={{ position:'absolute', top:-20, right:-20, width:120, height:120, borderRadius:'50%', background:'rgba(255,255,255,0.05)' }} />
+              <div style={{ position:'relative', zIndex:1 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
+                  <Zap size={16} style={{ color:'#FFD93D' }} />
+                  <p style={{ fontSize:14, fontWeight:800, color:'white', margin:0, letterSpacing:-0.3 }}>Unlock AI-Powered Analysis</p>
+                  <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:100, background:'#FFD93D', color:'#0A1A0A' }}>Pro</span>
+                </div>
+                <p style={{ fontSize:13, color:'rgba(255,255,255,0.75)', marginBottom:16, lineHeight:1.6, maxWidth:480 }}>
+                  Let Claude read every flagged article and fix it — grammar, rewrites, and quality scores — without ever leaving ArticleIQ.
+                </p>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginBottom:16 }}>
+                  {AI_CHECKS.map(({ label, desc }) => (
+                    <div key={label} style={{ padding:'12px', borderRadius:9, background:'rgba(255,255,255,0.1)', border:'1px solid rgba(255,255,255,0.15)' }}>
+                      <p style={{ fontSize:12, fontWeight:700, color:'white', marginBottom:4 }}>{label}</p>
+                      <p style={{ fontSize:11, color:'rgba(255,255,255,0.6)', margin:0, lineHeight:1.4 }}>{desc}</p>
+                    </div>
+                  ))}
+                </div>
+                <button className="btn" style={{ background:'#FFD93D', color:'#0A1A0A', fontWeight:700, fontSize:13, display:'flex', alignItems:'center', gap:6 }}>
+                  <Zap size={14} /> Upgrade to Pro — $49/mo
+                </button>
+              </div>
+            </div>
+          )}
 
           {error && <p style={{ fontSize:12, color:'var(--red)', marginBottom:12 }}>{error}</p>}
           <div style={{ display:'flex', alignItems:'center', gap:16 }}>
