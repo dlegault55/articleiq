@@ -55,12 +55,16 @@ export default function DashboardPage() {
 
   const [connector,    setConnector]    = useState(null)
   const [hasConn,      setHasConn]      = useState(null)
-  const [checks,  setChecks]  = useState(DEFAULT_CHECKS)
+  const [checks,        setChecks]        = useState(null) // null = loading
+  const [checksReady,   setChecksReady]   = useState(false)
 
   // Load saved scan defaults from profile
   useEffect(() => {
-    if (profile?.scan_defaults) setChecks({ ...DEFAULT_CHECKS, ...profile.scan_defaults })
-  }, [profile?.id])
+    if (profile !== null) {
+      setChecks({ ...DEFAULT_CHECKS, ...(profile?.scan_defaults || {}) })
+      setChecksReady(true)
+    }
+  }, [profile?.id, profile])
   const [starting,     setStarting]     = useState(false)
   const [lastCounts,   setLastCounts]   = useState(null)
   const [quickWins,    setQuickWins]    = useState([])
@@ -111,7 +115,7 @@ export default function DashboardPage() {
     setStarting(true); setError(null)
     try {
       const { data: job, error: jobErr } = await supabase.from('scan_jobs')
-        .insert({ user_id: userId, connector_id: connector.id, status: 'pending', preset: Object.entries(checks).filter(([,v])=>v).map(([k])=>k).join(',') })
+        .insert({ user_id: userId, connector_id: connector.id, status: 'pending', preset: Object.entries(checks || DEFAULT_CHECKS).filter(([,v])=>v).map(([k])=>k).join(',') })
         .select().single()
       if (jobErr) throw new Error(jobErr.message)
       reloadScans()
@@ -235,9 +239,16 @@ export default function DashboardPage() {
 
           {/* Standard checks */}
           <p style={{ fontSize:12, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:10 }}>Quality checks</p>
+          {!checksReady ? (
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:24 }}>
+              {[...Array(6)].map((_, i) => (
+                <div key={i} style={{ height:60, borderRadius:10, background:'var(--bg)', outline:'1.5px solid var(--border-md)', animation:'pulse 1.5s ease-in-out infinite', opacity:0.6 }} />
+              ))}
+            </div>
+          ) : (
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:24 }}>
             {SCAN_CHECKS.map(({ key, label, desc, time }) => {
-              const isChecked = checks[key]
+              const isChecked = (checks || DEFAULT_CHECKS)[key]
               return (
                 <button key={key}
                   onClick={() => setChecks(c => ({ ...c, [key]: !c[key] }))}
@@ -262,6 +273,8 @@ export default function DashboardPage() {
               )
             })}
           </div>
+
+          )}
 
           {/* AI section — highlighted */}
           {profile?.plan === 'paid' ? (
@@ -451,7 +464,7 @@ export default function DashboardPage() {
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12, marginBottom:16 }} className="animate-in">
           {[
             { icon:<BookOpen size={16} style={{ color:'var(--green)' }} />, label:'Articles scanned', value: lastScan.scanned_articles?.toLocaleString() || 0, sub: `across ${recentScans.length} scan${recentScans.length !== 1 ? 's' : ''}` },
-            { icon:<Clock size={16} style={{ color:'var(--amber)' }} />, label:'Time saved', value: timeSaved(total), sub: 'vs finding issues manually' },
+            { icon:<AlertTriangle size={16} style={{ color:'var(--amber)' }} />, label:'Issues found', value: total.toLocaleString(), sub: 'across all checks' },
             { icon:<CheckCircle size={16} style={{ color:'var(--green)' }} />, label:'Scans this month', value: recentScans.filter(s => new Date(s.created_at) > new Date(Date.now() - 30*24*60*60*1000)).length, sub: 'last 30 days' },
           ].map(({ icon, label, value, sub }) => (
             <div key={label} className="card" style={{ padding:'16px 18px', display:'flex', gap:12, alignItems:'flex-start' }}>
@@ -490,7 +503,11 @@ export default function DashboardPage() {
                 <Link to={`/scanner/results/${scan.id}`} style={{ flex:1, minWidth:0, textDecoration:'none' }}>
                   <div style={{ fontSize:13, fontWeight:600, color:'var(--text)', display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
                     {format(new Date(scan.created_at), 'MMM d, yyyy — h:mm a')}
-                    {scan.preset && <span style={{ fontSize:10, fontWeight:700, padding:'1px 7px', borderRadius:100, background:'var(--green-light)', color:'var(--green)', border:'1px solid var(--green-border)' }}>{scan.preset}</span>}
+                    {scan.preset && (() => {
+                      const count = scan.preset.split(',').filter(Boolean).length
+                      const label = count <= 2 ? 'Fast' : count <= 5 ? 'Standard' : 'Full'
+                      return <span style={{ fontSize:10, fontWeight:700, padding:'1px 7px', borderRadius:100, background:'var(--green-light)', color:'var(--green)', border:'1px solid var(--green-border)' }}>{label} · {count} checks</span>
+                    })()}
                   </div>
                   <div style={{ fontSize:11, color:'var(--text-3)' }}>
                     {isActive ? `${scan.scanned_articles||0} of ${scan.total_articles||'?'} articles · in progress`

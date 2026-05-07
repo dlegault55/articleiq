@@ -17,7 +17,6 @@ import TipTapLink from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 
 const PAGE_SIZE = 25
-const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY
 
 const ISSUE_ICONS = {
   low_readability:   BookOpen,
@@ -54,28 +53,18 @@ const readLabel = (s) => {
   return 'Very hard'
 }
 
-// ─── Claude API ────────────────────────────────────────────────
-const callClaude = async (system, user, maxTokens = 1024) => {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+// ─── AI via server-side endpoint ──────────────────────────────
+const callAI = async (action, { content, title } = {}) => {
+  const res = await fetch('/api/ai-action', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: maxTokens,
-      system,
-      messages: [{ role: 'user', content: user }],
-    }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, content, title }),
   })
   if (!res.ok) {
     const e = await res.json().catch(() => ({}))
-    throw new Error(e.error?.message || `API error ${res.status}`)
+    throw new Error(e.error || `AI error ${res.status}`)
   }
-  return (await res.json()).content[0]?.text || ''
+  return (await res.json()).result || ''
 }
 
 // ─── Excel export ──────────────────────────────────────────────
@@ -375,7 +364,7 @@ function AIDrawer({ article, connector, action, onClose }) {
           ? `You are a professional editor working with HTML knowledge base articles. Fix all grammar, spelling, punctuation, and clarity issues in the TEXT CONTENT ONLY. You MUST preserve every HTML tag exactly as-is — especially <img>, <a href>, <table>, <code>, <pre> tags and all their attributes. Never remove, add or modify any HTML tags or attributes. Only fix the words between the tags. Return only the corrected HTML with no commentary or markdown fences.`
           : `You are a professional editor and technical writer working with HTML knowledge base articles. In a single pass: fix all grammar, spelling, and punctuation errors AND rewrite the content to be clearer, more concise, and easier to follow. Use simple language, active voice, and short sentences. You MUST preserve every HTML tag exactly as-is — especially <img>, <a href>, <table>, <code>, <pre> tags and all their attributes. Never remove, add, or modify any HTML tags or attributes. Use <h2> tags for section headings. Structure as: one summary sentence, then <h2>Problem</h2>, <h2>Why This Happens</h2>, <h2>Solution</h2>. Return only the improved HTML with no commentary or markdown fences.`
 
-        const aiResult = await callClaude(systemPrompt, rawHtml || article.title, 4096)
+        const aiResult = await callAI('improve', { content: rawHtml || article.title })
         setResult(aiResult)
         setEditedText(aiResult)
       } catch (e) {
@@ -577,10 +566,7 @@ function AIPanel({ article, isPaid, connector, onOpenDrawer }) {
     if (!isPaid) return
     setLoading('quality'); setResult(null)
     try {
-      const raw = await callClaude(
-        'Evaluate this knowledge base article title. Return JSON only: {"score": 0-100, "verdict": "one sentence", "suggestions": ["s1","s2","s3"]}',
-        `Article title: ${article.title}`, 512
-      )
+      const raw = await callAI('quality', { title: article.title })
       setResult({ type: 'quality', data: JSON.parse(raw.replace(/```json|```/g,'').trim()) })
     } catch (e) {
       setResult({ type: 'error', message: e.message })
@@ -698,10 +684,7 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
     if (!isPaid) return
     setAiLoading('quality'); setAiResult(null)
     try {
-      const raw = await callClaude(
-        'Evaluate this knowledge base article title. Return JSON only: {"score": 0-100, "verdict": "one sentence", "suggestions": ["s1","s2","s3"]}',
-        `Article title: ${article.title}`, 512
-      )
+      const raw = await callAI('quality', { title: article.title })
       setAiResult({ type: 'quality', data: JSON.parse(raw.replace(/```json|```/g,'').trim()) })
     } catch (e) {
       setAiResult({ type: 'error', message: e.message })
@@ -1048,6 +1031,31 @@ export default function ScanResultsPage() {
     <div style={{ maxWidth:600, margin:'80px auto', textAlign:'center', padding:'0 24px' }}>
       <p style={{ color:'var(--text-3)', marginBottom:16 }}>Scan not found</p>
       <Link to="/dashboard" className="btn btn-primary">Back to Dashboard</Link>
+    </div>
+  )
+
+  if (scan.status === 'failed') return (
+    <div style={{ maxWidth:560, margin:'80px auto', textAlign:'center', padding:'0 24px' }} className="animate-in">
+      <div style={{ width:52, height:52, borderRadius:14, background:'var(--red-light)', border:'1px solid var(--red-border)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
+        <AlertOctagon size={24} style={{ color:'var(--red)' }} />
+      </div>
+      <h2 style={{ fontSize:20, fontWeight:800, color:'var(--text)', marginBottom:8 }}>Scan didn't complete</h2>
+      <p style={{ fontSize:14, color:'var(--text-2)', lineHeight:1.7, marginBottom:8 }}>
+        {scan.error_message || 'Something went wrong while scanning your knowledge base.'}
+      </p>
+      <p style={{ fontSize:13, color:'var(--text-3)', marginBottom:24 }}>
+        {scan.scanned_articles > 0 && `${scan.scanned_articles} articles were analyzed before the error.`}
+      </p>
+      <div style={{ display:'flex', gap:10, justifyContent:'center' }}>
+        <Link to="/dashboard" className="btn btn-secondary">Back to Dashboard</Link>
+        <Link to="/dashboard" className="btn btn-primary"><Scan size={14} /> Start new scan</Link>
+      </div>
+      {scan.scanned_articles > 0 && (
+        <p style={{ fontSize:12, color:'var(--green)', marginTop:16, cursor:'pointer', fontWeight:600 }}
+          onClick={() => setScan(s => ({ ...s, status: 'completed' }))}>
+          View partial results ({scan.scanned_articles} articles) →
+        </p>
+      )}
     </div>
   )
 

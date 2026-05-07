@@ -29,6 +29,21 @@ const countWords = (html) => {
   return text ? text.split(' ').filter(Boolean).length : 0
 }
 
+
+const checkBrokenLinks = async (html) => {
+  if (!html) return []
+  const matches = [...html.matchAll(/href=["']([^"']+)["']/g)]
+  const urls = [...new Set(matches.map(m => m[1]).filter(u => u.startsWith('http')))]
+  const broken = []
+  await Promise.all(urls.slice(0, 10).map(async (url) => { // cap at 10 per article
+    try {
+      const res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(5000) })
+      if (res.status >= 400) broken.push(url)
+    } catch { broken.push(url) }
+  }))
+  return broken
+}
+
 // ─── Check parsing ─────────────────────────────────────────────
 // preset field is now a comma-separated list of check keys
 // e.g. "outdated,wordCount,readability,labels"
@@ -81,7 +96,7 @@ const analyzeArticle = (article, checks) => {
   if (!article.section_id)
     issues.push({ severity: 'info', issue_type: 'missing_section', description: 'Not assigned to any section — may be hard to find.' })
 
-  return { wordCount, readabilityScore, issues }
+  return { wordCount, readabilityScore, issues, checkLinks: checks.links }
 }
 
 // ─── Main handler ──────────────────────────────────────────────
@@ -162,6 +177,19 @@ export default async function handler(req, res) {
         has_missing_metadata: !article.title?.trim() || !article.section_id,
         broken_links_count:   0,
       }).select().single()
+
+      // Broken links check (async — runs after article saved)
+      if (checks.links && analysis.checkLinks && saved) {
+        const brokenLinks = await checkBrokenLinks(article.body || '')
+        for (const url of brokenLinks) {
+          analysis.issues.push({
+            severity: 'warning',
+            issue_type: 'broken_link',
+            description: `Broken link found: ${url}`,
+            metadata: { url },
+          })
+        }
+      }
 
       if (saved && analysis.issues.length > 0) {
         await supabase.from('article_issues').insert(
