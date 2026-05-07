@@ -603,8 +603,34 @@ function AIPanel({ article, isPaid, connector, onOpenDrawer }) {
 }
 
 // ─── Article row ───────────────────────────────────────────────
+const AI_ACTIONS = [
+  {
+    key: 'grammar',
+    label: 'Fix Grammar & Spelling',
+    desc: 'Claude reads the full article and corrects grammar, spelling, and punctuation errors — without changing the meaning or structure.',
+    icon: Wand2,
+    action: 'grammar',
+  },
+  {
+    key: 'rewrite',
+    label: 'Rewrite for Clarity',
+    desc: 'Claude rewrites the article using simpler language, active voice, and a clear structure (Problem → Why → Solution). Good for low readability scores.',
+    icon: RefreshCcw,
+    action: 'rewrite',
+  },
+  {
+    key: 'quality',
+    label: 'Score Quality',
+    desc: 'Claude rates the article on clarity, completeness, structure, and tone — with specific suggestions for what to improve.',
+    icon: Star,
+    action: 'quality',
+  },
+]
+
 function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolvedIssues, onResolveIssue }) {
   const [open, setOpen] = useState(false)
+  const [aiResult, setAiResult] = useState(null)
+  const [aiLoading, setAiLoading] = useState(null)
 
   const activeIssues = issues.filter(i => !resolvedIssues.has(i.id))
   const critical     = activeIssues.filter(i => i.severity === 'critical')
@@ -620,19 +646,31 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
     info:     { bg:'#EFF6FF', border:'#BFDBFE', color:'var(--blue)',  label:'Info'     },
   }
 
+  const runQuality = async () => {
+    if (!isPaid) return
+    setAiLoading('quality'); setAiResult(null)
+    try {
+      const raw = await callClaude(
+        'Evaluate this knowledge base article title. Return JSON only: {"score": 0-100, "verdict": "one sentence", "suggestions": ["s1","s2","s3"]}',
+        `Article title: ${article.title}`, 512
+      )
+      setAiResult({ type: 'quality', data: JSON.parse(raw.replace(/```json|```/g,'').trim()) })
+    } catch (e) {
+      setAiResult({ type: 'error', message: e.message })
+    } finally { setAiLoading(null) }
+  }
+
   return (
     <div style={{ borderBottom:'1px solid var(--border)' }}>
-      {/* Row */}
+      {/* Collapsed row */}
       <div style={{ display:'flex', alignItems:'center', gap:10, padding:'13px 20px', transition:'background 0.1s' }}
         onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
 
-        {/* Severity bar */}
         <div style={{ width:3, alignSelf:'stretch', borderRadius:2, background:barColor, flexShrink:0 }} />
 
-        {/* Expand toggle */}
         <button onClick={() => setOpen(v => !v)}
-          style={{ display:'flex', alignItems:'flex-start', gap:10, flex:1, minWidth:0, background:'none', border:'none', cursor:'pointer', textAlign:'left', padding:0 }}>
+          style={{ display:'flex', alignItems:'center', flex:1, minWidth:0, background:'none', border:'none', cursor:'pointer', textAlign:'left', padding:0, gap:10 }}>
           <div style={{ flex:1, minWidth:0 }}>
             <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
               <span style={{ fontSize:13, fontWeight:600, color:'var(--text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
@@ -641,114 +679,170 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
               {article.url && (
                 <a href={article.url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
                   style={{ color:'var(--text-3)', display:'flex', flexShrink:0 }}>
-                  <ExternalLink size={11} />
+                  <ExternalLink size={12} />
                 </a>
               )}
             </div>
             <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
               <span style={{ fontSize:11, color:'var(--text-3)' }}>{article.word_count||0} words</span>
-              {article.last_updated && (
-                <span style={{ fontSize:11, color:'var(--text-3)' }}>Updated {formatDistanceToNow(new Date(article.last_updated), { addSuffix:true })}</span>
-              )}
+              {article.last_updated && <span style={{ fontSize:11, color:'var(--text-3)' }}>Updated {formatDistanceToNow(new Date(article.last_updated), { addSuffix:true })}</span>}
               {article.readability_score != null && (
-                <span style={{ fontSize:11, fontWeight:600, color:readColor(article.readability_score), background:`${readColor(article.readability_score)}18`, padding:'1px 6px', borderRadius:4 }}>
-                  Readability: {article.readability_score} · {readLabel(article.readability_score)}
+                <span style={{ fontSize:11, fontWeight:600, color:readColor(article.readability_score), background:`${readColor(article.readability_score)}18`, padding:'1px 7px', borderRadius:4 }}>
+                  Readability {article.readability_score} · {readLabel(article.readability_score)}
                 </span>
               )}
             </div>
           </div>
-
           <div style={{ display:'flex', alignItems:'center', gap:6, flexShrink:0 }}>
             {critical.length > 0 && <span className="badge badge-critical"><AlertOctagon size={9} />{critical.length} critical</span>}
             {warning.length  > 0 && <span className="badge badge-warning"><AlertTriangle size={9} />{warning.length} warning{warning.length !== 1 ? 's' : ''}</span>}
-            {(clean || allResolved) && <span className="badge badge-success"><CheckCircle size={9} />{allResolved ? 'Resolved' : 'Clean'}</span>}
+            {(clean || allResolved) && <span className="badge badge-success"><CheckCircle size={9} />{allResolved ? 'All resolved' : 'Clean'}</span>}
             {open ? <ChevronUp size={13} style={{ color:'var(--text-3)' }} /> : <ChevronDown size={13} style={{ color:'var(--text-3)' }} />}
           </div>
         </button>
-
-        {/* AI button — always visible on the row */}
-        {isPaid && issues.length > 0 && (
-          <div style={{ display:'flex', gap:5, flexShrink:0 }}>
-            <button onClick={() => onOpenDrawer('grammar')}
-              style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', borderRadius:6, border:'none', cursor:'pointer', fontSize:11, fontWeight:600, background:'var(--green-light)', color:'var(--green)', transition:'all 0.12s' }}
-              title="Fix grammar with AI">
-              <Wand2 size={11} /> Fix
-            </button>
-            <button onClick={() => onOpenDrawer('rewrite')}
-              style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', borderRadius:6, border:'none', cursor:'pointer', fontSize:11, fontWeight:600, background:'var(--green-light)', color:'var(--green)', transition:'all 0.12s' }}
-              title="Rewrite with AI">
-              <RefreshCcw size={11} /> Rewrite
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* Expanded issues */}
+      {/* Expanded */}
       {open && (
-        <div style={{ padding:'8px 20px 20px 36px', background:'var(--bg)' }}>
-          {issues.length === 0 ? (
-            <div style={{ display:'flex', alignItems:'center', gap:8, padding:'16px', borderRadius:10, background:'var(--green-light)', border:'1px solid var(--green-border)' }}>
-              <CheckCircle size={16} style={{ color:'var(--green)', flexShrink:0 }} />
+        <div style={{ background:'var(--bg)', borderTop:'1px solid var(--border)' }}>
+
+          {/* Article link — prominent */}
+          {article.url && (
+            <div style={{ padding:'12px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div>
-                <p style={{ fontSize:13, fontWeight:600, color:'var(--green)', margin:0 }}>No issues found</p>
-                <p style={{ fontSize:12, color:'var(--text-2)', margin:0 }}>This article looks good — no issues detected in this scan.</p>
+                <p style={{ fontSize:12, fontWeight:600, color:'var(--text-3)', marginBottom:2, textTransform:'uppercase', letterSpacing:'0.06em' }}>Article</p>
+                <p style={{ fontSize:13, fontWeight:600, color:'var(--text)', margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:400 }}>{article.title}</p>
               </div>
-            </div>
-          ) : (
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              {[...issues.filter(i=>i.severity==='critical'), ...issues.filter(i=>i.severity==='warning'), ...issues.filter(i=>i.severity==='info')].map(issue => {
-                const Icon    = ISSUE_ICONS[issue.issue_type] || Info
-                const s       = SEVERITY[issue.severity] || SEVERITY.info
-                const resolved = resolvedIssues.has(issue.id)
-                return (
-                  <div key={issue.id} style={{ borderRadius:10, border:`1px solid ${resolved ? 'var(--border)' : s.border}`, background: resolved ? 'var(--bg)' : s.bg, overflow:'hidden', transition:'all 0.15s' }}>
-                    <div style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'14px 16px' }}>
-                      <div style={{ width:32, height:32, borderRadius:8, background:'white', border:`1px solid ${resolved ? 'var(--border)' : s.border}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                        <Icon size={15} style={{ color: resolved ? 'var(--text-3)' : s.color }} />
-                      </div>
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
-                          <span style={{ fontSize:12, fontWeight:700, color: resolved ? 'var(--text-3)' : s.color, textTransform:'capitalize' }}>
-                            {issue.issue_type.replace(/_/g,' ')}
-                          </span>
-                          <span style={{ fontSize:10, fontWeight:600, padding:'1px 7px', borderRadius:100, background:'white', color: resolved ? 'var(--text-3)' : s.color, border:`1px solid ${resolved ? 'var(--border)' : s.border}` }}>
-                            {s.label}
-                          </span>
-                          {resolved && <span style={{ fontSize:10, fontWeight:600, color:'var(--green)' }}>✓ Resolved</span>}
-                        </div>
-                        <p style={{ fontSize:13, color: resolved ? 'var(--text-3)' : 'var(--text-2)', margin:0, lineHeight:1.6, textDecoration: resolved ? 'line-through' : 'none' }}>
-                          {issue.description}
-                        </p>
-                      </div>
-                      <button onClick={() => onResolveIssue(issue.id, !resolved)}
-                        style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:7, border:'none', cursor:'pointer', fontSize:12, fontWeight:600, flexShrink:0, transition:'all 0.12s',
-                          background: resolved ? 'var(--bg-card)' : 'white',
-                          color: resolved ? 'var(--text-3)' : s.color,
-                          outline: `1px solid ${resolved ? 'var(--border)' : s.border}`,
-                        }}>
-                        {resolved ? <><Square size={12} /> Unresolve</> : <><CheckSquare size={12} /> Mark resolved</>}
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
+              <a href={article.url} target="_blank" rel="noreferrer"
+                className="btn btn-secondary btn-sm" style={{ flexShrink:0 }}>
+                <ExternalLink size={13} /> Open in Zendesk
+              </a>
             </div>
           )}
 
-          {/* AI upsell for free users */}
-          {!isPaid && issues.length > 0 && (
-            <div style={{ marginTop:12, padding:'12px 14px', borderRadius:10, background:'linear-gradient(135deg, #0A5A0A, #107C10)', display:'flex', alignItems:'center', justifyContent:'space-between', gap:12 }}>
-              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                <Zap size={14} style={{ color:'#FFD93D', flexShrink:0 }} />
-                <p style={{ fontSize:12, color:'rgba(255,255,255,0.85)', margin:0 }}>
-                  <strong style={{ color:'white' }}>Fix issues with AI</strong> — grammar, rewrites, and quality scoring
-                </p>
+          {/* Issues */}
+          {issues.length > 0 && (
+            <div style={{ padding:'16px 20px', borderBottom:'1px solid var(--border)' }}>
+              <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', marginBottom:12 }}>Issues found</p>
+              <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                {[...issues.filter(i=>i.severity==='critical'), ...issues.filter(i=>i.severity==='warning'), ...issues.filter(i=>i.severity==='info')].map(issue => {
+                  const Icon     = ISSUE_ICONS[issue.issue_type] || Info
+                  const s        = SEVERITY[issue.severity] || SEVERITY.info
+                  const resolved = resolvedIssues.has(issue.id)
+                  return (
+                    <div key={issue.id} style={{ borderRadius:10, border:`1px solid ${resolved ? 'var(--border)' : s.border}`, background: resolved ? 'white' : s.bg, transition:'all 0.15s', opacity: resolved ? 0.6 : 1 }}>
+                      <div style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'14px 16px' }}>
+                        <div style={{ width:34, height:34, borderRadius:8, background:'white', border:`1px solid ${resolved ? 'var(--border)' : s.border}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                          <Icon size={16} style={{ color: resolved ? 'var(--text-3)' : s.color }} />
+                        </div>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:5 }}>
+                            <span style={{ fontSize:13, fontWeight:700, color: resolved ? 'var(--text-3)' : s.color, textTransform:'capitalize' }}>
+                              {issue.issue_type.replace(/_/g,' ')}
+                            </span>
+                            <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:100, background:'white', color: resolved ? 'var(--text-3)' : s.color, border:`1px solid ${resolved ? 'var(--border)' : s.border}` }}>
+                              {s.label}
+                            </span>
+                          </div>
+                          <p style={{ fontSize:13, color:'var(--text-2)', margin:0, lineHeight:1.65 }}>{issue.description}</p>
+                        </div>
+                        <button onClick={() => onResolveIssue(issue.id, !resolved)}
+                          style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:7, border:'none', cursor:'pointer', fontSize:12, fontWeight:600, flexShrink:0, transition:'all 0.12s',
+                            background: resolved ? 'var(--green-light)' : 'white',
+                            color: resolved ? 'var(--green)' : 'var(--text-3)',
+                            outline: `1px solid ${resolved ? 'var(--green-border)' : 'var(--border-md)'}`,
+                          }}>
+                          {resolved
+                            ? <><CheckCircle size={12} /> Resolved</>
+                            : <><Square size={12} /> Mark resolved</>
+                          }
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
-              <button className="btn btn-sm" style={{ background:'#FFD93D', color:'#0A1A0A', fontWeight:700, fontSize:12, flexShrink:0 }}>
-                <Zap size={12} /> Upgrade to Pro
-              </button>
             </div>
           )}
+
+          {/* Clean */}
+          {issues.length === 0 && (
+            <div style={{ padding:'20px', margin:'16px 20px', borderRadius:10, background:'var(--green-light)', border:'1px solid var(--green-border)', display:'flex', alignItems:'center', gap:10 }}>
+              <CheckCircle size={18} style={{ color:'var(--green)', flexShrink:0 }} />
+              <div>
+                <p style={{ fontSize:13, fontWeight:600, color:'var(--green)', margin:0 }}>No issues found</p>
+                <p style={{ fontSize:12, color:'var(--text-2)', margin:0 }}>This article looks good across all checks run in this scan.</p>
+              </div>
+            </div>
+          )}
+
+          {/* AI section */}
+          <div style={{ padding:'16px 20px' }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+              <div>
+                <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', margin:'0 0 2px' }}>Fix with AI</p>
+                {!isPaid && <p style={{ fontSize:11, color:'var(--amber)', fontWeight:600, margin:0 }}>Pro feature — upgrade to unlock</p>}
+              </div>
+              {!isPaid && (
+                <button className="btn btn-sm" style={{ background:'#FFD93D', color:'#0A1A0A', fontWeight:700, fontSize:12 }}>
+                  <Zap size={12} /> Upgrade to Pro
+                </button>
+              )}
+            </div>
+
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {AI_ACTIONS.map(({ key, label, desc, icon: Icon, action }) => (
+                <div key={key} style={{ borderRadius:10, border:'1px solid var(--border)', background:'white', overflow:'hidden',
+                  opacity: !isPaid ? 0.6 : 1,
+                }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px' }}>
+                    <div style={{ width:34, height:34, borderRadius:8, background:'var(--green-light)', border:'1px solid var(--green-border)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                      <Icon size={16} style={{ color:'var(--green)' }} />
+                    </div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <p style={{ fontSize:13, fontWeight:700, color:'var(--text)', margin:'0 0 3px' }}>{label}</p>
+                      <p style={{ fontSize:12, color:'var(--text-2)', margin:0, lineHeight:1.6 }}>{desc}</p>
+                    </div>
+                    {action === 'quality' ? (
+                      <button onClick={runQuality} disabled={!isPaid || aiLoading === 'quality'}
+                        className="btn btn-secondary btn-sm" style={{ flexShrink:0 }}>
+                        {aiLoading === 'quality' ? <Loader size={12} style={{ animation:'spin 0.7s linear infinite' }} /> : <Star size={12} />}
+                        Run score
+                      </button>
+                    ) : (
+                      <button onClick={() => isPaid && onOpenDrawer(action)} disabled={!isPaid}
+                        className="btn btn-secondary btn-sm" style={{ flexShrink:0 }}>
+                        <Icon size={12} /> Open editor
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Quality score result inline */}
+                  {action === 'quality' && aiResult?.type === 'quality' && (
+                    <div style={{ padding:'12px 16px', borderTop:'1px solid var(--border)', background:'var(--green-light)' }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:8 }}>
+                        <div style={{ textAlign:'center', flexShrink:0 }}>
+                          <div style={{ fontSize:32, fontWeight:800, color:'var(--green)', lineHeight:1 }}>{aiResult.data.score}</div>
+                          <div style={{ fontSize:10, color:'var(--text-3)' }}>/100</div>
+                        </div>
+                        <p style={{ fontSize:13, color:'var(--text-2)', margin:0, lineHeight:1.6 }}>{aiResult.data.verdict}</p>
+                      </div>
+                      {aiResult.data.suggestions?.map((s,i) => (
+                        <div key={i} style={{ fontSize:12, color:'var(--text-2)', display:'flex', gap:6, marginBottom:4 }}>
+                          <span style={{ color:'var(--green)', flexShrink:0 }}>→</span>{s}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {action === 'quality' && aiResult?.type === 'error' && (
+                    <div style={{ padding:'10px 16px', borderTop:'1px solid var(--border)', background:'var(--red-light)' }}>
+                      <p style={{ fontSize:12, color:'var(--red)', margin:0 }}>{aiResult.message}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>
