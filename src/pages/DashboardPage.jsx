@@ -20,9 +20,21 @@ const healthColor = (s) => s >= 80 ? 'var(--green)' : s >= 60 ? 'var(--amber)' :
 const healthLabel = (s) => s >= 80 ? 'Healthy' : s >= 60 ? 'Needs attention' : 'Critical'
 
 const PRESETS = [
-  { value: 'fast',     label: 'Fast',     icon: '⚡', time: '~10 min / 1k', checks: ['Outdated articles (180+ days)', 'Word count (too short)'] },
-  { value: 'standard', label: 'Standard', icon: '🔍', time: '~20 min / 1k', checks: ['Outdated articles', 'Word count', 'Readability scores', 'Missing labels & sections', 'Duplicate detection'] },
-  { value: 'full',     label: 'Full',     icon: '🔬', time: '~30 min / 1k', checks: ['Outdated articles', 'Word count', 'Readability scores', 'Missing labels & sections', 'Duplicate detection', 'Broken link detection'] },
+  { value: 'fast', label: 'Fast', icon: '⚡', time: '~10 min / 1k', checks: [
+    { label: 'Outdated articles', desc: 'Not updated in 180+ days — customers may be following stale instructions' },
+    { label: 'Too short', desc: 'Under 150 words — likely not detailed enough to actually help' },
+  ]},
+  { value: 'standard', label: 'Standard', icon: '🔍', time: '~20 min / 1k', checks: [
+    { label: 'Outdated articles', desc: 'Not updated in 180+ days' },
+    { label: 'Too short', desc: 'Under 150 words' },
+    { label: 'Readability score', desc: 'How easy the article is to read and follow — low scores mean customers struggle and call support instead' },
+    { label: 'Duplicate detection', desc: 'Articles covering the same topic — confuses customers and splits your search results' },
+    { label: 'Missing labels', desc: 'No tags or category assigned — harder to find and harder to manage at scale' },
+  ]},
+  { value: 'full', label: 'Full', icon: '🔬', time: '~30 min / 1k', checks: [
+    { label: 'Everything in Standard', desc: '' },
+    { label: 'Broken links', desc: 'Dead hyperlinks inside articles — customers click them, hit a 404, and lose trust in your content' },
+  ]},
 ]
 
 // Time saved calculation: ~18s per issue to manually find
@@ -231,10 +243,14 @@ export default function DashboardPage() {
                 </div>
                 <div style={{ fontSize:15, fontWeight:700, color: preset===value ? 'var(--green)' : 'var(--text)', marginBottom:2 }}>{label}</div>
                 <div style={{ fontSize:11, color:'var(--text-3)', marginBottom:12, fontFamily:'monospace' }}>{time} · keep tab open</div>
-                <div style={{ borderTop:`1px solid ${preset===value ? 'var(--green-border)' : 'var(--border)'}`, paddingTop:10, display:'flex', flexDirection:'column', gap:5 }}>
+                <div style={{ borderTop:`1px solid ${preset===value ? 'var(--green-border)' : 'var(--border)'}`, paddingTop:10, display:'flex', flexDirection:'column', gap:8 }}>
                   {checks.map(c => (
-                    <div key={c} style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color: preset===value ? 'var(--green)' : 'var(--text-2)' }}>
-                      <CheckCircle size={11} style={{ flexShrink:0, opacity: preset===value ? 1 : 0.4 }} /> {c}
+                    <div key={c.label} style={{ display:'flex', alignItems:'flex-start', gap:6 }}>
+                      <CheckCircle size={11} style={{ flexShrink:0, marginTop:2, color: preset===value ? 'var(--green)' : 'var(--text-3)', opacity: preset===value ? 1 : 0.5 }} />
+                      <div>
+                        <div style={{ fontSize:12, fontWeight:600, color: preset===value ? 'var(--text)' : 'var(--text-2)' }}>{c.label}</div>
+                        {c.desc && <div style={{ fontSize:11, color:'var(--text-3)', lineHeight:1.4, marginTop:1 }}>{c.desc}</div>}
+                      </div>
                     </div>
                   ))}
                 </div>
