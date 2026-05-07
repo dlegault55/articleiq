@@ -235,35 +235,90 @@ function WYSIWYGEditor({ html, onChange }) {
     }
   }, [html])
 
-  const btn = (action, icon, title, isActive) => (
-    <button key={title} onMouseDown={e => { e.preventDefault(); action() }}
-      title={title}
-      style={{ display:'flex', alignItems:'center', justifyContent:'center', width:28, height:28, borderRadius:5, border:'none', cursor:'pointer', fontSize:13, fontWeight:700, transition:'all 0.1s',
-        background: isActive ? 'var(--green-light)' : 'transparent',
-        color: isActive ? 'var(--green)' : 'var(--text-2)',
-      }}>
-      {icon}
-    </button>
-  )
+  const TOOLBAR_ITEMS = [
+    { group: [
+      { action: () => editor.chain().focus().toggleBold().run(),      icon: <b>B</b>,  tooltip: 'Bold — make selected text bold',           isActive: () => editor.isActive('bold') },
+      { action: () => editor.chain().focus().toggleItalic().run(),    icon: <i>I</i>,  tooltip: 'Italic — make selected text italic',        isActive: () => editor.isActive('italic') },
+    ]},
+    { group: [
+      { action: () => editor.chain().focus().toggleHeading({ level:1 }).run(), icon: 'H1', tooltip: 'Heading 1 — large section title',       isActive: () => editor.isActive('heading', { level:1 }) },
+      { action: () => editor.chain().focus().toggleHeading({ level:2 }).run(), icon: 'H2', tooltip: 'Heading 2 — medium section title',      isActive: () => editor.isActive('heading', { level:2 }) },
+      { action: () => editor.chain().focus().toggleHeading({ level:3 }).run(), icon: 'H3', tooltip: 'Heading 3 — small section title',       isActive: () => editor.isActive('heading', { level:3 }) },
+    ]},
+    { group: [
+      { action: () => editor.chain().focus().toggleBulletList().run(),  icon: '• —', tooltip: 'Bullet list — unordered list of items',      isActive: () => editor.isActive('bulletList') },
+      { action: () => editor.chain().focus().toggleOrderedList().run(), icon: '1.',  tooltip: 'Numbered list — ordered list of items',      isActive: () => editor.isActive('orderedList') },
+    ]},
+    { group: [
+      { action: () => editor.chain().focus().undo().run(), icon: '↩', tooltip: 'Undo — reverse your last change (Ctrl+Z)',  isActive: () => false },
+      { action: () => editor.chain().focus().redo().run(), icon: '↪', tooltip: 'Redo — reapply your last undone change',   isActive: () => false },
+    ]},
+  ]
 
   if (!editor) return null
 
   return (
     <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+      <style>{`
+        .tb-tooltip { position:relative; display:inline-flex; }
+        .tb-tooltip::after {
+          content: attr(data-tip);
+          position: absolute;
+          bottom: calc(100% + 6px);
+          left: 50%;
+          transform: translateX(-50%);
+          background: #1c1b18;
+          color: white;
+          font-size: 11px;
+          font-weight: 500;
+          padding: 5px 9px;
+          border-radius: 6px;
+          white-space: nowrap;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.15s;
+          z-index: 999;
+          font-family: 'Instrument Sans', sans-serif;
+        }
+        .tb-tooltip::before {
+          content: '';
+          position: absolute;
+          bottom: calc(100% + 1px);
+          left: 50%;
+          transform: translateX(-50%);
+          border: 5px solid transparent;
+          border-top-color: #1c1b18;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.15s;
+          z-index: 999;
+        }
+        .tb-tooltip:hover::after, .tb-tooltip:hover::before { opacity: 1; }
+      `}</style>
+
       {/* Toolbar */}
       <div style={{ display:'flex', alignItems:'center', gap:2, padding:'6px 12px', borderBottom:'1px solid var(--border)', background:'var(--bg)', flexShrink:0, flexWrap:'wrap' }}>
-        {btn(() => editor.chain().focus().toggleBold().run(),      <b>B</b>,   'Bold',          editor.isActive('bold'))}
-        {btn(() => editor.chain().focus().toggleItalic().run(),    <i>I</i>,   'Italic',        editor.isActive('italic'))}
-        <div style={{ width:1, height:18, background:'var(--border)', margin:'0 4px' }} />
-        {btn(() => editor.chain().focus().toggleHeading({ level:1 }).run(), 'H1', 'Heading 1', editor.isActive('heading', { level:1 }))}
-        {btn(() => editor.chain().focus().toggleHeading({ level:2 }).run(), 'H2', 'Heading 2', editor.isActive('heading', { level:2 }))}
-        {btn(() => editor.chain().focus().toggleHeading({ level:3 }).run(), 'H3', 'Heading 3', editor.isActive('heading', { level:3 }))}
-        <div style={{ width:1, height:18, background:'var(--border)', margin:'0 4px' }} />
-        {btn(() => editor.chain().focus().toggleBulletList().run(),  '• —', 'Bullet list',   editor.isActive('bulletList'))}
-        {btn(() => editor.chain().focus().toggleOrderedList().run(), '1.', 'Numbered list',  editor.isActive('orderedList'))}
-        <div style={{ width:1, height:18, background:'var(--border)', margin:'0 4px' }} />
-        {btn(() => editor.chain().focus().undo().run(), '↩', 'Undo', false)}
-        {btn(() => editor.chain().focus().redo().run(), '↪', 'Redo', false)}
+        {TOOLBAR_ITEMS.map(({ group }, gi) => (
+          <div key={gi} style={{ display:'flex', alignItems:'center', gap:1 }}>
+            {gi > 0 && <div style={{ width:1, height:18, background:'var(--border)', margin:'0 4px' }} />}
+            {group.map(({ action, icon, tooltip, isActive }, bi) => (
+              <div key={bi} className="tb-tooltip" data-tip={tooltip}>
+                <button onMouseDown={e => { e.preventDefault(); action() }}
+                  style={{ display:'flex', alignItems:'center', justifyContent:'center', width:28, height:28, borderRadius:5, border:'none', cursor:'pointer', fontSize:13, fontWeight:700, transition:'all 0.1s',
+                    background: isActive() ? 'var(--green-light)' : 'transparent',
+                    color: isActive() ? 'var(--green)' : 'var(--text-2)',
+                  }}>
+                  {icon}
+                </button>
+              </div>
+            ))}
+          </div>
+        ))}
+        {/* Active format indicator */}
+        <div style={{ marginLeft:'auto', fontSize:11, color:'var(--text-3)', fontFamily:'monospace', display:'flex', alignItems:'center', gap:6 }}>
+          <div style={{ width:8, height:8, borderRadius:'50%', background:'var(--green)', boxShadow:'0 0 4px var(--green)' }} title="Editor is active and ready" />
+          <span>Ready to edit</span>
+        </div>
       </div>
 
       {/* Editor area */}
