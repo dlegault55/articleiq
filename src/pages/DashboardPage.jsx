@@ -20,9 +20,9 @@ const healthColor = (s) => s >= 80 ? 'var(--green)' : s >= 60 ? 'var(--amber)' :
 const healthLabel = (s) => s >= 80 ? 'Healthy' : s >= 60 ? 'Needs attention' : 'Critical'
 
 const PRESETS = [
-  { value: 'fast',     label: 'Fast',     icon: '⚡', time: '~10 min / 1k', checks: ['Outdated articles', 'Word count'] },
-  { value: 'standard', label: 'Standard', icon: '🔍', time: '~20 min / 1k', checks: ['Everything in Fast', 'Readability scores', 'Missing labels', 'Duplicate detection'] },
-  { value: 'full',     label: 'Full',     icon: '🔬', time: '~30 min / 1k', checks: ['Everything in Standard', 'Broken link detection', 'Deeper duplicate analysis'] },
+  { value: 'fast',     label: 'Fast',     icon: '⚡', time: '~10 min / 1k', checks: ['Outdated articles (180+ days)', 'Word count (too short)'] },
+  { value: 'standard', label: 'Standard', icon: '🔍', time: '~20 min / 1k', checks: ['Outdated articles', 'Word count', 'Readability scores', 'Missing labels & sections', 'Duplicate detection'] },
+  { value: 'full',     label: 'Full',     icon: '🔬', time: '~30 min / 1k', checks: ['Outdated articles', 'Word count', 'Readability scores', 'Missing labels & sections', 'Duplicate detection', 'Broken link detection'] },
 ]
 
 // Time saved calculation: ~18s per issue to manually find
@@ -202,118 +202,120 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── Main grid: health score + scan launcher ── */}
+      {/* ── Scan launcher — full width, 1/3 each ── */}
       {!activeScan && hasConn && (
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 300px', gap:16, marginBottom:16 }}>
-
-          {/* Health score card */}
-          <div style={{ borderRadius:'var(--radius-xl)', background:'var(--green)', padding:'24px 28px', position:'relative', overflow:'hidden' }} className="animate-in">
-            <div style={{ position:'absolute', top:-40, right:-40, width:200, height:200, borderRadius:'50%', background:'rgba(255,255,255,0.06)' }} />
-            <div style={{ position:'absolute', bottom:-60, right:80, width:140, height:140, borderRadius:'50%', background:'rgba(255,255,255,0.04)' }} />
-            <p style={{ fontSize:11, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(255,255,255,0.55)', marginBottom:6 }}>
-              Knowledge Base Health {lastScan ? `· ${formatDistanceToNow(new Date(lastScan.created_at), { addSuffix: true })}` : ''}
-            </p>
-            {lastScan ? (
-              <>
-                <div style={{ display:'flex', alignItems:'flex-end', gap:14, marginBottom:12 }}>
-                  <div style={{ fontSize:80, fontWeight:800, color:'white', lineHeight:1, letterSpacing:-3 }}>{lastH}</div>
-                  <div style={{ paddingBottom:8 }}>
-                    <div style={{ fontSize:17, fontWeight:700, color:'rgba(255,255,255,0.9)', marginBottom:6 }}>{healthLabel(lastH)}</div>
-                    {trend !== null && (
-                      <div style={{ display:'inline-flex', alignItems:'center', gap:5, fontSize:12, fontWeight:600, padding:'3px 10px', borderRadius:100, background:'rgba(255,255,255,0.15)', color:'white' }}>
-                        {trend > 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                        {trend > 0 ? '+' : ''}{trend} vs previous
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Progress to healthy */}
-                {needed > 0 && (
-                  <div style={{ marginBottom:14, padding:'10px 14px', background:'rgba(255,255,255,0.12)', borderRadius:10 }}>
-                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
-                      <span style={{ fontSize:12, color:'rgba(255,255,255,0.8)', fontWeight:500 }}>
-                        <Target size={11} style={{ display:'inline', marginRight:4 }} />
-                        {needed} points to Healthy (80)
-                      </span>
-                      <span style={{ fontSize:12, color:'rgba(255,255,255,0.6)' }}>{lastH}/100</span>
-                    </div>
-                    <div style={{ height:5, background:'rgba(255,255,255,0.2)', borderRadius:3, overflow:'hidden' }}>
-                      <div style={{ height:'100%', width:`${lastH}%`, background:'rgba(255,255,255,0.7)', borderRadius:3 }} />
-                    </div>
-                  </div>
-                )}
-
-                <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
-                  {counts.critical > 0 && <div style={{ padding:'5px 12px', borderRadius:100, background:'#FF4444', color:'white', fontSize:12, fontWeight:700, display:'flex', alignItems:'center', gap:4 }}><AlertOctagon size={11} /> {counts.critical} Critical</div>}
-                  {counts.warning  > 0 && <div style={{ padding:'5px 12px', borderRadius:100, background:'#FFD93D', color:'#1A1A00', fontSize:12, fontWeight:700, display:'flex', alignItems:'center', gap:4 }}><AlertTriangle size={11} /> {counts.warning} Warnings</div>}
-                  <div style={{ padding:'5px 12px', borderRadius:100, background:'rgba(255,255,255,0.2)', color:'white', fontSize:12, fontWeight:500 }}>
-                    {(lastScan.scanned_articles||0) - counts.critical - counts.warning} Clean
-                  </div>
-                  <Link to={`/scanner/results/${lastScan.id}`}
-                    style={{ padding:'5px 12px', borderRadius:100, background:'rgba(255,255,255,0.15)', color:'white', fontSize:12, fontWeight:600, display:'flex', alignItems:'center', gap:4, marginLeft:'auto', textDecoration:'none' }}>
-                    View report <ArrowRight size={12} />
-                  </Link>
-                </div>
-              </>
-            ) : (
-              <div>
-                <div style={{ fontSize:80, fontWeight:800, color:'rgba(255,255,255,0.2)', lineHeight:1, letterSpacing:-3, marginBottom:12 }}>—</div>
-                <p style={{ color:'rgba(255,255,255,0.7)', fontSize:14, lineHeight:1.6 }}>
-                  Run your first scan to get your health score and see exactly what needs attention.
-                </p>
-              </div>
+        <div className="card animate-in" style={{ padding:'28px', marginBottom:16 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+            <div>
+              <p style={{ fontSize:16, fontWeight:700, marginBottom:2 }}>Run a new scan</p>
+              <p style={{ fontSize:13, color:'var(--text-2)' }}>Choose how deep to scan your knowledge base</p>
+            </div>
+            {connector && (
+              <span style={{ fontSize:12, color:'var(--text-3)', display:'flex', alignItems:'center', gap:5, padding:'6px 12px', background:'var(--green-light)', border:'1px solid var(--green-border)', borderRadius:100 }}>
+                <CheckCircle size={12} style={{ color:'var(--green)' }} /> {connector.subdomain}.zendesk.com
+              </span>
             )}
           </div>
 
-          {/* Scan launcher */}
-          <div className="card animate-in" style={{ padding:'20px' }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-              <p style={{ fontSize:14, fontWeight:700 }}>New Scan</p>
-              {connector && <span style={{ fontSize:11, color:'var(--text-3)', display:'flex', alignItems:'center', gap:4 }}><CheckCircle size={11} style={{ color:'var(--green)' }} />{connector.subdomain}</span>}
-            </div>
-            <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:10 }}>
-              {PRESETS.map(({ value, label, icon, time, checks }) => (
-                <button key={value} onClick={() => setPreset(value)}
-                  style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'11px 12px', borderRadius:10, cursor:'pointer', textAlign:'left', border:'none', transition:'all 0.12s',
-                    background: preset===value ? 'var(--green-light)' : 'var(--bg)',
-                    outline: `1.5px solid ${preset===value ? 'var(--green-border)' : 'var(--border-md)'}`,
-                  }}>
-                  <span style={{ fontSize:16, flexShrink:0, marginTop:1 }}>{icon}</span>
-                  <div style={{ flex:1 }}>
-                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:3 }}>
-                      <span style={{ fontSize:13, fontWeight:700, color: preset===value ? 'var(--green)' : 'var(--text)' }}>{label}</span>
-                      <span style={{ fontSize:10, color:'var(--text-3)', fontFamily:'monospace' }}>{time}</span>
+          {/* 1/3 1/3 1/3 preset grid */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12, marginBottom:20 }}>
+            {PRESETS.map(({ value, label, icon, time, checks }) => (
+              <button key={value} onClick={() => setPreset(value)}
+                style={{ padding:'20px', borderRadius:12, cursor:'pointer', textAlign:'left', border:'none', transition:'all 0.15s',
+                  background: preset===value ? 'var(--green-light)' : 'var(--bg)',
+                  outline: `2px solid ${preset===value ? 'var(--green)' : 'var(--border-md)'}`,
+                }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
+                  <span style={{ fontSize:22 }}>{icon}</span>
+                  {preset===value && <CheckCircle size={16} style={{ color:'var(--green)' }} />}
+                </div>
+                <div style={{ fontSize:15, fontWeight:700, color: preset===value ? 'var(--green)' : 'var(--text)', marginBottom:2 }}>{label}</div>
+                <div style={{ fontSize:11, color:'var(--text-3)', marginBottom:12, fontFamily:'monospace' }}>{time} · keep tab open</div>
+                <div style={{ borderTop:`1px solid ${preset===value ? 'var(--green-border)' : 'var(--border)'}`, paddingTop:10, display:'flex', flexDirection:'column', gap:5 }}>
+                  {checks.map(c => (
+                    <div key={c} style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color: preset===value ? 'var(--green)' : 'var(--text-2)' }}>
+                      <CheckCircle size={11} style={{ flexShrink:0, opacity: preset===value ? 1 : 0.4 }} /> {c}
                     </div>
-                    {preset===value && (
-                      <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
-                        {checks.map(c => (
-                          <div key={c} style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'var(--green)' }}>
-                            <CheckCircle size={10} style={{ flexShrink:0 }} /> {c}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {preset===value && <CheckCircle size={13} style={{ color:'var(--green)', flexShrink:0, marginTop:2 }} />}
-                </button>
-              ))}
-            </div>
+                  ))}
+                </div>
+              </button>
+            ))}
+          </div>
 
-            {/* AI note */}
-            <div style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 10px', background:'var(--bg)', borderRadius:8, border:'1px solid var(--border)', marginBottom:12 }}>
-              <Zap size={13} style={{ color:'var(--amber)', flexShrink:0 }} />
-              <p style={{ fontSize:11, color:'var(--text-2)', margin:0, lineHeight:1.5 }}>
-                <strong>AI features</strong> (grammar fix, rewrite, quality score) are available on <strong>all presets</strong> for Pro users — not just Full.
-              </p>
-            </div>
-            {error && <p style={{ fontSize:12, color:'var(--red)', marginBottom:10 }}>{error}</p>}
-            <button onClick={startScan} disabled={starting} className="btn btn-primary" style={{ width:'100%', justifyContent:'center', padding:'11px' }}>
-              {starting ? <Loader size={14} className="spin" /> : <Scan size={14} />}
+          {/* AI note */}
+          <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 14px', background:'var(--amber-light)', borderRadius:8, border:'1px solid var(--amber-border)', marginBottom:16 }}>
+            <Zap size={14} style={{ color:'var(--amber)', flexShrink:0 }} />
+            <p style={{ fontSize:12, color:'var(--text-2)', margin:0 }}>
+              <strong style={{ color:'var(--text)' }}>AI features</strong> — grammar fix, rewrite, and quality scoring — are available on <strong style={{ color:'var(--text)' }}>all presets</strong> for Pro users.
+            </p>
+          </div>
+
+          {error && <p style={{ fontSize:12, color:'var(--red)', marginBottom:12 }}>{error}</p>}
+          <div style={{ display:'flex', alignItems:'center', gap:16 }}>
+            <button onClick={startScan} disabled={starting} className="btn btn-primary btn-lg">
+              {starting ? <Loader size={16} className="spin" /> : <Scan size={16} />}
               {starting ? 'Starting...' : `Start ${PRESETS.find(p=>p.value===preset)?.label} Scan`}
             </button>
-            <p style={{ fontSize:11, color:'var(--text-3)', textAlign:'center', marginTop:8 }}>Keep this tab open while scanning</p>
+            <p style={{ fontSize:12, color:'var(--text-3)', margin:0 }}>Keep this tab open while the scan runs</p>
           </div>
+        </div>
+      )}
+
+      {/* ── Health score — full width below scan launcher ── */}
+      {!activeScan && hasConn && (
+        <div style={{ borderRadius:'var(--radius-xl)', background:'var(--green)', padding:'24px 28px', marginBottom:16, position:'relative', overflow:'hidden' }} className="animate-in">
+          <div style={{ position:'absolute', top:-40, right:-40, width:200, height:200, borderRadius:'50%', background:'rgba(255,255,255,0.06)' }} />
+          <div style={{ position:'absolute', bottom:-60, right:80, width:140, height:140, borderRadius:'50%', background:'rgba(255,255,255,0.04)' }} />
+          <p style={{ fontSize:11, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(255,255,255,0.55)', marginBottom:6 }}>
+            Knowledge Base Health {lastScan ? `· ${formatDistanceToNow(new Date(lastScan.created_at), { addSuffix: true })}` : ''}
+          </p>
+          {lastScan ? (
+            <div style={{ display:'grid', gridTemplateColumns:'auto 1fr', gap:32, alignItems:'center' }}>
+              <div>
+                <div style={{ fontSize:88, fontWeight:800, color:'white', lineHeight:1, letterSpacing:-3 }}>{lastH}</div>
+                <div style={{ fontSize:16, fontWeight:700, color:'rgba(255,255,255,0.85)', marginTop:4 }}>{healthLabel(lastH)}</div>
+                {trend !== null && (
+                  <div style={{ display:'inline-flex', alignItems:'center', gap:5, fontSize:12, fontWeight:600, padding:'3px 10px', borderRadius:100, background:'rgba(255,255,255,0.15)', color:'white', marginTop:8 }}>
+                    {trend > 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                    {trend > 0 ? '+' : ''}{trend} vs previous scan
+                  </div>
+                )}
+              </div>
+              <div>
+                {needed > 0 && (
+                  <div style={{ marginBottom:16, padding:'12px 16px', background:'rgba(255,255,255,0.12)', borderRadius:10 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                      <span style={{ fontSize:13, color:'rgba(255,255,255,0.85)', fontWeight:600, display:'flex', alignItems:'center', gap:5 }}>
+                        <Target size={12} /> {needed} points to Healthy
+                      </span>
+                      <span style={{ fontSize:12, color:'rgba(255,255,255,0.55)' }}>{lastH} / 80</span>
+                    </div>
+                    <div style={{ height:6, background:'rgba(255,255,255,0.2)', borderRadius:3, overflow:'hidden' }}>
+                      <div style={{ height:'100%', width:`${(lastH/80)*100}%`, background:'rgba(255,255,255,0.75)', borderRadius:3 }} />
+                    </div>
+                  </div>
+                )}
+                <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
+                  {counts.critical > 0 && <div style={{ padding:'6px 14px', borderRadius:100, background:'#FF4444', color:'white', fontSize:13, fontWeight:700, display:'flex', alignItems:'center', gap:5 }}><AlertOctagon size={12} /> {counts.critical} Critical</div>}
+                  {counts.warning  > 0 && <div style={{ padding:'6px 14px', borderRadius:100, background:'#FFD93D', color:'#1A1A00', fontSize:13, fontWeight:700, display:'flex', alignItems:'center', gap:5 }}><AlertTriangle size={12} /> {counts.warning} Warnings</div>}
+                  <div style={{ padding:'6px 14px', borderRadius:100, background:'rgba(255,255,255,0.2)', color:'white', fontSize:13, fontWeight:500 }}>
+                    {(lastScan.scanned_articles||0) - counts.critical - counts.warning} Clean
+                  </div>
+                  <Link to={`/scanner/results/${lastScan.id}`}
+                    style={{ padding:'6px 14px', borderRadius:100, background:'rgba(255,255,255,0.15)', color:'white', fontSize:13, fontWeight:600, display:'flex', alignItems:'center', gap:5, marginLeft:'auto', textDecoration:'none' }}>
+                    View full report <ArrowRight size={13} />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display:'flex', alignItems:'center', gap:24 }}>
+              <div style={{ fontSize:88, fontWeight:800, color:'rgba(255,255,255,0.2)', lineHeight:1, letterSpacing:-3 }}>—</div>
+              <p style={{ color:'rgba(255,255,255,0.7)', fontSize:15, lineHeight:1.6, maxWidth:400 }}>
+                Your health score will appear here after your first scan. Run a scan above to get started.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
