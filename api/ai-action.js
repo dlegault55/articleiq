@@ -12,23 +12,24 @@ export default async function handler(req, res) {
     return res.status(e.status || 401).json({ error: e.message })
   }
 
-  // Rate limit: 30 AI calls per minute per user
+  const { action, content, title } = req.body
+  if (!action || (!content && !title)) return res.status(400).json({ error: 'Missing fields' })
+
+  // Rate limit: 30 AI calls per minute per user (skip for free label suggestions)
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
-  try {
-    await rateLimit(supabase, `ai:${auth.userId}`, 30, 60000)
-  } catch (e) {
-    return res.status(429).json({ error: e.message })
+  if (action !== 'labels') {
+    try {
+      await rateLimit(supabase, `ai:${auth.userId}`, 30, 60000)
+    } catch (e) {
+      return res.status(429).json({ error: e.message })
+    }
   }
 
-  // Verify user is Pro for most AI actions (labels suggestions are free)
+  // Verify user is Pro for most AI actions (label suggestions are free)
   const { data: profile } = await supabase.from('profiles').select('plan').eq('id', auth.userId).single()
-  const { action } = req.body
   if (profile?.plan !== 'paid' && action !== 'labels') {
     return res.status(403).json({ error: 'AI features require a Pro subscription' })
   }
-
-  const { action, content, title } = req.body
-  if (!action || (!content && !title)) return res.status(400).json({ error: 'Missing fields' })
 
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY
   if (!ANTHROPIC_KEY) return res.status(500).json({ error: 'AI not configured' })

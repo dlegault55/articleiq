@@ -613,7 +613,7 @@ function IssueCard({ issue, Icon, s, resolved, article, isPaid, onResolve }) {
       const data = JSON.parse(raw.replace(/```json|```/g, '').trim())
       setLabels(data.labels || [])
     } catch (e) {
-      setLabels([])
+      setLabels([`Error: ${e.message}`])
     } finally {
       setSuggesting(false)
     }
