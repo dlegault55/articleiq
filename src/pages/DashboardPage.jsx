@@ -11,6 +11,133 @@ import {
 } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 
+// ─── Health trend chart ───────────────────────────────────────
+function HealthChart({ scans }) {
+  if (!scans || scans.length < 2) return null
+
+  const W = 600, H = 120, PAD = { top:12, right:16, bottom:24, left:28 }
+  const IW = W - PAD.left - PAD.right
+  const IH = H - PAD.top  - PAD.bottom
+
+  const calcH = (s) => {
+    if (!s?.scanned_articles) return null
+    const p = ((s.critical_count||0)*3 + (s.warning_count||0) + (s.info_count||0)*0.2) / s.scanned_articles
+    return Math.max(0, Math.min(100, Math.round(100 - p * 20)))
+  }
+
+  // Up to 20 scans, oldest first, only completed with a health score
+  const pts = scans
+    .filter(s => s.status === 'completed' && s.scanned_articles > 0)
+    .slice(0, 20).reverse()
+    .map(s => ({ score: calcH(s), date: new Date(s.created_at), id: s.id }))
+    .filter(p => p.score !== null)
+
+  if (pts.length < 2) return null
+
+  const minY = Math.max(0,  Math.min(...pts.map(p => p.score)) - 10)
+  const maxY = Math.min(100, Math.max(...pts.map(p => p.score)) + 10)
+  const rangeY = maxY - minY || 10
+
+  const minX = pts[0].date.getTime()
+  const maxX = pts[pts.length-1].date.getTime()
+  const rangeX = maxX - minX || 1
+
+  const px = (d) => PAD.left + ((d.getTime() - minX) / rangeX) * IW
+  const py = (s) => PAD.top  + (1 - (s - minY) / rangeY) * IH
+
+  const path = pts.map((p,i) => `${i===0?'M':'L'}${px(p.date).toFixed(1)},${py(p.score).toFixed(1)}`).join(' ')
+  const area = `${path} L${px(pts[pts.length-1].date).toFixed(1)},${(PAD.top+IH).toFixed(1)} L${PAD.left},${(PAD.top+IH).toFixed(1)} Z`
+
+  // Y gridlines at 20, 40, 60, 80
+  const gridLines = [20,40,60,80].filter(v => v >= minY && v <= maxY)
+
+  // X axis labels — show up to 4 dates
+  const labelIdxs = pts.length <= 4
+    ? pts.map((_,i) => i)
+    : [0, Math.floor(pts.length/3), Math.floor(2*pts.length/3), pts.length-1]
+
+  const last  = pts[pts.length-1]
+  const prev  = pts[pts.length-2]
+  const delta = last.score - prev.score
+
+  return (
+    <div style={{ background:'white', borderRadius:'var(--radius-lg)', border:'1px solid var(--border-md)', padding:'16px 18px', marginBottom:16 }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+        <div>
+          <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', margin:'0 0 2px' }}>Health score trend</p>
+          <p style={{ fontSize:11, color:'var(--text-3)', margin:0 }}>{pts.length} scans</p>
+        </div>
+        <div style={{ display:'flex', gap:16 }}>
+          {/* Healthy threshold legend */}
+          <div style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'var(--text-3)' }}>
+            <div style={{ width:20, height:1, background:'rgba(16,124,16,0.3)', borderTop:'1.5px dashed rgba(16,124,16,0.4)' }} />
+            Healthy (80)
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, fontWeight:600,
+            color: delta > 0 ? 'var(--green)' : delta < 0 ? 'var(--red)' : 'var(--text-3)' }}>
+            {delta > 0 ? '↑' : delta < 0 ? '↓' : '→'}
+            {delta > 0 ? '+' : ''}{delta} vs previous
+          </div>
+        </div>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width:'100%', height:'auto', display:'block', overflow:'visible' }}>
+        {/* Grid lines */}
+        {gridLines.map(v => (
+          <g key={v}>
+            <line x1={PAD.left} y1={py(v)} x2={PAD.left+IW} y2={py(v)}
+              stroke="var(--border)" strokeWidth="1" strokeDasharray={v===80?"4,3":undefined} />
+            <text x={PAD.left-5} y={py(v)+4} textAnchor="end" fontSize="9" fill="var(--text-3)">{v}</text>
+          </g>
+        ))}
+
+        {/* Healthy threshold dashed line */}
+        {80 >= minY && 80 <= maxY && (
+          <line x1={PAD.left} y1={py(80)} x2={PAD.left+IW} y2={py(80)}
+            stroke="rgba(16,124,16,0.35)" strokeWidth="1.5" strokeDasharray="4,3" />
+        )}
+
+        {/* Area fill */}
+        <defs>
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--navy)" stopOpacity="0.12" />
+            <stop offset="100%" stopColor="var(--navy)" stopOpacity="0.01" />
+          </linearGradient>
+        </defs>
+        <path d={area} fill="url(#areaGrad)" />
+
+        {/* Line */}
+        <path d={path} fill="none" stroke="var(--navy)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+
+        {/* Data points */}
+        {pts.map((p, i) => {
+          const isLast = i === pts.length - 1
+          const cx = px(p.date), cy = py(p.score)
+          return (
+            <g key={i}>
+              <circle cx={cx} cy={cy} r={isLast ? 5 : 3.5}
+                fill={isLast ? 'var(--navy)' : 'white'}
+                stroke="var(--navy)" strokeWidth={isLast ? 0 : 1.5} />
+              {isLast && (
+                <text x={cx} y={cy-10} textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--navy)">{p.score}</text>
+              )}
+            </g>
+          )
+        })}
+
+        {/* X axis labels */}
+        {labelIdxs.map(i => {
+          const p = pts[i]
+          const d = p.date
+          const label = `${d.toLocaleString('default',{month:'short'})} ${d.getDate()}`
+          return (
+            <text key={i} x={px(d)} y={H-2} textAnchor="middle" fontSize="9" fill="var(--text-3)">{label}</text>
+          )
+        })}
+      </svg>
+    </div>
+  )
+}
+
 const calcHealth = (scan) => {
   if (!scan?.scanned_articles) return null
   const penalty = ((scan.critical_count||0)*3 + (scan.warning_count||0) + (scan.info_count||0)*0.2) / scan.scanned_articles
@@ -250,6 +377,11 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── Health trend chart ── */}
+      {!activeScan && completed.length >= 2 && (
+        <HealthChart scans={completed} />
       )}
 
       {/* ── Stats row ── */}
