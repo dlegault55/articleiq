@@ -297,7 +297,7 @@ async function sendEmail(supabase, scanJobId, userId) {
   if (!key) return
   try {
     const [{ data: profile }, { data: job }] = await Promise.all([
-      supabase.from('profiles').select('email, full_name').eq('id', userId).single(),
+      supabase.from('profiles').select('email, full_name, email_notifications').eq('id', userId).single(),
       supabase.from('scan_jobs').select('*').eq('id', scanJobId).single(),
     ])
     if (!profile?.email || !job) return
