@@ -1,5 +1,6 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { requireAuth } from './_auth.js'
 
 const stripe   = new Stripe(process.env.STRIPE_SECRET_KEY)
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
@@ -7,21 +8,31 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const { userId, email } = req.body
-  if (!userId || !email) return res.status(400).json({ error: 'Missing userId or email' })
+  // Verify JWT — get real userId from token, ignore any body userId
+  let auth
+  try {
+    auth = await requireAuth(req)
+  } catch (e) {
+    return res.status(e.status || 401).json({ error: e.message })
+  }
 
   try {
-    // Check if customer already exists
     const { data: profile } = await supabase
-      .from('profiles').select('stripe_customer_id').eq('id', userId).single()
+      .from('profiles').select('stripe_customer_id, plan').eq('id', auth.userId).single()
+
+    // Already subscribed
+    if (profile?.plan === 'paid') {
+      return res.status(400).json({ error: 'Already subscribed to Pro' })
+    }
 
     let customerId = profile?.stripe_customer_id
-
-    // Create Stripe customer if needed
     if (!customerId) {
-      const customer = await stripe.customers.create({ email, metadata: { supabase_user_id: userId } })
+      const customer = await stripe.customers.create({
+        email: auth.email,
+        metadata: { supabase_user_id: auth.userId }
+      })
       customerId = customer.id
-      await supabase.from('profiles').update({ stripe_customer_id: customerId }).eq('id', userId)
+      await supabase.from('profiles').update({ stripe_customer_id: customerId }).eq('id', auth.userId)
     }
 
     const session = await stripe.checkout.sessions.create({

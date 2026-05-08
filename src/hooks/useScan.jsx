@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
+import { apiFetch } from '@/lib/api'
 import { useAuth } from './useAuth'
 
 const ScanContext = createContext(null)
@@ -51,12 +52,10 @@ export const ScanProvider = ({ children }) => {
       if (!current || current.status === 'failed' || current.status === 'completed') break
 
       try {
-        const res = await fetch('/api/scan-chunk', {
+        const res = await apiFetch('/api/scan-chunk', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             scanJobId:   scan.id,
-            userId:      scan.user_id,
             connectorId: connector.id,
             preset:      scan.preset || 'outdated,wordCount,readability,labels',
             page,

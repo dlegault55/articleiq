@@ -1,4 +1,5 @@
 import { useAuth } from './useAuth'
+import { apiFetch } from '@/lib/api'
 import { useToast } from './useToast'
 
 export const useUpgrade = () => {
@@ -8,10 +9,9 @@ export const useUpgrade = () => {
   return async () => {
     if (!userId || !user?.email) { toast.error('Please sign in first'); return }
     try {
-      const res = await fetch('/api/create-checkout', {
+      const res = await apiFetch('/api/create-checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, email: user.email }),
+        body: JSON.stringify({ email: user.email }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)

@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useUpgrade } from '@/hooks/useUpgrade'
 import { useScan } from '@/hooks/useScan'
 import { supabase } from '@/lib/supabase'
+import { apiFetch } from '@/lib/api'
 import {
   AlertOctagon, AlertTriangle, Info, CheckCircle, ArrowLeft, X,
   ChevronDown, ChevronUp, ExternalLink, Download, Share2, Check,
@@ -57,9 +58,8 @@ const readLabel = (s) => {
 
 // ─── AI via server-side endpoint ──────────────────────────────
 const callAI = async (action, { content, title } = {}) => {
-  const res = await fetch('/api/ai-action', {
+  const res = await apiFetch('/api/ai-action', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action, content, title }),
   })
   if (!res.ok) {
@@ -399,11 +399,9 @@ function AIDrawer({ article, connector, action, onClose }) {
     try {
       const html = editedText || result
       // Route through our server to avoid browser CORS restrictions
-      const res = await fetch('/api/publish-article', {
+      const res = await apiFetch('/api/publish-article', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId:      connector.user_id,
           connectorId: connector.id,
           articleId:   article.zendesk_article_id,
           html,

@@ -1,3 +1,4 @@
+import { requireAuth, rateLimit } from './_auth.js'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -103,8 +104,24 @@ const analyzeArticle = (article, checks) => {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { scanJobId, userId, connectorId, preset, page = 1 } = req.body
-  if (!scanJobId || !userId || !connectorId) return res.status(400).json({ error: 'Missing fields' })
+  // Verify JWT
+  let auth
+  try {
+    auth = await requireAuth(req)
+  } catch (e) {
+    return res.status(e.status || 401).json({ error: e.message })
+  }
+
+  // Rate limit: 200 chunk requests per hour per user (generous for large KBs)
+  try {
+    await rateLimit(supabase, `scan:${auth.userId}`, 200, 3600000)
+  } catch (e) {
+    return res.status(429).json({ error: e.message })
+  }
+
+  const { scanJobId, connectorId, preset, page = 1 } = req.body
+  const userId = auth.userId // always use verified userId from token
+  if (!scanJobId || !connectorId) return res.status(400).json({ error: 'Missing fields' })
 
   try {
     // Get connector

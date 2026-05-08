@@ -1,5 +1,30 @@
+import { createClient } from '@supabase/supabase-js'
+import { requireAuth, rateLimit } from './_auth.js'
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+
+  // Verify JWT
+  let auth
+  try {
+    auth = await requireAuth(req)
+  } catch (e) {
+    return res.status(e.status || 401).json({ error: e.message })
+  }
+
+  // Rate limit: 30 AI calls per minute per user
+  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+  try {
+    await rateLimit(supabase, `ai:${auth.userId}`, 30, 60000)
+  } catch (e) {
+    return res.status(429).json({ error: e.message })
+  }
+
+  // Verify user is Pro
+  const { data: profile } = await supabase.from('profiles').select('plan').eq('id', auth.userId).single()
+  if (profile?.plan !== 'paid') {
+    return res.status(403).json({ error: 'AI features require a Pro subscription' })
+  }
 
   const { action, content, title } = req.body
   if (!action || (!content && !title)) return res.status(400).json({ error: 'Missing fields' })
