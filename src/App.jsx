@@ -63,6 +63,8 @@ export default function App() {
           <Route path="scanner/results/:id" element={<ScanResultsPage />} />
           <Route path="connector"           element={<ConnectorPage />} />
           <Route path="settings"            element={<SettingsPage />} />
+          <Route path="help"               element={<HelpPage />} />
+          <Route path="release-notes"      element={<ReleaseNotesPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
