@@ -1,3 +1,4 @@
+import { usePageTitle } from '@/hooks/usePageTitle'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
@@ -51,6 +52,8 @@ function Toggle({ value, onChange }) {
 
 export default function SettingsPage() {
   const { profile, userId, user } = useAuth()
+  usePageTitle('Settings')
+
   const toast    = useToast()
   const navigate = useNavigate()
 

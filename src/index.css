@@ -116,3 +116,14 @@ a  { color: inherit; text-decoration: none; }
 ::-webkit-scrollbar       { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
+
+/* ─── Micro-interactions ─────────────────────────────────────── */
+@keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.85)} }
+@keyframes resolve   { 0%{transform:scale(1)} 40%{transform:scale(1.18)} 100%{transform:scale(1)} }
+@keyframes check-pop { 0%{transform:scale(0.5);opacity:0} 60%{transform:scale(1.2)} 100%{transform:scale(1);opacity:1} }
+
+.resolve-anim { animation: resolve 0.25s ease; }
+.check-pop    { animation: check-pop 0.2s ease forwards; }
+
+/* Smooth row hovers */
+.article-row { transition: background 0.1s ease; }

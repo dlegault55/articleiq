@@ -1,3 +1,4 @@
+import { usePageTitle } from '@/hooks/usePageTitle'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
@@ -164,6 +165,8 @@ const DEFAULT_CHECKS = { outdated:true, wordCount:true, readability:true, labels
 export default function DashboardPage() {
   const { userId, profile } = useAuth()
   const { recentScans, activeScan, reload: reloadScans } = useScan()
+  usePageTitle('Dashboard')
+
   const toast    = useToast()
   const navigate = useNavigate()
   const upgrade  = useUpgrade()
@@ -506,7 +509,7 @@ export default function DashboardPage() {
           <div style={{ display:'flex', alignItems:'center', gap:14 }}>
             <button onClick={startScan} disabled={starting} className="btn btn-primary">
               {starting ? <Loader size={15} style={{ animation:'spin 0.7s linear infinite' }} /> : <Scan size={15} />}
-              {starting ? 'Starting...' : 'Start scan'}
+              {starting ? 'Starting...' : 'Start scan →'}
             </button>
             <p style={{ fontSize:11, color:'var(--text-3)', margin:0 }}>Keep this tab open while scanning</p>
           </div>

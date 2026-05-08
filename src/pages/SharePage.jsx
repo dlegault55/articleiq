@@ -211,12 +211,33 @@ export default function SharePage() {
           ))}
         </div>
 
-        {/* Footer CTA */}
-        <div style={{ textAlign:'center', padding:'24px', background:'var(--green-light)', borderRadius:'var(--radius-xl)', border:'1px solid var(--green-border)' }}>
-          <p style={{ fontSize:15, fontWeight:700, color:'var(--text)', marginBottom:6 }}>Want to scan your own knowledge base?</p>
-          <p style={{ fontSize:13, color:'var(--text-2)', marginBottom:16 }}>ArticleIQ scans every article for quality issues — free to get started.</p>
-          <Link to="/login" className="btn btn-primary">Try ArticleIQ free →</Link>
+        {/* Footer CTA — acquisition moment */}
+        <div style={{ borderRadius:16, background:'var(--navy)', padding:'32px', position:'relative', overflow:'hidden', marginBottom:24 }}>
+          <div style={{ position:'absolute', top:-40, right:-40, width:180, height:180, borderRadius:'50%', background:'rgba(255,255,255,0.04)' }} />
+          <div style={{ position:'relative', display:'grid', gridTemplateColumns:'1fr auto', gap:32, alignItems:'center' }}>
+            <div>
+              <p style={{ fontSize:11, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(255,255,255,0.4)', marginBottom:8 }}>
+                ArticleIQ — Free to start
+              </p>
+              <h2 style={{ fontSize:24, fontWeight:800, color:'white', letterSpacing:-0.5, marginBottom:8, lineHeight:1.2 }}>
+                How healthy is your knowledge base?
+              </h2>
+              <p style={{ fontSize:14, color:'rgba(255,255,255,0.65)', lineHeight:1.6, marginBottom:0, maxWidth:400 }}>
+                Connect your Zendesk® account in 2 minutes and get a health score for every article — readability, freshness, duplicates, and more.
+              </p>
+            </div>
+            <div style={{ flexShrink:0, textAlign:'center' }}>
+              <Link to="/login" style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'12px 24px', borderRadius:10, background:'white', color:'var(--navy)', fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:14, fontWeight:800, textDecoration:'none', marginBottom:8, whiteSpace:'nowrap' }}>
+                Scan your KB free →
+              </Link>
+              <p style={{ fontSize:11, color:'rgba(255,255,255,0.4)', margin:0 }}>No credit card · 300 articles free</p>
+            </div>
+          </div>
         </div>
+
+        <p style={{ fontSize:11, color:'var(--text-3)', textAlign:'center' }}>
+          Zendesk® is a registered trademark of Zendesk, Inc. ArticleIQ is not affiliated with or endorsed by Zendesk, Inc.
+        </p>
       </div>
     </div>
   )

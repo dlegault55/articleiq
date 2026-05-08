@@ -1,3 +1,4 @@
+import { usePageTitle } from '@/hooks/usePageTitle'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/useToast'
@@ -12,6 +13,8 @@ export default function ConnectorPage() {
   const [loading,    setLoading]    = useState(true)
   const [saving,     setSaving]     = useState(false)
   const [form,       setForm]       = useState({ subdomain:'', email:'', api_key:'' })
+
+  usePageTitle('Connectors')
 
   const load = async () => {
     if (!userId) return

@@ -1,3 +1,4 @@
+import { usePageTitle } from '@/hooks/usePageTitle'
 import { Link } from 'react-router-dom'
 
 const RELEASES = [
@@ -125,36 +126,29 @@ const TYPE_CONFIG = {
 }
 
 export default function ReleaseNotesPage() {
+  usePageTitle("What's new")
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '28px 24px' }}>
       <div style={{ marginBottom: 32 }}>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 4, letterSpacing: -0.3 }}>What's New</h1>
         <p style={{ fontSize: 13, color: 'var(--text-2)' }}>Every update, fix, and improvement to ArticleIQ</p>
       </div>
-
       <div style={{ position: 'relative' }}>
         <div style={{ position: 'absolute', left: 15, top: 8, bottom: 0, width: 1, background: 'var(--border)' }} />
-
         {RELEASES.map((release, ri) => (
           <div key={release.version} style={{ position: 'relative', paddingLeft: 40, marginBottom: 40 }}>
-            <div style={{ position: 'absolute', left: 8, top: 6, width: 14, height: 14, borderRadius: '50%', background: ri === 0 ? 'var(--green)' : 'var(--border-md)', border: '2px solid white', zIndex: 1 }} />
-
+            <div style={{ position: 'absolute', left: 8, top: 6, width: 14, height: 14, borderRadius: '50%', background: ri === 0 ? 'var(--navy)' : 'var(--border-md)', border: '2px solid white', zIndex: 1 }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
               <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)', margin: 0 }}>v{release.version}</h2>
-              <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 9px', borderRadius: 100, background: release.tagBg, color: release.tagColor }}>
-                {release.tag}
-              </span>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 9px', borderRadius: 100, background: release.tagBg, color: release.tagColor }}>{release.tag}</span>
               <span style={{ fontSize: 12, color: 'var(--text-3)', marginLeft: 'auto' }}>{release.date}</span>
             </div>
-
             <div className="card" style={{ overflow: 'hidden' }}>
               {release.changes.map((change, ci) => {
                 const t = TYPE_CONFIG[change.type] || TYPE_CONFIG.new
                 return (
                   <div key={ci} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 16px', borderBottom: ci < release.changes.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: t.bg, color: t.color, border: `1px solid ${t.border}`, flexShrink: 0, marginTop: 2 }}>
-                      {t.label}
-                    </span>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: t.bg, color: t.color, border: `1px solid ${t.border}`, flexShrink: 0, marginTop: 2 }}>{t.label}</span>
                     <p style={{ fontSize: 13, color: 'var(--text-2)', margin: 0, lineHeight: 1.6 }}>{change.text}</p>
                   </div>
                 )
@@ -163,15 +157,12 @@ export default function ReleaseNotesPage() {
           </div>
         ))}
       </div>
-
       <div style={{ padding: '16px 20px', borderRadius: 10, background: 'var(--navy-light)', border: '1px solid var(--navy-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
         <div>
-          <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>Have a feature request or found a bug?</p>
-          <p style={{ fontSize: 12, color: 'var(--text-2)', margin: 0 }}>We'd love to hear from you.</p>
+          <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Have a feature request or found a bug?</p>
+          <p style={{ fontSize: 13, color: 'var(--text-2)', margin: 0 }}>We'd love to hear from you.</p>
         </div>
-        <a href="mailto:support@articleiq.app" className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}>
-          Send feedback
-        </a>
+        <a href="mailto:support@articleiq.app" className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}>Send feedback</a>
       </div>
     </div>
   )

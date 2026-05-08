@@ -1,3 +1,4 @@
+import { usePageTitle } from '@/hooks/usePageTitle'
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
@@ -911,6 +912,8 @@ export default function ScanResultsPage() {
   const [connector,        setConnector]        = useState(null)
   const intervalRef = useRef(null)
 
+  usePageTitle(scan ? `Scan report · ${format(new Date(scan.created_at), 'MMM d')}` : 'Scan results')
+
   const isPaid = profile?.plan === 'paid'
 
   // Load connector for AI drawer
@@ -1247,7 +1250,8 @@ export default function ScanResultsPage() {
         {paginated.length === 0 ? (
           <div style={{ padding:48, textAlign:'center' }}>
             <CheckCircle size={28} style={{ color:'var(--green)', marginBottom:10 }} />
-            <p style={{ fontSize:14, color:'var(--text-3)' }}>No articles match this filter</p>
+            <p style={{ fontSize:14, fontWeight:600, color:'var(--text)', marginBottom:4 }}>Nothing here</p>
+            <p style={{ fontSize:13, color:'var(--text-3)' }}>Try a different filter or resolve some issues to see them here.</p>
           </div>
         ) : paginated.map(a => (
           <ArticleRow key={a.id} article={a}
