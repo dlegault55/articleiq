@@ -120,8 +120,13 @@ export default async function handler(req, res) {
   }
 
   const { scanJobId, connectorId, preset, page = 1 } = req.body
-  const userId = auth.userId // always use verified userId from token
+  const userId = auth.userId
   if (!scanJobId || !connectorId) return res.status(400).json({ error: 'Missing fields' })
+
+  // Check plan and enforce article limit for free users
+  const { data: profile } = await supabase.from('profiles').select('plan').eq('id', userId).single()
+  const isPaid = profile?.plan === 'paid'
+  const FREE_LIMIT = 300
 
   try {
     // Get connector
@@ -161,6 +166,27 @@ export default async function handler(req, res) {
     // Set total on first page
     if (page === 1) {
       await supabase.from('scan_jobs').update({ total_articles: totalCount }).eq('id', scanJobId)
+    }
+
+    // Enforce free tier article limit
+    const { count: alreadyScanned } = await supabase
+      .from('scanned_articles').select('*', { count: 'exact', head: true })
+      .eq('scan_job_id', scanJobId)
+
+    if (!isPaid && alreadyScanned >= FREE_LIMIT) {
+      // Complete the scan early with a limit notice
+      const { data: counts } = await supabase.from('article_issues').select('severity').eq('scan_job_id', scanJobId)
+      const critical = (counts||[]).filter(i=>i.severity==='critical').length
+      const warning  = (counts||[]).filter(i=>i.severity==='warning').length
+      const info     = (counts||[]).filter(i=>i.severity==='info').length
+      await supabase.from('scan_jobs').update({
+        status: 'completed', completed_at: new Date().toISOString(),
+        critical_count: critical, warning_count: warning, info_count: info,
+        issues_found: critical + warning + info,
+        scanned_articles: alreadyScanned,
+        error_message: 'free_limit_reached',
+      }).eq('id', scanJobId)
+      return res.status(200).json({ done: true, limitReached: true, scannedSoFar: alreadyScanned, totalCount })
     }
 
     // Get IDs already saved for this scan (resume safety — no duplicates)

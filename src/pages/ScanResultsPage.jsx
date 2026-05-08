@@ -1130,6 +1130,26 @@ export default function ScanResultsPage() {
         </div>
       )}
 
+      {/* Free tier limit reached banner */}
+      {scan.status === 'completed' && scan.error_message === 'free_limit_reached' && (
+        <div className="card animate-in" style={{ marginBottom: 16, padding: '16px 20px', background: 'var(--amber-light)', border: '1.5px solid var(--amber-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+            <AlertTriangle size={18} style={{ color: 'var(--amber)', flexShrink: 0, marginTop: 1 }} />
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 3 }}>
+                Showing first 300 articles — free tier limit reached
+              </p>
+              <p style={{ fontSize: 13, color: 'var(--text-2)', margin: 0 }}>
+                Your knowledge base has {scan.total_articles?.toLocaleString()} articles. Upgrade to Pro to scan all of them.
+              </p>
+            </div>
+          </div>
+          <button onClick={upgrade} className="btn btn-sm" style={{ background: '#FFD93D', color: '#0A1A0A', fontWeight: 700, flexShrink: 0 }}>
+            <Zap size={13} /> Upgrade to Pro
+          </button>
+        </div>
+      )}
+
       {/* Hero health score */}
       <div style={{ borderRadius:'var(--radius-xl)', background:'var(--green)', padding:'24px 28px', marginBottom:16, position:'relative', overflow:'hidden' }}>
         <div style={{ position:'absolute', top:-40, right:-40, width:200, height:200, borderRadius:'50%', background:'rgba(255,255,255,0.06)' }} />

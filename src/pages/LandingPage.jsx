@@ -437,36 +437,83 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Pricing teaser ── */}
+      {/* ── Pricing ── */}
       <section id="pricing" style={{ background: '#F0F5F0', borderTop: '1px solid #D4E8D4', padding: '80px 48px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <h2 style={{ fontWeight: 800, fontSize: 34, letterSpacing: -1, marginBottom: 12 }}>Simple, honest pricing</h2>
+          <p style={{ fontSize: 16, color: '#4A5E4A' }}>Start free. Upgrade when you need more.</p>
+        </div>
         <div style={{ maxWidth: 860, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-          {[
-            { name: 'Free', price: '$0', desc: 'Perfect for getting started and understanding your knowledge base health.', features: ['Unlimited scans', 'All quality checks', 'Duplicate detection', 'Readability scores', 'Excel export', 'Shareable reports'], cta: 'Get started free', style: 'outline' },
-            { name: 'Pro', price: '$49', period: '/mo', desc: 'For teams serious about knowledge base quality and continuous improvement.', features: ['Everything in Free', 'AI grammar fix', 'AI article rewrite', 'AI quality scoring', 'Priority support', 'Coming soon: push to Zendesk®'], cta: 'Start Pro trial', style: 'green', badge: 'Most popular' },
-          ].map(({ name, price, period, desc, features, cta, style, badge }) => (
-            <div key={name} style={{ background: 'white', borderRadius: 18, padding: '28px 28px', border: style === 'green' ? '2px solid #107C10' : '1px solid #E5E7EB', position: 'relative', boxShadow: style === 'green' ? '0 8px 32px rgba(16,124,16,0.1)' : 'none' }}>
-              {badge && <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: '#107C10', color: 'white', fontSize: 11, fontWeight: 700, padding: '3px 12px', borderRadius: 100 }}>{badge}</div>}
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#4A5E4A', marginBottom: 4 }}>{name}</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
-                  <span style={{ fontWeight: 800, fontSize: 36, color: '#0F1F0F' }}>{price}</span>
-                  {period && <span style={{ fontSize: 14, color: '#9CA3AF' }}>{period}</span>}
-                </div>
-                <p style={{ fontSize: 13, color: '#4A5E4A', marginTop: 8, lineHeight: 1.6 }}>{desc}</p>
-              </div>
-              <div style={{ marginBottom: 24 }}>
-                {features.map(f => (
-                  <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                    <CheckCircle size={14} style={{ color: '#107C10', flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, color: '#0F1F0F' }}>{f}</span>
-                  </div>
-                ))}
-              </div>
-              <Link to="/login" className={`land-btn ${style === 'green' ? 'land-btn-green' : 'land-btn-outline'}`} style={{ width: '100%', justifyContent: 'center' }}>
-                {cta}
-              </Link>
+
+          {/* Free */}
+          <div style={{ background: 'white', borderRadius: 18, padding: '28px', border: '1px solid #E5E7EB' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#4A5E4A', marginBottom: 4 }}>Free</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, marginBottom: 8 }}>
+              <span style={{ fontWeight: 800, fontSize: 36, color: '#0F1F0F' }}>$0</span>
             </div>
-          ))}
+            <p style={{ fontSize: 13, color: '#4A5E4A', marginBottom: 20, lineHeight: 1.6 }}>
+              Try ArticleIQ on your first 300 articles. No credit card required.
+            </p>
+            <div style={{ marginBottom: 24 }}>
+              {[
+                { text: 'Up to 300 articles per scan', on: true },
+                { text: 'All quality checks', on: true },
+                { text: 'Readability + duplicate detection', on: true },
+                { text: 'Excel export', on: true },
+                { text: 'Shareable reports', on: true },
+                { text: 'AI Improve Article', on: false },
+                { text: 'AI Quality Score', on: false },
+                { text: 'Publish to Zendesk®', on: false },
+                { text: 'Email notifications', on: false },
+              ].map(({ text, on }) => (
+                <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, opacity: on ? 1 : 0.4 }}>
+                  <CheckCircle size={14} style={{ color: on ? '#107C10' : '#9CA3AF', flexShrink: 0 }} />
+                  <span style={{ fontSize: 13, color: '#0F1F0F' }}>{text}</span>
+                </div>
+              ))}
+            </div>
+            <Link to="/login" className="land-btn land-btn-outline" style={{ width: '100%', justifyContent: 'center' }}>
+              Get started free
+            </Link>
+          </div>
+
+          {/* Pro */}
+          <div style={{ background: 'white', borderRadius: 18, padding: '28px', border: '2px solid #107C10', position: 'relative', boxShadow: '0 8px 32px rgba(16,124,16,0.1)' }}>
+            <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: '#107C10', color: 'white', fontSize: 11, fontWeight: 700, padding: '3px 16px', borderRadius: 100, whiteSpace: 'nowrap' }}>Most popular</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#4A5E4A', marginBottom: 4 }}>Pro</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, marginBottom: 8 }}>
+              <span style={{ fontWeight: 800, fontSize: 36, color: '#0F1F0F' }}>$99</span>
+              <span style={{ fontSize: 14, color: '#9CA3AF' }}>/month</span>
+            </div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 12px', background: '#EBF5EB', border: '1px solid #B8D8B8', borderRadius: 8, marginBottom: 12 }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: '#107C10' }}>$790/year</span>
+              <span style={{ fontSize: 11, color: '#4A5E4A' }}>— 2 months free, save $398</span>
+            </div>
+            <p style={{ fontSize: 13, color: '#4A5E4A', marginBottom: 20, lineHeight: 1.6 }}>
+              Unlimited articles, AI-powered fixes, and direct publishing to Zendesk®.
+            </p>
+            <div style={{ marginBottom: 24 }}>
+              {[
+                'Unlimited articles per scan',
+                'Everything in Free',
+                'AI Improve Article',
+                'AI Quality Score',
+                'Publish directly to Zendesk®',
+                'Email notifications',
+                'Priority support',
+              ].map(f => (
+                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <CheckCircle size={14} style={{ color: '#107C10', flexShrink: 0 }} />
+                  <span style={{ fontSize: 13, color: '#0F1F0F' }}>{f}</span>
+                </div>
+              ))}
+            </div>
+            <Link to="/login" className="land-btn land-btn-green" style={{ width: '100%', justifyContent: 'center', marginBottom: 10 }}>
+              Start free trial
+            </Link>
+            <p style={{ fontSize: 11, color: '#9CA3AF', textAlign: 'center' }}>14-day free trial · No credit card required</p>
+          </div>
+
         </div>
       </section>
 
