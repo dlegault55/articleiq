@@ -20,9 +20,10 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: e.message })
   }
 
-  // Verify user is Pro
+  // Verify user is Pro for most AI actions (labels suggestions are free)
   const { data: profile } = await supabase.from('profiles').select('plan').eq('id', auth.userId).single()
-  if (profile?.plan !== 'paid') {
+  const { action } = req.body
+  if (profile?.plan !== 'paid' && action !== 'labels') {
     return res.status(403).json({ error: 'AI features require a Pro subscription' })
   }
 
@@ -42,6 +43,11 @@ export default async function handler(req, res) {
       system: `Evaluate this knowledge base article title. Return JSON only: {"score": 0-100, "verdict": "one sentence", "suggestions": ["s1","s2","s3"]}`,
       user: `Article title: ${title}`,
       maxTokens: 512,
+    },
+    labels: {
+      system: `You are a knowledge base manager. Suggest 3-5 short, specific labels or tags for a Zendesk® Help Center article based on its title. Labels should be lowercase, concise (1-3 words), and help customers find the article. Return JSON only: {"labels": ["label1","label2","label3"]}`,
+      user: `Article title: ${title}`,
+      maxTokens: 256,
     },
   }
 

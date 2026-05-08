@@ -652,6 +652,92 @@ function AIPanel({ article, isPaid, connector, onOpenDrawer }) {
   )
 }
 
+// ─── Issue card ───────────────────────────────────────────────
+function IssueCard({ issue, Icon, s, resolved, article, isPaid, onResolve }) {
+  const [suggesting, setSuggesting] = useState(false)
+  const [labels,     setLabels]     = useState(null)
+
+  const suggestLabels = async () => {
+    setSuggesting(true)
+    try {
+      const raw = await callAI('labels', { title: article.title })
+      const data = JSON.parse(raw.replace(/```json|```/g, '').trim())
+      setLabels(data.labels || [])
+    } catch (e) {
+      setLabels([])
+    } finally {
+      setSuggesting(false)
+    }
+  }
+
+  const isLabelIssue = issue.issue_type === 'missing_labels'
+
+  return (
+    <div style={{ borderRadius:10, border:`1px solid ${resolved ? 'var(--border)' : s.border}`, background: resolved ? 'white' : s.bg, transition:'all 0.15s', opacity: resolved ? 0.6 : 1 }}>
+      <div style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'14px 16px' }}>
+        <div style={{ width:34, height:34, borderRadius:8, background:'white', border:`1px solid ${resolved ? 'var(--border)' : s.border}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+          <Icon size={16} style={{ color: resolved ? 'var(--text-3)' : s.color }} />
+        </div>
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:5 }}>
+            <span style={{ fontSize:13, fontWeight:700, color: resolved ? 'var(--text-3)' : s.color, textTransform:'capitalize' }}>
+              {issue.issue_type.replace(/_/g,' ')}
+            </span>
+            <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:100, background:'white', color: resolved ? 'var(--text-3)' : s.color, border:`1px solid ${resolved ? 'var(--border)' : s.border}` }}>
+              {s.label}
+            </span>
+          </div>
+          <p style={{ fontSize:13, color:'var(--text-2)', margin:'0 0 8px', lineHeight:1.65 }}>{issue.description}</p>
+
+          {/* Label suggestions */}
+          {isLabelIssue && !resolved && (
+            <div>
+              {!labels && (
+                <button onClick={suggestLabels} disabled={suggesting}
+                  style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'5px 10px', borderRadius:6, border:`1px solid ${s.border}`, background:'white', cursor:'pointer', fontSize:12, fontWeight:600, color: s.color }}>
+                  {suggesting
+                    ? <><Loader size={11} style={{ animation:'spin 0.7s linear infinite' }} /> Suggesting labels...</>
+                    : <><Tag size={11} /> Suggest labels with ArticleIQ</>
+                  }
+                </button>
+              )}
+              {labels !== null && labels.length > 0 && (
+                <div>
+                  <p style={{ fontSize:11, fontWeight:600, color:'var(--text-3)', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' }}>Suggested labels</p>
+                  <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                    {labels.map(label => (
+                      <button key={label}
+                        onClick={() => navigator.clipboard.writeText(label)}
+                        title="Click to copy"
+                        style={{ padding:'4px 10px', borderRadius:100, background:'white', border:`1px solid ${s.border}`, fontSize:12, fontWeight:600, color: s.color, cursor:'pointer', transition:'all 0.1s' }}
+                        onMouseEnter={e => e.currentTarget.style.background = s.bg}
+                        onMouseLeave={e => e.currentTarget.style.background = 'white'}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <p style={{ fontSize:11, color:'var(--text-3)', marginTop:6 }}>Click any label to copy · Add them in Zendesk®</p>
+                </div>
+              )}
+              {labels !== null && labels.length === 0 && (
+                <p style={{ fontSize:12, color:'var(--text-3)', margin:0 }}>Couldn't suggest labels for this article.</p>
+              )}
+            </div>
+          )}
+        </div>
+        <button onClick={onResolve}
+          style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:7, border:'none', cursor:'pointer', fontSize:12, fontWeight:600, flexShrink:0, transition:'all 0.12s',
+            background: resolved ? 'var(--green-light)' : 'white',
+            color: resolved ? 'var(--green)' : 'var(--text-3)',
+            outline: `1px solid ${resolved ? 'var(--green-border)' : 'var(--border-md)'}`,
+          }}>
+          {resolved ? <><CheckCircle size={12} /> Resolved</> : <><Square size={12} /> Mark resolved</>}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Article row ───────────────────────────────────────────────
 const AI_ACTIONS = [
   {
@@ -770,35 +856,9 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
                   const s        = SEVERITY[issue.severity] || SEVERITY.info
                   const resolved = resolvedIssues.has(issue.id)
                   return (
-                    <div key={issue.id} style={{ borderRadius:10, border:`1px solid ${resolved ? 'var(--border)' : s.border}`, background: resolved ? 'white' : s.bg, transition:'all 0.15s', opacity: resolved ? 0.6 : 1 }}>
-                      <div style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'14px 16px' }}>
-                        <div style={{ width:34, height:34, borderRadius:8, background:'white', border:`1px solid ${resolved ? 'var(--border)' : s.border}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                          <Icon size={16} style={{ color: resolved ? 'var(--text-3)' : s.color }} />
-                        </div>
-                        <div style={{ flex:1, minWidth:0 }}>
-                          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:5 }}>
-                            <span style={{ fontSize:13, fontWeight:700, color: resolved ? 'var(--text-3)' : s.color, textTransform:'capitalize' }}>
-                              {issue.issue_type.replace(/_/g,' ')}
-                            </span>
-                            <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:100, background:'white', color: resolved ? 'var(--text-3)' : s.color, border:`1px solid ${resolved ? 'var(--border)' : s.border}` }}>
-                              {s.label}
-                            </span>
-                          </div>
-                          <p style={{ fontSize:13, color:'var(--text-2)', margin:0, lineHeight:1.65 }}>{issue.description}</p>
-                        </div>
-                        <button onClick={() => onResolveIssue(issue.id, !resolved)}
-                          style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:7, border:'none', cursor:'pointer', fontSize:12, fontWeight:600, flexShrink:0, transition:'all 0.12s',
-                            background: resolved ? 'var(--green-light)' : 'white',
-                            color: resolved ? 'var(--green)' : 'var(--text-3)',
-                            outline: `1px solid ${resolved ? 'var(--green-border)' : 'var(--border-md)'}`,
-                          }}>
-                          {resolved
-                            ? <><CheckCircle size={12} /> Resolved</>
-                            : <><Square size={12} /> Mark resolved</>
-                          }
-                        </button>
-                      </div>
-                    </div>
+                    <IssueCard key={issue.id} issue={issue} Icon={Icon} s={s} resolved={resolved}
+                      article={article} isPaid={isPaid}
+                      onResolve={() => onResolveIssue(issue.id, !resolved)} />
                   )
                 })}
               </div>
