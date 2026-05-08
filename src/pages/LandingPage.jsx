@@ -230,7 +230,7 @@ export default function LandingPage() {
             <span style={{ color: '#107C10' }}>has problems you<br />don't know about.</span>
           </h1>
           <p style={{ fontSize: 18, color: '#4A5E4A', lineHeight: 1.7, marginBottom: 16, maxWidth: 460 }}>
-            The average Zendesk knowledge base has <strong>30% outdated articles</strong>, poor readability scores, and hidden duplicates confusing customers every day.
+            The average Zendesk® knowledge base has <strong>30% outdated articles</strong>, poor readability scores, and hidden duplicates confusing customers every day.
           </p>
           <p style={{ fontSize: 16, color: '#4A5E4A', lineHeight: 1.7, marginBottom: 36, maxWidth: 460 }}>
             ArticleIQ scans every article automatically and gives you a health score, prioritized issues, and AI-powered fixes — so your team spends time on the right things.
@@ -242,7 +242,7 @@ export default function LandingPage() {
             <span style={{ fontSize: 13, color: '#8A9E8A' }}>Takes 2 minutes to set up</span>
           </div>
           <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-            {['No credit card required', 'Read-only Zendesk access', 'Results in minutes'].map(t => (
+            {['No credit card required', 'Read-only Zendesk® access', 'Results in minutes'].map(t => (
               <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#4A5E4A' }}>
                 <CheckCircle size={14} style={{ color: '#107C10' }} /> {t}
               </div>
@@ -420,7 +420,7 @@ export default function LandingPage() {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 24 }}>
           {[
-            { step: '01', icon: <Plug size={22} style={{ color: '#107C10' }} />, title: 'Connect Zendesk', time: '2 minutes', desc: 'Add your Zendesk subdomain and API token. Read-only access — we never modify a single article without your say-so.' },
+            { step: '01', icon: <Plug size={22} style={{ color: '#107C10' }} />, title: 'Connect Zendesk®', time: '2 minutes', desc: 'Add your Zendesk® subdomain and API token. Read-only access — we never modify a single article without your say-so.' },
             { step: '02', icon: <Scan size={22} style={{ color: '#107C10' }} />, title: 'Choose and run a scan', time: '10–30 minutes', desc: 'Pick Fast, Standard, or Full depth. We analyze every article and score it for readability, freshness, duplicates, and more.' },
             { step: '03', icon: <CheckCircle size={22} style={{ color: '#107C10' }} />, title: 'Fix what matters', time: 'Ongoing', desc: 'Your health score tells you where to start. Filter by severity, use AI to fix issues, and track progress scan over scan.' },
           ].map(({ step, icon, title, time, desc }) => (
@@ -442,7 +442,7 @@ export default function LandingPage() {
         <div style={{ maxWidth: 860, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
           {[
             { name: 'Free', price: '$0', desc: 'Perfect for getting started and understanding your knowledge base health.', features: ['Unlimited scans', 'All quality checks', 'Duplicate detection', 'Readability scores', 'Excel export', 'Shareable reports'], cta: 'Get started free', style: 'outline' },
-            { name: 'Pro', price: '$49', period: '/mo', desc: 'For teams serious about knowledge base quality and continuous improvement.', features: ['Everything in Free', 'AI grammar fix', 'AI article rewrite', 'AI quality scoring', 'Priority support', 'Coming soon: push to Zendesk'], cta: 'Start Pro trial', style: 'green', badge: 'Most popular' },
+            { name: 'Pro', price: '$49', period: '/mo', desc: 'For teams serious about knowledge base quality and continuous improvement.', features: ['Everything in Free', 'AI grammar fix', 'AI article rewrite', 'AI quality scoring', 'Priority support', 'Coming soon: push to Zendesk®'], cta: 'Start Pro trial', style: 'green', badge: 'Most popular' },
           ].map(({ name, price, period, desc, features, cta, style, badge }) => (
             <div key={name} style={{ background: 'white', borderRadius: 18, padding: '28px 28px', border: style === 'green' ? '2px solid #107C10' : '1px solid #E5E7EB', position: 'relative', boxShadow: style === 'green' ? '0 8px 32px rgba(16,124,16,0.1)' : 'none' }}>
               {badge && <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: '#107C10', color: 'white', fontSize: 11, fontWeight: 700, padding: '3px 12px', borderRadius: 100 }}>{badge}</div>}
@@ -485,21 +485,28 @@ export default function LandingPage() {
             Start scanning for free <ArrowRight size={16} />
           </Link>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 16 }}>
-            No credit card · Read-only Zendesk access · Cancel anytime
+            No credit card · Read-only Zendesk® access · Cancel anytime
           </p>
         </div>
       </section>
 
       {/* ── Footer ── */}
-      <footer style={{ background: '#0A1A0A', padding: '28px 48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 24, height: 24, background: '#107C10', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Scan size={13} color="white" />
+      <footer style={{ background: '#0A1A0A', padding: '28px 48px 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 24, height: 24, background: '#107C10', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Scan size={13} color="white" />
+            </div>
+            <span style={{ fontWeight: 800, fontSize: 14, color: 'white' }}>Article<span style={{ color: '#4ade80' }}>IQ</span></span>
           </div>
-          <span style={{ fontWeight: 800, fontSize: 14, color: 'white' }}>Article<span style={{ color: '#4ade80' }}>IQ</span></span>
+          <p style={{ fontSize: 12, color: '#4A5E4A' }}>© 2026 ArticleIQ. Built for knowledge base teams.</p>
+          <Link to="/login" style={{ fontSize: 13, color: '#4ade80', fontWeight: 600, textDecoration: 'none' }}>Sign in →</Link>
         </div>
-        <p style={{ fontSize: 12, color: '#4A5E4A' }}>© 2026 ArticleIQ. Built for knowledge base teams.</p>
-        <Link to="/login" style={{ fontSize: 13, color: '#4ade80', fontWeight: 600, textDecoration: 'none' }}>Sign in →</Link>
+        <div style={{ borderTop: '1px solid #1a2e1a', paddingTop: 14, textAlign: 'center' }}>
+          <p style={{ fontSize: 11, color: '#3a4e3a', lineHeight: 1.6 }}>
+            Zendesk® is a registered trademark of Zendesk, Inc. ArticleIQ is not affiliated with, endorsed by, or sponsored by Zendesk, Inc. in any way.
+          </p>
+        </div>
       </footer>
     </div>
   )

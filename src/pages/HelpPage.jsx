@@ -65,7 +65,7 @@ export default function HelpPage() {
               ArticleIQ uses Claude AI to help fix grammar, rewrite articles, and score quality. While Claude is highly capable, AI can introduce errors, change technical meaning, miss context, or produce output that doesn't match your brand voice.
             </p>
             <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.7, marginBottom: 8 }}>
-              <strong style={{ color: 'var(--text)' }}>You are responsible for any content published to your knowledge base.</strong> ArticleIQ provides AI suggestions as a starting point — not a finished product. Always read the full rewrite before clicking "Publish to Zendesk", and verify that technical instructions, product names, steps, and links are correct.
+              <strong style={{ color: 'var(--text)' }}>You are responsible for any content published to your knowledge base.</strong> ArticleIQ provides AI suggestions as a starting point — not a finished product. Always read the full rewrite before clicking "Publish to Zendesk®", and verify that technical instructions, product names, steps, and links are correct.
             </p>
             <p style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.6 }}>
               ArticleIQ and its operators accept no liability for inaccurate, incomplete, or misleading content published to your knowledge base as a result of using AI features. Use of AI features constitutes acceptance of these terms.
@@ -78,8 +78,8 @@ export default function HelpPage() {
       <Section title="Getting started">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {[
-            { num: '01', title: 'Connect Zendesk', desc: 'Go to Connectors in the account menu. Enter your Zendesk subdomain, admin email, and API token. ArticleIQ uses read-only access by default — we never modify your articles unless you explicitly publish an AI rewrite.' },
-            { num: '02', title: 'Find your API token', desc: 'In Zendesk: Admin Center → Apps & Integrations → APIs → Zendesk API → API Tokens. Create a new token and copy it. Keep it safe — you won\'t be able to see it again.' },
+            { num: '01', title: 'Connect Zendesk®', desc: 'Go to Connectors in the account menu. Enter your Zendesk® subdomain, admin email, and API token. ArticleIQ uses read-only access by default — we never modify your articles unless you explicitly publish an AI rewrite.' },
+            { num: '02', title: 'Find your API token', desc: 'In Zendesk®: Admin Center → Apps & Integrations → APIs → Zendesk® API → API Tokens. Create a new token and copy it. Keep it safe — you won\'t be able to see it again.' },
             { num: '03', title: 'Run your first scan', desc: 'From the Dashboard, select which checks to run and click Start Scan. Keep the tab open while scanning — the scan runs in your browser and will pause if the tab is closed or backgrounded for too long.' },
             { num: '04', title: 'Review your results', desc: 'Your health score and issue breakdown appear as soon as the scan completes. Click any article to expand its issues. Use the filter tabs to focus on Critical issues first.' },
           ].map(({ num, title, desc }) => (
@@ -112,7 +112,7 @@ export default function HelpPage() {
             <p style={{ fontSize: 13, fontWeight: 700, color: 'white', margin: 0 }}>Powered by Claude</p>
           </div>
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.7 }}>
-            AI features use Anthropic's Claude model. Each action fetches the full article HTML from Zendesk and sends it to Claude for processing. Images, links, tables, and code blocks are preserved in the output.
+            AI features use Anthropic's Claude model. Each action fetches the full article HTML from Zendesk® and sends it to Claude for processing. Images, links, tables, and code blocks are preserved in the output.
           </p>
         </div>
         {[
@@ -156,20 +156,20 @@ export default function HelpPage() {
 
       {/* ── FAQ ── */}
       <Section title="Frequently asked questions">
-        <FAQ q="Does ArticleIQ modify my Zendesk articles automatically?"
-          a="No. ArticleIQ is read-only by default. The only time we write to Zendesk is when you explicitly click 'Publish to Zendesk' inside the AI rewrite drawer. You always see a confirmation dialog before anything is published." />
+        <FAQ q="Does ArticleIQ modify my Zendesk® articles automatically?"
+          a="No. ArticleIQ is read-only by default. The only time we write to Zendesk® is when you explicitly click 'Publish to Zendesk®' inside the AI rewrite drawer. You always see a confirmation dialog before anything is published." />
         <FAQ q="Why does the scan need the tab to stay open?"
           a="Scans run in your browser rather than on a server, which means they pause if the tab is closed or moved to the background for too long. We're working on a server-side scan option. For now, keep the tab active while scanning — you'll get an email when it's done." />
         <FAQ q="How accurate is duplicate detection?"
           a="Duplicate detection compares article titles using text similarity scoring. It flags articles with 85%+ title similarity — which catches near-duplicates reliably but won't catch articles with completely different titles covering the same topic. It's a starting point, not a comprehensive audit." />
         <FAQ q="What does ArticleIQ do with my article content?"
-          a="Article content is fetched directly from Zendesk using your API credentials and processed in your browser. When you use AI features, the article HTML is sent to Anthropic's API for processing. We store article metadata (title, word count, scores) in our database but not the full article body." />
-        <FAQ q="Can I undo a publish to Zendesk?"
-          a="ArticleIQ doesn't provide an undo. If your Zendesk plan includes article version history, you can restore a previous version from the Zendesk admin panel. We strongly recommend reviewing the full rewrite before publishing." />
+          a="Article content is fetched directly from Zendesk® using your API credentials and processed in your browser. When you use AI features, the article HTML is sent to Anthropic's API for processing. We store article metadata (title, word count, scores) in our database but not the full article body." />
+        <FAQ q="Can I undo a publish to Zendesk®?"
+          a="ArticleIQ doesn't provide an undo. If your Zendesk® plan includes article version history, you can restore a previous version from the Zendesk® admin panel. We strongly recommend reviewing the full rewrite before publishing." />
         <FAQ q="Why is my readability score low even though the article seems clear?"
           a="The Flesch-Kincaid formula penalises long sentences, multi-syllable words, and passive voice. Technical documentation often scores lower than conversational content. Use it as a guide, not an absolute — a score of 40–60 is acceptable for technical content, while consumer-facing articles should aim for 60+." />
-        <FAQ q="How do I get an API token from Zendesk?"
-          a={<span>In Zendesk: Admin Center → Apps & Integrations → APIs → Zendesk API → API Tokens tab → Add API token. <a href="https://support.zendesk.com/hc/en-us/articles/4408889192858" target="_blank" rel="noreferrer" style={{ color: 'var(--green)', fontWeight: 600 }}>View Zendesk's full guide →</a></span>} />
+        <FAQ q="How do I get an API token from Zendesk®?"
+          a={<span>In Zendesk®: Admin Center → Apps & Integrations → APIs → Zendesk® API → API Tokens tab → Add API token. <a href="https://support.zendesk.com/hc/en-us/articles/4408889192858" target="_blank" rel="noreferrer" style={{ color: 'var(--green)', fontWeight: 600 }}>View Zendesk®'s full guide →</a></span>} />
       </Section>
 
       {/* ── Contact ── */}

@@ -35,10 +35,10 @@ export default function ConnectorPage() {
       const { error: dbErr } = await supabase.from('zendesk_connectors').upsert({
         user_id: userId, subdomain: form.subdomain.trim().toLowerCase(),
         api_key_encrypted: `${form.email.trim()}/token:${form.token.trim()}`,
-        api_key_hint: `...${form.token.slice(-6)}`, label: 'Zendesk', is_active: true, sync_frequency: 'weekly',
+        api_key_hint: `...${form.token.slice(-6)}`, label: 'Zendesk®', is_active: true, sync_frequency: 'weekly',
       }, { onConflict: 'user_id,subdomain' })
       if (dbErr) throw new Error(dbErr.message)
-      toast.success('Zendesk connected!')
+      toast.success('Zendesk® connected!')
       setForm({ subdomain: '', email: '', token: '' }); setShowForm(false); load()
     } catch (e) { setError(e.message) } finally { setSaving(false) }
   }
@@ -85,7 +85,7 @@ export default function ConnectorPage() {
       {/* Form */}
       {showForm && (
         <div className="card animate-in" style={{ padding: '20px 22px', maxWidth: 480 }}>
-          <p style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700, fontSize: 15, marginBottom: 2 }}>Connect Zendesk</p>
+          <p style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700, fontSize: 15, marginBottom: 2 }}>Connect Zendesk®</p>
           <p style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 18 }}>Read-only — we never modify your articles.</p>
 
           <div style={{ marginBottom: 12 }}>
@@ -110,7 +110,7 @@ export default function ConnectorPage() {
             <label style={{ fontSize: 12, marginBottom: 4 }}>API Token</label>
             <div style={{ position: 'relative' }}>
               <input className="input" type={showKey ? 'text' : 'password'} style={{ paddingRight: 38, fontSize: 13 }}
-                placeholder="Your Zendesk API token" value={form.token}
+                placeholder="Your Zendesk® API token" value={form.token}
                 onChange={e => setForm(f => ({ ...f, token: e.target.value }))} />
               <button onClick={() => setShowKey(v => !v)}
                 style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex' }}>
@@ -119,14 +119,14 @@ export default function ConnectorPage() {
             </div>
           </div>
           <p style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 16 }}>
-            Zendesk Admin → Apps & Integrations → APIs → API Tokens
+            Zendesk® Admin → Apps & Integrations → APIs → API Tokens
           </p>
 
           {error && <p style={{ fontSize: 12, color: 'var(--red)', marginBottom: 12 }}>{error}</p>}
 
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={save} disabled={saving} className="btn btn-primary btn-sm">
-              {saving ? 'Connecting...' : 'Connect Zendesk'}
+              {saving ? 'Connecting...' : 'Connect Zendesk®'}
             </button>
             {connectors.length > 0 && (
               <button onClick={() => { setShowForm(false); setError(null) }} className="btn btn-secondary btn-sm">Cancel</button>

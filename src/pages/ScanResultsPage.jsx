@@ -164,7 +164,7 @@ function renderInline(text) {
   })
 }
 
-// ─── Markdown to HTML (for Zendesk publish) ───────────────────
+// ─── Markdown to HTML (for Zendesk® publish) ───────────────────
 const markdownToHtml = (text) => {
   if (!text) return ''
   const lines = text.split('\n')
@@ -355,13 +355,13 @@ function AIDrawer({ article, connector, action, onClose }) {
   const [editedText,  setEditedText]  = useState('')
   const [error,       setError]       = useState(null)
 
-  // Fetch article body from Zendesk then run AI
+  // Fetch article body from Zendesk® then run AI
   useEffect(() => {
     if (!article || !connector || !action) return
     const run = async () => {
       setLoading(true); setError(null)
       try {
-        // Fetch article body from Zendesk
+        // Fetch article body from Zendesk®
         const authHeader = `Basic ${btoa(connector.api_key_encrypted)}`
         const res = await fetch(
           `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${article.zendesk_article_id}`,
@@ -522,11 +522,11 @@ function AIDrawer({ article, connector, action, onClose }) {
                 <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 14px', background:'var(--green-light)', border:'1px solid var(--green-border)', borderRadius:8, marginBottom:12 }}>
                   <CheckCircle size={14} style={{ color:'var(--green)' }} />
                   <p style={{ fontSize:12, color:'var(--green)', fontWeight:600, margin:0 }}>
-                    Article updated in Zendesk successfully
+                    Article updated in Zendesk® successfully
                   </p>
                   <a href={article.url} target="_blank" rel="noreferrer"
                     style={{ fontSize:12, color:'var(--green)', fontWeight:600, marginLeft:'auto', display:'flex', alignItems:'center', gap:4, textDecoration:'none' }}>
-                    View in Zendesk <ExternalLink size={11} />
+                    View in Zendesk® <ExternalLink size={11} />
                   </a>
                 </div>
               )}
@@ -539,7 +539,7 @@ function AIDrawer({ article, connector, action, onClose }) {
 
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                 <p style={{ fontSize:12, color:'var(--text-3)', margin:0 }}>
-                  Copy to clipboard or publish directly to Zendesk
+                  Copy to clipboard or publish directly to Zendesk®
                 </p>
                 <div style={{ display:'flex', gap:8 }}>
                   <button onClick={onClose} className="btn btn-ghost btn-sm">Close</button>
@@ -554,8 +554,8 @@ function AIDrawer({ article, connector, action, onClose }) {
                     {publishing
                       ? <><Loader size={13} style={{ animation:'spin 0.7s linear infinite' }} /> Publishing...</>
                       : confirmPub
-                        ? <><AlertOctagon size={13} /> Yes, publish to Zendesk</>
-                        : <><ExternalLink size={13} /> Publish to Zendesk</>
+                        ? <><AlertOctagon size={13} /> Yes, publish to Zendesk®</>
+                        : <><ExternalLink size={13} /> Publish to Zendesk®</>
                     }
                   </button>
                 </div>
@@ -757,7 +757,7 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
               </div>
               <a href={article.url} target="_blank" rel="noreferrer"
                 className="btn btn-secondary btn-sm" style={{ flexShrink:0 }}>
-                <ExternalLink size={13} /> Open in Zendesk
+                <ExternalLink size={13} /> Open in Zendesk®
               </a>
             </div>
           )}

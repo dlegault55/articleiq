@@ -27,7 +27,7 @@ export default function LoginPage() {
             Your knowledge base health score is waiting.
           </h1>
           <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, marginBottom: 40, maxWidth: 380 }}>
-            Scan every article in your Zendesk knowledge base for quality issues — in minutes, not months.
+            Scan every article in your Zendesk® knowledge base for quality issues — in minutes, not months.
           </p>
 
           {/* Benefits */}
@@ -102,7 +102,7 @@ export default function LoginPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
               'No credit card required',
-              'Read-only access to your Zendesk',
+              'Read-only access to your Zendesk®',
               'Your data is never shared',
             ].map(t => (
               <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
