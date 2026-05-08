@@ -164,8 +164,7 @@ export default function HelpPage() {
           a="Duplicate detection compares article titles using text similarity scoring. It flags articles with 85%+ title similarity — which catches near-duplicates reliably but won't catch articles with completely different titles covering the same topic. It's a starting point, not a comprehensive audit." />
         <FAQ q="What does ArticleIQ do with my article content?"
           a="Article content is fetched directly from Zendesk® using your API credentials and processed in your browser. When you use AI features, the article HTML is sent to Anthropic's API for processing. We store article metadata (title, word count, scores) in our database but not the full article body." />
-        <FAQ q="Can I undo a publish to Zendesk®?"
-          a="ArticleIQ doesn't provide an undo. If your Zendesk® plan includes article version history, you can restore a previous version from the Zendesk® admin panel. We strongly recommend reviewing the full rewrite before publishing." />
+
         <FAQ q="Why is my readability score low even though the article seems clear?"
           a="The Flesch-Kincaid formula penalises long sentences, multi-syllable words, and passive voice. Technical documentation often scores lower than conversational content. Use it as a guide, not an absolute — a score of 40–60 is acceptable for technical content, while consumer-facing articles should aim for 60+." />
         <FAQ q="My article has a low readability score but a high AI Quality Score — which should I trust?"

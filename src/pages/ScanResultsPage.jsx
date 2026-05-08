@@ -349,9 +349,6 @@ function AIDrawer({ article, connector, action, onClose }) {
   const [body,     setBody]     = useState('')
   const [result,   setResult]   = useState('')
   const [copying,   setCopying]   = useState(false)
-  const [publishing,  setPublishing]  = useState(false)
-  const [published,   setPublished]   = useState(false)
-  const [confirmPub,  setConfirmPub]  = useState(false)
   const [editedText,  setEditedText]  = useState('')
   const [error,       setError]       = useState(null)
 
@@ -393,30 +390,6 @@ function AIDrawer({ article, connector, action, onClose }) {
     setTimeout(() => setCopying(false), 2000)
   }
 
-  const publish = async () => {
-    if (!confirmPub) { setConfirmPub(true); return }
-    setPublishing(true); setConfirmPub(false)
-    try {
-      const html = editedText || result
-      // Route through our server to avoid browser CORS restrictions
-      const res = await apiFetch('/api/publish-article', {
-        method: 'POST',
-        body: JSON.stringify({
-          connectorId: connector.id,
-          articleId:   article.zendesk_article_id,
-          html,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || `Server error ${res.status}`)
-      setPublished(true)
-      setTimeout(() => setPublished(false), 4000)
-    } catch (e) {
-      setError(`Publish failed: ${e.message}`)
-    } finally {
-      setPublishing(false)
-    }
-  }
 
   const actionLabel = action === 'rewrite' ? 'Improve Article' : 'Grammar Fix'
 
@@ -515,19 +488,7 @@ function AIDrawer({ article, connector, action, onClose }) {
                 </div>
               )}
 
-              {/* Published success */}
-              {published && (
-                <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 14px', background:'var(--green-light)', border:'1px solid var(--green-border)', borderRadius:8, marginBottom:12 }}>
-                  <CheckCircle size={14} style={{ color:'var(--green)' }} />
-                  <p style={{ fontSize:12, color:'var(--green)', fontWeight:600, margin:0 }}>
-                    Article updated in Zendesk® successfully
-                  </p>
-                  <a href={article.url} target="_blank" rel="noreferrer"
-                    style={{ fontSize:12, color:'var(--green)', fontWeight:600, marginLeft:'auto', display:'flex', alignItems:'center', gap:4, textDecoration:'none' }}>
-                    View in Zendesk® <ExternalLink size={11} />
-                  </a>
-                </div>
-              )}
+
 
               {error && (
                 <div style={{ padding:'8px 14px', background:'var(--red-light)', border:'1px solid var(--red-border)', borderRadius:8, marginBottom:12 }}>
@@ -541,20 +502,8 @@ function AIDrawer({ article, connector, action, onClose }) {
                 </p>
                 <div style={{ display:'flex', gap:8 }}>
                   <button onClick={onClose} className="btn btn-ghost btn-sm">Close</button>
-                  {/* Copy — primary action */}
-                  <button onClick={copy} className="btn btn-secondary btn-sm">
-                    {copying ? <><Check size={13} /> Copied!</> : <><CheckSquare size={13} /> Copy text</>}
-                  </button>
-                  {/* Publish — secondary, destructive */}
-                  <button onClick={publish} disabled={publishing || !result}
-                    className="btn btn-sm"
-                    style={{ background: confirmPub ? 'var(--red)' : 'var(--green)', color:'white', fontWeight:700, opacity: publishing ? 0.7 : 1 }}>
-                    {publishing
-                      ? <><Loader size={13} style={{ animation:'spin 0.7s linear infinite' }} /> Publishing...</>
-                      : confirmPub
-                        ? <><AlertOctagon size={13} /> Yes, publish to Zendesk®</>
-                        : <><ExternalLink size={13} /> Publish to Zendesk®</>
-                    }
+                  <button onClick={copy} className="btn btn-primary btn-sm">
+                    {copying ? <><Check size={13} /> Copied!</> : <><CheckSquare size={13} /> Copy improved text</>}
                   </button>
                 </div>
               </div>

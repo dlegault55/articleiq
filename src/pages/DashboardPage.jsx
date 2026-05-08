@@ -31,7 +31,7 @@ const SCAN_CHECKS = [
 
 const AI_CHECKS = [
   { key: 'ai_grammar',  label: 'Grammar & spelling fix', desc: 'Catch every error your team missed. See exactly what changed before applying.' },
-  { key: 'ai_rewrite',  label: 'Article rewrite',        desc: 'Transform jargon and walls of text into clear, step-by-step content customers can actually follow.' },
+  { key: 'ai_rewrite',  label: 'Article rewrite',        desc: 'Transform jargon and walls of text into clear, step-by-step content. Copy the improved version into Zendesk®.' },
   { key: 'ai_quality',  label: 'Quality score',          desc: 'Get scored on clarity, completeness, structure, and tone — with specific suggestions to improve.' },
 ]
 

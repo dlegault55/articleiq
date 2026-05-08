@@ -498,7 +498,6 @@ export default function LandingPage() {
                 'Everything in Free',
                 'AI Improve Article',
                 'AI Quality Score',
-                'Publish directly to Zendesk®',
                 'Email notifications',
                 'Priority support',
               ].map(f => (
