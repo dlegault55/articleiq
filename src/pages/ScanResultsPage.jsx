@@ -1050,7 +1050,6 @@ export default function ScanResultsPage() {
 
   return (
     <div style={{ maxWidth:960, margin:'0 auto', padding:'24px' }}>
-      <style>{`@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}`}</style>
 
       {/* Back + actions */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
@@ -1083,7 +1082,7 @@ export default function ScanResultsPage() {
           )}
           <div style={{ padding:'14px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:16 }}>
             <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-              {!isStalled && <div style={{ width:8, height:8, borderRadius:'50%', background:'var(--green)', animation:'pulse-dot 1.5s ease-in-out infinite' }} />}
+              {!isStalled && <div className="pulse-dot" style={{ width:8, height:8, borderRadius:'50%', background:'var(--navy)' }} />}
               <div>
                 <p style={{ fontSize:14, fontWeight:700, color: isStalled ? 'var(--amber)' : 'var(--green)', margin:0 }}>
                   {isStalled ? 'Scan paused' : 'Scan in progress'}

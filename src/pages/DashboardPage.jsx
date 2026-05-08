@@ -152,7 +152,7 @@ const SCAN_CHECKS = [
   { key: 'wordCount',   label: 'Thin content',        desc: 'Under 150 words' },
   { key: 'readability', label: 'Readability score',   desc: 'Hard to read articles' },
   { key: 'labels',      label: 'Missing labels',      desc: 'No tags assigned' },
-  { key: 'duplicates',  label: 'Duplicate detection', desc: 'Similar articles' },
+  { key: 'duplicates',  label: 'Duplicate detection', desc: 'Similar article titles (85%+ match)' },
   { key: 'links',       label: 'Broken links',        desc: 'Dead hyperlinks' },
 ]
 const AI_CHECKS = [
@@ -283,7 +283,7 @@ export default function DashboardPage() {
           <div style={{ borderRadius:'var(--radius-xl)', background:'var(--navy)', overflow:'hidden' }} className="animate-in">
             <div style={{ padding:'16px 22px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:16 }}>
               <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                <div style={{ width:8, height:8, borderRadius:'50%', background:'white', opacity:0.8, animation:'pulse-dot 1.5s ease-in-out infinite' }} />
+                <div className="pulse-dot" style={{ width:8, height:8, borderRadius:'50%', background:'white', opacity:0.8 }} />
                 <div>
                   <p style={{ fontSize:14, fontWeight:700, color:'white', margin:0 }}>Scan in progress — keep this tab open</p>
                   <p style={{ fontSize:12, color:'rgba(255,255,255,0.6)', margin:0 }}>{activeScan.scanned_articles||0} of {activeScan.total_articles||'?'} articles</p>
@@ -482,21 +482,9 @@ export default function DashboardPage() {
               {profile?.plan === 'paid' ? 'AI-powered grammar, rewrites, and quality scoring.' : 'Upgrade to unlock AI-powered article improvements.'}
             </p>
             {profile?.plan === 'paid' && (
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:6 }}>
-                {AI_CHECKS.map(({ key, label, desc }) => {
-                  const on = (checks || DEFAULT_CHECKS)[key]
-                  return (
-                    <button key={key} onClick={() => setChecks(c => ({ ...c, [key]: !c[key] }))}
-                      style={{ padding:'9px 10px', borderRadius:8, cursor:'pointer', textAlign:'left', border:'none', transition:'all 0.12s', fontFamily:'inherit',
-                        background: on ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.07)',
-                        outline: `1.5px solid ${on ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.12)'}`,
-                      }}>
-                      <div style={{ fontSize:11, fontWeight:700, color:'white', marginBottom:2 }}>{label}</div>
-                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.5)' }}>{desc}</div>
-                    </button>
-                  )
-                })}
-              </div>
+              <p style={{ fontSize:11, color:'rgba(255,255,255,0.55)', margin:0 }}>
+                Improve Article, Quality Score, and Label Suggestions are available on any article after scanning.
+              </p>
             )}
             {profile?.plan !== 'paid' && (
               <button onClick={upgrade} style={{ marginTop:10, padding:'6px 14px', borderRadius:7, background:'#FFD93D', color:'#1A1A18', border:'none', cursor:'pointer', fontFamily:'inherit', fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:5 }}>

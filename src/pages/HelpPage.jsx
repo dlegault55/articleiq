@@ -83,7 +83,7 @@ export default function HelpPage() {
         <Check icon={Type}      severity="warning"  title="Thin content"       desc="Articles under 150 words are flagged as warnings; under 50 as critical. Short articles rarely genuinely help customers." />
         <Check icon={BookOpen}  severity="critical" title="Readability score"  desc="Uses the Flesch-Kincaid formula (0–100). Below 50 is a warning; below 30 is critical. Note: readability and AI Quality Score measure different things — an article can have low readability but a high quality score. Readability measures how easy the writing is to follow; Quality Score measures structure, completeness, and usefulness. Use Improve Article to simplify language without changing the content." />
         <Check icon={Tag}       severity="warning"  title="Missing labels"     desc="Articles with no tags assigned. Makes them harder to find and manage. Use Suggest Labels to get AI-powered tag ideas." />
-        <Check icon={Copy}      severity="warning"  title="Duplicate detection" desc="Compares article titles for high similarity (85%+). Catches near-duplicate content that confuses customers." />
+        <Check icon={Copy}      severity="warning"  title="Duplicate detection" desc="Compares article titles using similarity scoring (85%+ match). Good for catching near-duplicate titles — does not compare article body content." />
         <Check icon={Link2}     severity="warning"  title="Broken links"       desc="Checks hyperlinks inside articles. Can slow down Full scans on large knowledge bases." />
       </div>
 
