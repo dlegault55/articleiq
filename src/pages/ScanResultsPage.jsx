@@ -475,21 +475,6 @@ function AIDrawer({ article, connector, action, onClose }) {
             {/* Footer actions */}
             <div style={{ padding:'14px 24px', borderTop:'1px solid var(--border)', flexShrink:0, background:'var(--bg)' }}>
 
-              {/* Confirmation warning */}
-              {confirmPub && (
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', background:'var(--red-light)', border:'1px solid var(--red-border)', borderRadius:8, marginBottom:12 }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                    <AlertOctagon size={14} style={{ color:'var(--red)', flexShrink:0 }} />
-                    <p style={{ fontSize:12, color:'var(--red)', fontWeight:600, margin:0 }}>
-                      This will permanently overwrite the article in Zendesk. Are you sure?
-                    </p>
-                  </div>
-                  <button onClick={() => setConfirmPub(false)} className="btn btn-ghost btn-sm" style={{ color:'var(--red)', flexShrink:0 }}>Cancel</button>
-                </div>
-              )}
-
-
-
               {error && (
                 <div style={{ padding:'8px 14px', background:'var(--red-light)', border:'1px solid var(--red-border)', borderRadius:8, marginBottom:12 }}>
                   <p style={{ fontSize:12, color:'var(--red)', margin:0 }}>{error}</p>
