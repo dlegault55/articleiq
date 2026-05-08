@@ -11,6 +11,7 @@ import SettingsPage from '@/pages/SettingsPage'
 import LandingPage from '@/pages/LandingPage'
 import HelpPage from '@/pages/HelpPage'
 import ReleaseNotesPage from '@/pages/ReleaseNotesPage'
+import SharePage from '@/pages/SharePage'
 
 // Error boundary
 class ErrorBoundary extends Component {
@@ -58,6 +59,7 @@ export default function App() {
         <Route path="/home" element={<LandingPage />} />
         <Route path="/login" element={<PublicOnly><LoginPage /></PublicOnly>} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        <Route path="/share/:id" element={<SharePage />} />
         <Route path="/" element={<Guard><Layout /></Guard>}>
           <Route path="dashboard"           element={<DashboardPage />} />
           <Route path="scanner/results/:id" element={<ScanResultsPage />} />
