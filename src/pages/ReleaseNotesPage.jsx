@@ -164,7 +164,7 @@ export default function ReleaseNotesPage() {
         ))}
       </div>
 
-      <div style={{ padding: '16px 20px', borderRadius: 10, background: 'var(--green-light)', border: '1px solid var(--green-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+      <div style={{ padding: '16px 20px', borderRadius: 10, background: 'var(--navy-light)', border: '1px solid var(--navy-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
         <div>
           <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>Have a feature request or found a bug?</p>
           <p style={{ fontSize: 12, color: 'var(--text-2)', margin: 0 }}>We'd love to hear from you.</p>

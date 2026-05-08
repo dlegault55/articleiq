@@ -1,555 +1,240 @@
 import { Link } from 'react-router-dom'
-import { Scan, CheckCircle, AlertOctagon, AlertTriangle, ArrowRight, Zap, TrendingUp, Shield, Clock, Users, BarChart3, Star, ChevronRight, Plug } from 'lucide-react'
+import { CheckCircle, Scan, ArrowRight, AlertOctagon, AlertTriangle, BookOpen, Tag, Clock, Zap } from 'lucide-react'
 
-const FONT = "@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');"
-
-// ─── Demo components ───────────────────────────────────────────
-function HealthScoreDemo() {
-  return (
-    <div style={{ background: '#F0F5F0', borderRadius: 20, padding: 20, border: '1px solid #D4E8D4', boxShadow: '0 32px 80px rgba(0,0,0,0.14), 0 8px 24px rgba(0,0,0,0.08)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
-        <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#FF5F57' }} />
-        <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#FEBC2E' }} />
-        <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#28C840' }} />
-        <div style={{ flex: 1, height: 20, background: 'white', borderRadius: 5, marginLeft: 6, display: 'flex', alignItems: 'center', paddingLeft: 10 }}>
-          <span style={{ fontSize: 9, color: '#9CA3AF', fontFamily: 'monospace' }}>articleiq.vercel.app/dashboard</span>
-        </div>
-      </div>
-      <div style={{ background: '#107C10', borderRadius: 14, padding: '20px 22px', marginBottom: 12, position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
-        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Knowledge Base Health · Last scan 2 hours ago</div>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, marginBottom: 8 }}>
-          <div style={{ fontWeight: 800, fontSize: 52, color: 'white', lineHeight: 1, letterSpacing: -2 }}>74</div>
-          <div style={{ paddingBottom: 6 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Needs attention</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>↑ +8 pts vs previous scan</div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <div style={{ padding: '4px 10px', borderRadius: 100, background: '#FF4444', color: 'white', fontSize: 10, fontWeight: 700 }}>12 Critical</div>
-          <div style={{ padding: '4px 10px', borderRadius: 100, background: '#FFD93D', color: '#1A1A00', fontSize: 10, fontWeight: 700 }}>49 Warnings</div>
-          <div style={{ padding: '4px 10px', borderRadius: 100, background: 'rgba(255,255,255,0.2)', color: 'white', fontSize: 10, fontWeight: 600 }}>1,169 Clean</div>
-        </div>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
-        {[['1,230', 'Articles'], ['6', 'Scans'], ['24', 'Resolved']].map(([v, l]) => (
-          <div key={l} style={{ background: 'white', borderRadius: 10, padding: '10px 12px', border: '1px solid #E5E7EB' }}>
-            <div style={{ fontWeight: 800, fontSize: 20, color: '#0F1F0F', lineHeight: 1 }}>{v}</div>
-            <div style={{ fontSize: 10, color: '#9CA3AF', marginTop: 2 }}>{l}</div>
-          </div>
-        ))}
-      </div>
-      <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', border: '1px solid #E5E7EB' }}>
-        <div style={{ padding: '8px 12px', borderBottom: '1px solid #F3F4F6', display: 'flex', gap: 5 }}>
-          {['All (5)', 'Issues (4)', 'Critical (2)', 'Clean (1)'].map((f, i) => (
-            <div key={f} style={{ padding: '2px 8px', borderRadius: 100, fontSize: 9, fontWeight: 700, background: i === 0 ? '#107C10' : '#F9FAFB', color: i === 0 ? 'white' : '#6B7280' }}>{f}</div>
-          ))}
-        </div>
-        {[
-          { title: 'How to reset your password', score: 42, issues: ['critical'], words: 89, age: '14 mo' },
-          { title: 'Getting started with the API', score: 71, issues: ['warning', 'warning'], words: 312, age: '7 mo' },
-          { title: 'Billing FAQ', score: 28, issues: ['critical', 'critical'], words: 67, age: '2 yr' },
-          { title: 'Connecting your Slack workspace', score: 88, issues: [], words: 445, age: '3 wk' },
-        ].map((a, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderBottom: i < 3 ? '1px solid #F9FAFB' : 'none' }}>
-            <div style={{ width: 32, height: 32, borderRadius: 7, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, fontFamily: 'monospace',
-              background: a.score >= 80 ? '#EBF5EB' : a.score >= 60 ? '#FFFBEB' : '#FEF2F2',
-              color: a.score >= 80 ? '#107C10' : a.score >= 60 ? '#D97706' : '#DC2626' }}>
-              {a.score}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{a.title}</div>
-              <div style={{ display: 'flex', gap: 4 }}>
-                {a.issues.map((sev, j) => (
-                  <div key={j} style={{ fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: sev === 'critical' ? '#FEF2F2' : '#FFFBEB', color: sev === 'critical' ? '#DC2626' : '#D97706' }}>
-                    {sev}
-                  </div>
-                ))}
-                {a.issues.length === 0 && <div style={{ fontSize: 8, color: '#107C10', fontWeight: 700 }}>✓ clean</div>}
-              </div>
-            </div>
-            <div style={{ fontSize: 9, color: '#9CA3AF', textAlign: 'right', flexShrink: 0 }}>
-              <div>{a.words}w</div><div>{a.age}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function IssueDetailDemo() {
-  return (
-    <div style={{ background: 'white', borderRadius: 16, border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 16px 48px rgba(0,0,0,0.1)' }}>
-      <div style={{ padding: '12px 16px', borderBottom: '1px solid #F3F4F6', display: 'flex', gap: 6 }}>
-        {['All', 'Has issues (4)', 'Critical (2)', 'Clean (1)', 'Resolved'].map((f, i) => (
-          <div key={f} style={{ padding: '3px 10px', borderRadius: 100, fontSize: 10, fontWeight: 700, background: i === 1 ? '#107C10' : '#F9FAFB', color: i === 1 ? 'white' : '#6B7280', border: i !== 1 ? '1px solid #E5E7EB' : 'none' }}>{f}</div>
-        ))}
-      </div>
-      {[
-        { title: 'How to reset your password', score: 42, open: true,
-          issues: [
-            { sev: 'critical', type: 'low_readability', desc: 'Readability very low (42/100). Most readers will struggle with this article.' },
-            { sev: 'warning', type: 'low_word_count', desc: 'Short article (89 words). Consider adding more detail to be genuinely helpful.' },
-          ]
-        },
-        { title: 'Billing FAQ', score: 28, open: false,
-          issues: [{ sev: 'critical', type: 'outdated', desc: '' }, { sev: 'critical', type: 'low_readability', desc: '' }]
-        },
-        { title: 'Getting started with the API', score: 71, open: false,
-          issues: [{ sev: 'warning', type: 'missing_labels', desc: '' }]
-        },
-      ].map((a, i) => (
-        <div key={i} style={{ borderBottom: '1px solid #F9FAFB' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px' }}>
-            <div style={{ width: 3, alignSelf: 'stretch', borderRadius: 2, background: a.score < 50 ? '#DC2626' : a.score < 70 ? '#D97706' : '#107C10', flexShrink: 0 }} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#111827', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <span style={{ fontSize: 10, color: '#9CA3AF' }}>Score: <b style={{ color: a.score < 50 ? '#DC2626' : '#D97706' }}>{a.score}</b></span>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-              {a.issues.filter(x => x.sev === 'critical').length > 0 && <div style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: '#FEF2F2', color: '#DC2626' }}>{a.issues.filter(x => x.sev === 'critical').length} critical</div>}
-              {a.issues.filter(x => x.sev === 'warning').length > 0 && <div style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: '#FFFBEB', color: '#D97706' }}>{a.issues.filter(x => x.sev === 'warning').length} warning</div>}
-            </div>
-          </div>
-          {a.open && (
-            <div style={{ padding: '0 16px 14px 32px', background: '#FAFAFA' }}>
-              {a.issues.map((iss, j) => (
-                <div key={j} style={{ padding: '8px 10px', borderRadius: 8, marginBottom: 6, background: iss.sev === 'critical' ? '#FEF2F2' : '#FFFBEB', border: `1px solid ${iss.sev === 'critical' ? '#FECACA' : '#FDE68A'}` }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: iss.sev === 'critical' ? '#DC2626' : '#D97706', marginBottom: 3 }}>{iss.type.replace(/_/g, ' ')}</div>
-                  <div style={{ fontSize: 11, color: '#4A5E4A' }}>{iss.desc}</div>
-                </div>
-              ))}
-              <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #E5E7EB' }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>AI Actions</div>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  {['✦ Fix Grammar', '↺ Rewrite', '★ Quality Score'].map(a => (
-                    <div key={a} style={{ padding: '4px 10px', borderRadius: 6, background: 'white', border: '1px solid #D4E8D4', fontSize: 10, fontWeight: 600, color: '#107C10', cursor: 'pointer' }}>{a}</div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function TrendDemo() {
-  const months = [
-    { m: 'Feb', score: 51, critical: 28, warning: 67 },
-    { m: 'Mar', score: 58, critical: 22, warning: 59 },
-    { m: 'Apr', score: 68, critical: 14, warning: 44 },
-    { m: 'May', score: 74, critical: 12, warning: 49 },
-  ]
-  return (
-    <div style={{ background: 'white', borderRadius: 16, padding: '20px', border: '1px solid #E5E7EB', boxShadow: '0 8px 32px rgba(0,0,0,0.08)' }}>
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Health Score Trend</div>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-          <span style={{ fontWeight: 800, fontSize: 32, color: '#D97706' }}>74</span>
-          <span style={{ fontSize: 13, color: '#107C10', fontWeight: 700 }}>↑ +23 pts in 3 months</span>
-        </div>
-      </div>
-      {months.map(({ m, score, critical, warning }) => (
-        <div key={m} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 7, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800,
-            background: score >= 80 ? '#EBF5EB' : score >= 60 ? '#FFFBEB' : '#FEF2F2',
-            color: score >= 80 ? '#107C10' : score >= 60 ? '#D97706' : '#DC2626' }}>
-            {score}
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
-              <span style={{ fontSize: 11, fontWeight: 600, color: '#0F1F0F' }}>{m} 2026</span>
-              <span style={{ fontSize: 10, color: '#DC2626', fontWeight: 700 }}>{critical} critical</span>
-            </div>
-            <div style={{ height: 5, background: '#F3F4F6', borderRadius: 3, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${score}%`, borderRadius: 3, transition: 'width 0.8s',
-                background: score >= 80 ? '#107C10' : score >= 60 ? '#D97706' : '#DC2626' }} />
-            </div>
-          </div>
-        </div>
-      ))}
-      <div style={{ marginTop: 14, padding: '10px 12px', background: '#EBF5EB', borderRadius: 8, border: '1px solid #B8D8B8' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#107C10', marginBottom: 2 }}>At this rate</div>
-        <div style={{ fontSize: 11, color: '#4A5E4A' }}>Your knowledge base will reach <b>80+ (Healthy)</b> by next month if you resolve the 12 critical issues.</div>
-      </div>
-    </div>
-  )
-}
-
-// ─── Main page ─────────────────────────────────────────────────
 export default function LandingPage() {
   return (
-    <div style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", background: 'white', color: '#0F1F0F', minHeight: '100vh' }}>
+    <div style={{ fontFamily:"'Plus Jakarta Sans', sans-serif", background:'#F7F7F5', color:'#1A1A18' }}>
       <style>{`
-        ${FONT}
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        .land-btn { display:inline-flex; align-items:center; gap:8px; padding:13px 26px; border-radius:10px; font-family:'Plus Jakarta Sans',sans-serif; font-size:14px; font-weight:700; cursor:pointer; border:none; text-decoration:none; transition:all 0.15s; }
-        .land-btn-green { background:#107C10; color:white; box-shadow:0 1px 3px rgba(16,124,16,0.3); }
-        .land-btn-green:hover { background:#0A5A0A; color:white; box-shadow:0 4px 12px rgba(16,124,16,0.35); }
-        .land-btn-outline { background:white; color:#107C10; border:2px solid #107C10; }
-        .land-btn-outline:hover { background:#EBF5EB; }
-        .land-btn-white { background:white; color:#107C10; box-shadow:0 2px 8px rgba(0,0,0,0.15); }
-        .land-btn-white:hover { box-shadow:0 4px 16px rgba(0,0,0,0.2); color:#107C10; }
-        .feature-card { background:white; border-radius:16px; padding:28px 24px; border:1px solid #E5E7EB; transition:all 0.2s; }
-        .feature-card:hover { border-color:#B8D8B8; box-shadow:0 8px 32px rgba(16,124,16,0.08); transform:translateY(-2px); }
-        .stat-num { font-weight:800; font-size:36px; color:#107C10; line-height:1; }
+        .land-btn { display:inline-flex; align-items:center; gap:7px; padding:10px 20px; border-radius:8px; font-family:inherit; font-size:13px; font-weight:700; text-decoration:none; cursor:pointer; border:none; transition:opacity 0.15s; }
+        .land-btn:hover { opacity: 0.85; }
+        .land-btn-navy { background:#1B2D5B; color:white; }
+        .land-btn-outline { background:white; color:#1A1A18; border:1px solid #E8E8E6; }
+        .land-btn-ghost { background:transparent; color:#1B2D5B; }
       `}</style>
 
       {/* ── Nav ── */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #E5E7EB', padding: '0 48px', height: 58, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 30, height: 30, background: '#107C10', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Scan size={16} color="white" />
+      <nav style={{ background:'rgba(247,247,245,0.92)', backdropFilter:'blur(12px)', borderBottom:'1px solid #E8E8E6', padding:'0 48px', height:54, display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:50 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+          <div style={{ width:26, height:26, background:'#1B2D5B', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <Scan size={13} color="white" />
           </div>
-          <span style={{ fontWeight: 800, fontSize: 16, letterSpacing: -0.3 }}>Article<span style={{ color: '#107C10' }}>IQ</span></span>
+          <span style={{ fontWeight:800, fontSize:15, letterSpacing:-0.3 }}>Article<span style={{ color:'#107C10' }}>IQ</span></span>
         </div>
-        <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
-          {['Features', 'How it works', 'Pricing'].map(l => (
-            <a key={l} href={`#${l.toLowerCase().replace(' ','-')}`} style={{ fontSize: 14, fontWeight: 500, color: '#4A5E4A', textDecoration: 'none' }}>{l}</a>
-          ))}
-        </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <Link to="/login" style={{ fontSize: 14, fontWeight: 600, color: '#4A5E4A', textDecoration: 'none' }}>Sign in</Link>
-          <Link to="/login" className="land-btn land-btn-green" style={{ padding: '8px 18px', fontSize: 13 }}>Start free →</Link>
+        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <a href="#pricing" className="land-btn land-btn-ghost" style={{ padding:'7px 14px' }}>Pricing</a>
+          <Link to="/login" className="land-btn land-btn-outline" style={{ padding:'7px 16px' }}>Sign in</Link>
+          <Link to="/login" className="land-btn land-btn-navy">Get started free</Link>
         </div>
       </nav>
 
       {/* ── Hero ── */}
-      <section style={{ maxWidth: 1160, margin: '0 auto', padding: '80px 48px 64px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
+      <section style={{ padding:'80px 48px 60px', maxWidth:1100, margin:'0 auto', display:'grid', gridTemplateColumns:'1fr 1fr', gap:60, alignItems:'center' }}>
         <div>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', background: '#EBF5EB', border: '1px solid #B8D8B8', borderRadius: 100, fontSize: 12, fontWeight: 700, color: '#107C10', marginBottom: 24 }}>
-            <Zap size={12} /> Free to start · No credit card required
+          <div style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'5px 12px', borderRadius:100, background:'#EBF5EB', border:'1px solid #A8D5A8', marginBottom:20 }}>
+            <div style={{ width:6, height:6, borderRadius:'50%', background:'#107C10' }} />
+            <span style={{ fontSize:12, fontWeight:700, color:'#107C10' }}>Free to start — no credit card required</span>
           </div>
-          <h1 style={{ fontWeight: 800, fontSize: 46, lineHeight: 1.1, letterSpacing: -1.5, marginBottom: 20 }}>
-            Your knowledge base<br />
-            <span style={{ color: '#107C10' }}>has problems you<br />don't know about.</span>
+          <h1 style={{ fontSize:48, fontWeight:800, letterSpacing:-2, lineHeight:1.05, marginBottom:20, color:'#1A1A18' }}>
+            Find what's hurting your knowledge base
           </h1>
-          <p style={{ fontSize: 18, color: '#4A5E4A', lineHeight: 1.7, marginBottom: 16, maxWidth: 460 }}>
-            The average Zendesk® knowledge base has <strong>30% outdated articles</strong>, poor readability scores, and hidden duplicates confusing customers every day.
+          <p style={{ fontSize:17, color:'#4A4A48', lineHeight:1.7, marginBottom:28, maxWidth:460 }}>
+            ArticleIQ scans every article in your Zendesk® knowledge base and tells you exactly what's causing customers to call support instead of finding answers themselves.
           </p>
-          <p style={{ fontSize: 16, color: '#4A5E4A', lineHeight: 1.7, marginBottom: 36, maxWidth: 460 }}>
-            ArticleIQ scans every article automatically and gives you a health score, prioritized issues, and AI-powered fixes — so your team spends time on the right things.
-          </p>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: 28 }}>
-            <Link to="/login" className="land-btn land-btn-green">
-              Scan my knowledge base <ArrowRight size={16} />
+          <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'center' }}>
+            <Link to="/login" className="land-btn land-btn-navy" style={{ fontSize:14, padding:'12px 24px' }}>
+              Scan your knowledge base <ArrowRight size={15} />
             </Link>
-            <span style={{ fontSize: 13, color: '#8A9E8A' }}>Takes 2 minutes to set up</span>
+            <span style={{ fontSize:13, color:'#9B9B98' }}>Connects in 2 minutes</span>
           </div>
-          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-            {['No credit card required', 'Read-only Zendesk® access', 'Results in minutes'].map(t => (
-              <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#4A5E4A' }}>
-                <CheckCircle size={14} style={{ color: '#107C10' }} /> {t}
+        </div>
+
+        {/* Hero visual — health score mock */}
+        <div style={{ background:'#1B2D5B', borderRadius:16, padding:'24px', position:'relative', overflow:'hidden' }}>
+          <div style={{ position:'absolute', top:-40, right:-40, width:160, height:160, borderRadius:'50%', background:'rgba(255,255,255,0.04)' }} />
+          <p style={{ fontSize:10, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(255,255,255,0.4)', marginBottom:4 }}>Knowledge base health</p>
+          <div style={{ fontSize:72, fontWeight:800, color:'white', lineHeight:1, letterSpacing:-3, marginBottom:4 }}>74</div>
+          <div style={{ fontSize:14, fontWeight:600, color:'rgba(255,255,255,0.75)', marginBottom:16 }}>Needs attention</div>
+          <div style={{ display:'flex', gap:6, marginBottom:16 }}>
+            <div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(192,57,43,0.35)', color:'#FFAAAA', fontSize:11, fontWeight:700 }}>12 critical</div>
+            <div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(255,200,80,0.18)', color:'#FFD980', fontSize:11, fontWeight:700 }}>49 warnings</div>
+            <div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(255,255,255,0.1)', color:'rgba(255,255,255,0.65)', fontSize:11 }}>1,169 clean</div>
+          </div>
+          {/* Sample issue cards */}
+          {[
+            { label:'Critical', title:'Low readability', desc:'Score 29 — customers struggle to follow', color:'#FFAAAA', bar:'rgba(192,57,43,0.8)' },
+            { label:'Warning',  title:'Outdated article', desc:'Not updated in 214 days', color:'#FFD980', bar:'rgba(217,119,6,0.8)' },
+          ].map(({ label, title, desc, color, bar }) => (
+            <div key={title} style={{ background:'rgba(255,255,255,0.07)', borderRadius:9, padding:'10px 12px', marginBottom:8, display:'flex', alignItems:'center', gap:10, borderLeft:`3px solid ${bar}` }}>
+              <div style={{ flex:1 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
+                  <span style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color }}>{label}</span>
+                  <span style={{ fontSize:12, fontWeight:700, color:'white' }}>{title}</span>
+                </div>
+                <span style={{ fontSize:11, color:'rgba(255,255,255,0.55)' }}>{desc}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Checks ── */}
+      <section style={{ padding:'60px 48px', background:'white', borderTop:'1px solid #E8E8E6', borderBottom:'1px solid #E8E8E6' }}>
+        <div style={{ maxWidth:900, margin:'0 auto' }}>
+          <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9B9B98', textAlign:'center', marginBottom:10 }}>What we scan for</p>
+          <h2 style={{ fontSize:30, fontWeight:800, textAlign:'center', letterSpacing:-0.8, marginBottom:40, color:'#1A1A18' }}>Six checks. One health score.</h2>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
+            {[
+              { icon:Clock,       title:'Outdated content',    desc:'Articles not updated in 180+ days. Your instructions may be wrong.' },
+              { icon:BookOpen,    title:'Readability score',   desc:'Flesch-Kincaid scoring on every article. Low scores mean customers call instead of reading.' },
+              { icon:Zap,         title:'Thin content',        desc:'Articles under 150 words rarely answer real questions. We flag them automatically.' },
+              { icon:Tag,         title:'Missing labels',      desc:'Untagged articles are invisible in search. We suggest labels with AI.' },
+              { icon:AlertOctagon,title:'Duplicate detection', desc:'Similar articles split traffic and confuse customers. We compare titles across your KB.' },
+              { icon:AlertTriangle,title:'Broken links',       desc:'Dead links inside articles destroy trust. We check every hyperlink.' },
+            ].map(({ icon: Icon, title, desc }) => (
+              <div key={title} style={{ padding:'18px', borderRadius:10, border:'1px solid #E8E8E6', background:'#FAFAF8' }}>
+                <div style={{ width:32, height:32, borderRadius:8, background:'#F0F3FA', border:'1px solid #C8D4F0', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:12 }}>
+                  <Icon size={15} style={{ color:'#1B2D5B' }} />
+                </div>
+                <p style={{ fontSize:13, fontWeight:700, color:'#1A1A18', marginBottom:5 }}>{title}</p>
+                <p style={{ fontSize:12, color:'#6B6B68', lineHeight:1.65, margin:0 }}>{desc}</p>
               </div>
             ))}
           </div>
         </div>
-        <div><HealthScoreDemo /></div>
       </section>
 
-      {/* ── Stats bar ── */}
-      <div style={{ background: '#107C10', padding: '28px 48px' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 32, textAlign: 'center' }}>
-          {[
-            ['30%', 'of KB articles are outdated on average'],
-            ['47%', 'of customers give up on self-service when articles are unclear'],
-            ['6hrs', 'saved per week by teams using ArticleIQ'],
-            ['3 min', 'to get your first health score'],
-          ].map(([num, label]) => (
-            <div key={num}>
-              <div style={{ fontWeight: 800, fontSize: 32, color: 'white', marginBottom: 4 }}>{num}</div>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>{label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Problem section ── */}
-      <section id="features" style={{ maxWidth: 1100, margin: '0 auto', padding: '96px 48px 80px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 64 }}>
-          <div style={{ display: 'inline-block', fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#107C10', background: '#EBF5EB', padding: '4px 14px', borderRadius: 100, border: '1px solid #B8D8B8', marginBottom: 16 }}>The problem</div>
-          <h2 style={{ fontWeight: 800, fontSize: 38, letterSpacing: -1, marginBottom: 16, lineHeight: 1.15 }}>
-            Your support team is working hard.<br />Your KB is working against them.
-          </h2>
-          <p style={{ fontSize: 17, color: '#4A5E4A', maxWidth: 600, margin: '0 auto', lineHeight: 1.7 }}>
-            Knowledge bases grow fast and decay faster. Without visibility into quality, you're flying blind — and your customers feel it.
-          </p>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
-          {[
-            { icon: <Clock size={24} style={{ color: '#DC2626' }} />, bg: '#FEF2F2', border: '#FECACA', title: 'Outdated content erodes trust', stat: '180+ days', statLabel: 'since last update on 30% of articles', desc: 'Customers read your article, follow the steps, and nothing works. They call support. Your team spends 20 minutes on a ticket that a fresh article would have solved in 2. Multiply that by thousands of users.' },
-            { icon: <BarChart3 size={24} style={{ color: '#D97706' }} />, bg: '#FFFBEB', border: '#FDE68A', title: 'Poor readability drives up ticket volume', stat: '47%', statLabel: 'of users abandon unclear self-service', desc: 'A Flesch-Kincaid score below 50 means most readers will struggle. Technical jargon, passive voice, and long sentences all contribute. Your articles might be accurate — but impossible to act on.' },
-            { icon: <Users size={24} style={{ color: '#2563EB' }} />, bg: '#EFF6FF', border: '#BFDBFE', title: 'Duplicates create confusion and noise', desc: 'Three articles about the same topic with slightly different information. Which one is right? Customers don\'t know. Your team doesn\'t know. Duplicates dilute search results and create inconsistent answers.', stat: '2.4x', statLabel: 'more support tickets from teams with duplicates' },
-          ].map(({ icon, bg, border, title, stat, statLabel, desc }) => (
-            <div key={title} style={{ padding: '28px', background: bg, border: `1px solid ${border}`, borderRadius: 18 }}>
-              <div style={{ marginBottom: 16 }}>{icon}</div>
-              <div style={{ fontWeight: 800, fontSize: 28, color: '#0F1F0F', marginBottom: 2 }}>{stat}</div>
-              <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 14 }}>{statLabel}</div>
-              <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 10, color: '#0F1F0F' }}>{title}</p>
-              <p style={{ fontSize: 13, color: '#4A5E4A', lineHeight: 1.7 }}>{desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Feature: Issue detail ── */}
-      <section style={{ background: '#F0F5F0', borderTop: '1px solid #D4E8D4', borderBottom: '1px solid #D4E8D4', padding: '96px 48px' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 72, alignItems: 'center' }}>
+      {/* ── AI ── */}
+      <section style={{ padding:'60px 48px' }}>
+        <div style={{ maxWidth:900, margin:'0 auto', display:'grid', gridTemplateColumns:'1fr 1fr', gap:48, alignItems:'center' }}>
           <div>
-            <div style={{ display: 'inline-block', fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#107C10', background: '#EBF5EB', padding: '4px 14px', borderRadius: 100, border: '1px solid #B8D8B8', marginBottom: 20 }}>Issue detection</div>
-            <h2 style={{ fontWeight: 800, fontSize: 34, letterSpacing: -1, marginBottom: 16, lineHeight: 1.2 }}>
-              Every issue, explained clearly. Prioritized by impact.
+            <div style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'4px 12px', borderRadius:100, background:'#FEF9EC', border:'1px solid #F5D98A', marginBottom:16 }}>
+              <Zap size={12} style={{ color:'#D97706' }} />
+              <span style={{ fontSize:11, fontWeight:700, color:'#D97706' }}>Pro feature</span>
+            </div>
+            <h2 style={{ fontSize:30, fontWeight:800, letterSpacing:-0.8, marginBottom:14, color:'#1A1A18', lineHeight:1.2 }}>
+              Fix issues with AI, not manual editing
             </h2>
-            <p style={{ fontSize: 16, color: '#4A5E4A', lineHeight: 1.7, marginBottom: 24 }}>
-              ArticleIQ doesn't just flag problems — it tells you exactly what's wrong and why it matters. Critical issues that are costing you support tickets rise to the top.
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 32 }}>
-              {[
-                { color: '#DC2626', bg: '#FEF2F2', label: 'Critical', desc: 'Needs immediate attention — directly impacting customers right now' },
-                { color: '#D97706', bg: '#FFFBEB', label: 'Warning', desc: 'Should be reviewed — degrading the customer experience' },
-                { color: '#2563EB', bg: '#EFF6FF', label: 'Info', desc: 'Nice to fix — small improvements that add up over time' },
-              ].map(({ color, bg, label, desc }) => (
-                <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                  <div style={{ padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: bg, color, flexShrink: 0, marginTop: 2 }}>{label}</div>
-                  <p style={{ fontSize: 13, color: '#4A5E4A', lineHeight: 1.6 }}>{desc}</p>
-                </div>
-              ))}
-            </div>
-            <Link to="/login" className="land-btn land-btn-green">See your issues <ArrowRight size={15} /></Link>
-          </div>
-          <div><IssueDetailDemo /></div>
-        </div>
-      </section>
-
-      {/* ── Feature: AI fixes ── */}
-      <section style={{ maxWidth: 1100, margin: '0 auto', padding: '96px 48px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 72, alignItems: 'center' }}>
-          <div style={{ background: 'white', borderRadius: 18, border: '1px solid #E5E7EB', padding: 24, boxShadow: '0 8px 32px rgba(0,0,0,0.08)' }}>
-            <div style={{ padding: '14px 16px', background: '#FEF2F2', borderRadius: 10, border: '1px solid #FECACA', marginBottom: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#DC2626', marginBottom: 4 }}>low_readability · Critical</div>
-              <div style={{ fontSize: 13, color: '#4A5E4A' }}>Readability very low (28/100). Most readers will struggle with this article.</div>
-            </div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-              <div style={{ padding: '6px 12px', borderRadius: 7, background: '#EBF5EB', border: '1px solid #B8D8B8', fontSize: 12, fontWeight: 700, color: '#107C10', cursor: 'pointer' }}>✦ Fix Grammar</div>
-              <div style={{ padding: '6px 12px', borderRadius: 7, background: '#107C10', border: 'none', fontSize: 12, fontWeight: 700, color: 'white', cursor: 'pointer' }}>↺ Rewrite</div>
-              <div style={{ padding: '6px 12px', borderRadius: 7, background: '#EBF5EB', border: '1px solid #B8D8B8', fontSize: 12, fontWeight: 700, color: '#107C10', cursor: 'pointer' }}>★ Quality Score</div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9CA3AF', marginBottom: 6 }}>Before</div>
-                <div style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.6, padding: '10px 12px', background: '#F9FAFB', borderRadius: 8, border: '1px solid #E5E7EB' }}>
-                  In order to facilitate the process of password resetting, users must navigate to the authentication module and initiate the credential recovery workflow...
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#107C10', marginBottom: 6 }}>After (AI rewrite)</div>
-                <div style={{ fontSize: 12, color: '#0F1F0F', lineHeight: 1.6, padding: '10px 12px', background: '#EBF5EB', borderRadius: 8, border: '1px solid #B8D8B8' }}>
-                  To reset your password: click "Forgot password" on the login page, enter your email, and follow the link we send you. Takes about 2 minutes.
-                </div>
-              </div>
-            </div>
-          </div>
-          <div>
-            <div style={{ display: 'inline-block', fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#107C10', background: '#EBF5EB', padding: '4px 14px', borderRadius: 100, border: '1px solid #B8D8B8', marginBottom: 20 }}>AI-powered fixes</div>
-            <h2 style={{ fontWeight: 800, fontSize: 34, letterSpacing: -1, marginBottom: 16, lineHeight: 1.2 }}>
-              Don't just find problems. Fix them — in one click.
-            </h2>
-            <p style={{ fontSize: 16, color: '#4A5E4A', lineHeight: 1.7, marginBottom: 24 }}>
-              ArticleIQ Pro uses Claude AI to rewrite unclear articles, fix grammar and spelling, and score content quality — right inside the results page. No context switching, no copy-pasting.
+            <p style={{ fontSize:15, color:'#4A4A48', lineHeight:1.7, marginBottom:20 }}>
+              ArticleIQ uses Claude to improve your articles in one click — better grammar, clearer structure, and suggested labels. Copy the result and paste it into Zendesk®.
             </p>
             {[
-              { title: 'Grammar & spelling fix', desc: 'Catch errors your team missed. See exactly what changed before you copy it.' },
-              { title: 'Full article rewrite', desc: 'Transform technical jargon into clear, helpful language customers can actually follow.' },
-              { title: 'Quality score breakdown', desc: 'Get scored on clarity, completeness, structure, and tone with specific suggestions.' },
-            ].map(({ title, desc }) => (
-              <div key={title} style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-                <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#EBF5EB', border: '1px solid #B8D8B8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
-                  <CheckCircle size={12} style={{ color: '#107C10' }} />
-                </div>
-                <div>
-                  <p style={{ fontSize: 14, fontWeight: 700, marginBottom: 3 }}>{title}</p>
-                  <p style={{ fontSize: 13, color: '#4A5E4A', lineHeight: 1.6 }}>{desc}</p>
-                </div>
+              'Fix grammar and rewrite for clarity in a single pass',
+              'Quality scoring with specific improvement suggestions',
+              'AI-suggested labels based on article content',
+            ].map(f => (
+              <div key={f} style={{ display:'flex', alignItems:'flex-start', gap:8, marginBottom:8 }}>
+                <CheckCircle size={14} style={{ color:'#107C10', flexShrink:0, marginTop:2 }} />
+                <span style={{ fontSize:13, color:'#4A4A48' }}>{f}</span>
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* ── Feature: Trends ── */}
-      <section style={{ background: '#F0F5F0', borderTop: '1px solid #D4E8D4', borderBottom: '1px solid #D4E8D4', padding: '96px 48px' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 72, alignItems: 'center' }}>
-          <div>
-            <div style={{ display: 'inline-block', fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#107C10', background: '#EBF5EB', padding: '4px 14px', borderRadius: 100, border: '1px solid #B8D8B8', marginBottom: 20 }}>Progress tracking</div>
-            <h2 style={{ fontWeight: 800, fontSize: 34, letterSpacing: -1, marginBottom: 16, lineHeight: 1.2 }}>
-              Prove the work your team is doing.
-            </h2>
-            <p style={{ fontSize: 16, color: '#4A5E4A', lineHeight: 1.7, marginBottom: 24 }}>
-              Every scan adds a data point. Watch your health score climb as your team resolves issues. Share progress with stakeholders who care about customer experience.
-            </p>
-            {[
-              { icon: <TrendingUp size={18} style={{ color: '#107C10' }} />, title: 'Health score over time', desc: 'See at a glance whether your knowledge base is improving or declining after each scan.' },
-              { icon: <CheckCircle size={18} style={{ color: '#107C10' }} />, title: 'Resolve and track', desc: 'Mark individual issues as resolved. They move to a Resolved tab so nothing falls through the cracks.' },
-              { icon: <Star size={18} style={{ color: '#107C10' }} />, title: 'Shareable reports', desc: 'One click generates a public report link. Share with your manager or team without making them log in.' },
-            ].map(({ icon, title, desc }) => (
-              <div key={title} style={{ display: 'flex', gap: 14, marginBottom: 20 }}>
-                <div style={{ width: 36, height: 36, background: '#EBF5EB', border: '1px solid #B8D8B8', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {icon}
-                </div>
-                <div>
-                  <p style={{ fontSize: 14, fontWeight: 700, marginBottom: 3 }}>{title}</p>
-                  <p style={{ fontSize: 13, color: '#4A5E4A', lineHeight: 1.6 }}>{desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div><TrendDemo /></div>
-        </div>
-      </section>
-
-      {/* ── How it works ── */}
-      <section id="how-it-works" style={{ maxWidth: 1000, margin: '0 auto', padding: '96px 48px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 60 }}>
-          <h2 style={{ fontWeight: 800, fontSize: 36, letterSpacing: -1, marginBottom: 14 }}>Up and running in under 10 minutes</h2>
-          <p style={{ fontSize: 16, color: '#4A5E4A' }}>No agents. No code. No IT ticket required.</p>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 24 }}>
-          {[
-            { step: '01', icon: <Plug size={22} style={{ color: '#107C10' }} />, title: 'Connect Zendesk®', time: '2 minutes', desc: 'Add your Zendesk® subdomain and API token. Read-only access — we never modify a single article without your say-so.' },
-            { step: '02', icon: <Scan size={22} style={{ color: '#107C10' }} />, title: 'Choose and run a scan', time: '10–30 minutes', desc: 'Pick Fast, Standard, or Full depth. We analyze every article and score it for readability, freshness, duplicates, and more.' },
-            { step: '03', icon: <CheckCircle size={22} style={{ color: '#107C10' }} />, title: 'Fix what matters', time: 'Ongoing', desc: 'Your health score tells you where to start. Filter by severity, use AI to fix issues, and track progress scan over scan.' },
-          ].map(({ step, icon, title, time, desc }) => (
-            <div key={step} className="feature-card" style={{ position: 'relative' }}>
-              <div style={{ position: 'absolute', top: 20, right: 20, fontWeight: 800, fontSize: 36, color: '#F0F5F0', lineHeight: 1 }}>{step}</div>
-              <div style={{ width: 46, height: 46, background: '#EBF5EB', border: '1px solid #B8D8B8', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                {icon}
-              </div>
-              <div style={{ display: 'inline-block', fontSize: 11, fontWeight: 700, padding: '2px 10px', background: '#EBF5EB', color: '#107C10', borderRadius: 100, border: '1px solid #B8D8B8', marginBottom: 10 }}>{time}</div>
-              <p style={{ fontWeight: 700, fontSize: 16, marginBottom: 8 }}>{title}</p>
-              <p style={{ fontSize: 13, color: '#4A5E4A', lineHeight: 1.7 }}>{desc}</p>
+          {/* AI mock */}
+          <div style={{ background:'white', borderRadius:14, border:'1px solid #E8E8E6', overflow:'hidden', boxShadow:'0 4px 24px rgba(0,0,0,0.06)' }}>
+            <div style={{ padding:'12px 16px', borderBottom:'1px solid #E8E8E6', background:'#FAFAF8', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <span style={{ fontSize:11, fontWeight:700, color:'#9B9B98', textTransform:'uppercase', letterSpacing:'0.08em' }}>ArticleIQ Rewrite</span>
             </div>
-          ))}
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', height:200 }}>
+              <div style={{ padding:'16px', borderRight:'1px solid #E8E8E6', overflow:'hidden' }}>
+                <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#9B9B98', marginBottom:8 }}>Original</p>
+                <p style={{ fontSize:11, color:'#9B9B98', lineHeight:1.7 }}>Riva Cloud or Riva On-Premise does not sync multiday appointments from Outlook to NetSuite. NetSuite does not support events that span multiple calendar days...</p>
+              </div>
+              <div style={{ padding:'16px', background:'#FAFFFE', overflow:'hidden' }}>
+                <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#107C10', marginBottom:8 }}>Improved</p>
+                <p style={{ fontSize:11, fontWeight:700, color:'#1A1A18', marginBottom:6 }}>Multiday Appointments Won't Sync</p>
+                <p style={{ fontSize:10, fontWeight:700, color:'#4A4A48', marginBottom:4 }}>Problem</p>
+                <p style={{ fontSize:11, color:'#6B6B68', lineHeight:1.7 }}>Outlook multiday appointments don't sync to NetSuite because NetSuite doesn't support events spanning multiple days...</p>
+              </div>
+            </div>
+            <div style={{ padding:'10px 16px', borderTop:'1px solid #E8E8E6', display:'flex', justifyContent:'flex-end' }}>
+              <div style={{ padding:'6px 14px', borderRadius:7, background:'#1B2D5B', color:'white', fontSize:11, fontWeight:700 }}>Copy improved text</div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* ── Pricing ── */}
-      <section id="pricing" style={{ background: '#F0F5F0', borderTop: '1px solid #D4E8D4', padding: '80px 48px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h2 style={{ fontWeight: 800, fontSize: 34, letterSpacing: -1, marginBottom: 12 }}>Simple, honest pricing</h2>
-          <p style={{ fontSize: 16, color: '#4A5E4A' }}>Start free. Upgrade when you need more.</p>
-        </div>
-        <div style={{ maxWidth: 860, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <section id="pricing" style={{ padding:'60px 48px', background:'white', borderTop:'1px solid #E8E8E6' }}>
+        <div style={{ maxWidth:780, margin:'0 auto' }}>
+          <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9B9B98', textAlign:'center', marginBottom:10 }}>Pricing</p>
+          <h2 style={{ fontSize:30, fontWeight:800, textAlign:'center', letterSpacing:-0.8, marginBottom:40, color:'#1A1A18' }}>Simple, honest pricing</h2>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
 
-          {/* Free */}
-          <div style={{ background: 'white', borderRadius: 18, padding: '28px', border: '1px solid #E5E7EB' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#4A5E4A', marginBottom: 4 }}>Free</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, marginBottom: 8 }}>
-              <span style={{ fontWeight: 800, fontSize: 36, color: '#0F1F0F' }}>$0</span>
+            {/* Free */}
+            <div style={{ borderRadius:14, padding:'24px', border:'1px solid #E8E8E6', background:'#FAFAF8' }}>
+              <p style={{ fontSize:13, fontWeight:700, color:'#6B6B68', marginBottom:6 }}>Free</p>
+              <div style={{ fontSize:40, fontWeight:800, color:'#1A1A18', letterSpacing:-1.5, lineHeight:1, marginBottom:6 }}>$0</div>
+              <p style={{ fontSize:13, color:'#6B6B68', marginBottom:20, lineHeight:1.6 }}>Try ArticleIQ on your first 300 articles. No credit card required.</p>
+              <div style={{ marginBottom:24 }}>
+                {[
+                  { text:'Up to 300 articles per scan', on:true },
+                  { text:'All quality checks', on:true },
+                  { text:'Readability + duplicate detection', on:true },
+                  { text:'Excel export + shareable reports', on:true },
+                  { text:'AI Improve Article', on:false },
+                  { text:'AI Quality Score', on:false },
+                  { text:'Email notifications', on:false },
+                ].map(({ text, on }) => (
+                  <div key={text} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:7, opacity: on ? 1 : 0.4 }}>
+                    <CheckCircle size={13} style={{ color: on ? '#107C10' : '#9B9B98', flexShrink:0 }} />
+                    <span style={{ fontSize:13, color:'#1A1A18' }}>{text}</span>
+                  </div>
+                ))}
+              </div>
+              <Link to="/login" className="land-btn land-btn-outline" style={{ width:'100%', justifyContent:'center' }}>Get started free</Link>
             </div>
-            <p style={{ fontSize: 13, color: '#4A5E4A', marginBottom: 20, lineHeight: 1.6 }}>
-              Try ArticleIQ on your first 300 articles. No credit card required.
-            </p>
-            <div style={{ marginBottom: 24 }}>
-              {[
-                { text: 'Up to 300 articles per scan', on: true },
-                { text: 'All quality checks', on: true },
-                { text: 'Readability + duplicate detection', on: true },
-                { text: 'Excel export', on: true },
-                { text: 'Shareable reports', on: true },
-                { text: 'AI Improve Article', on: false },
-                { text: 'AI Quality Score', on: false },
-                { text: 'Publish to Zendesk®', on: false },
-                { text: 'Email notifications', on: false },
-              ].map(({ text, on }) => (
-                <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, opacity: on ? 1 : 0.4 }}>
-                  <CheckCircle size={14} style={{ color: on ? '#107C10' : '#9CA3AF', flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, color: '#0F1F0F' }}>{text}</span>
-                </div>
-              ))}
+
+            {/* Pro */}
+            <div style={{ borderRadius:14, padding:'24px', border:'2px solid #1B2D5B', background:'white', position:'relative' }}>
+              <div style={{ position:'absolute', top:-12, left:'50%', transform:'translateX(-50%)', background:'#1B2D5B', color:'white', fontSize:10, fontWeight:700, padding:'3px 14px', borderRadius:100, whiteSpace:'nowrap' }}>Most popular</div>
+              <p style={{ fontSize:13, fontWeight:700, color:'#6B6B68', marginBottom:6 }}>Pro</p>
+              <div style={{ display:'flex', alignItems:'baseline', gap:4, marginBottom:6 }}>
+                <span style={{ fontSize:40, fontWeight:800, color:'#1A1A18', letterSpacing:-1.5, lineHeight:1 }}>$99</span>
+                <span style={{ fontSize:14, color:'#9B9B98' }}>/month</span>
+              </div>
+              <div style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'4px 10px', background:'#F0F3FA', border:'1px solid #C8D4F0', borderRadius:7, marginBottom:14 }}>
+                <span style={{ fontSize:12, fontWeight:800, color:'#1B2D5B' }}>$790/year</span>
+                <span style={{ fontSize:11, color:'#4A4A48' }}>— 2 months free, save $398</span>
+              </div>
+              <p style={{ fontSize:13, color:'#6B6B68', marginBottom:20, lineHeight:1.6 }}>Unlimited articles, AI-powered fixes, and direct email notifications.</p>
+              <div style={{ marginBottom:24 }}>
+                {[
+                  'Unlimited articles per scan',
+                  'Everything in Free',
+                  'AI Improve Article — grammar + rewrite',
+                  'AI Quality Score',
+                  'AI label suggestions',
+                  'Email notifications on scan complete',
+                ].map(f => (
+                  <div key={f} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:7 }}>
+                    <CheckCircle size={13} style={{ color:'#107C10', flexShrink:0 }} />
+                    <span style={{ fontSize:13, color:'#1A1A18' }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+              <Link to="/login" className="land-btn land-btn-navy" style={{ width:'100%', justifyContent:'center', marginBottom:8 }}>Start free trial</Link>
+              <p style={{ fontSize:11, color:'#9B9B98', textAlign:'center' }}>14-day free trial · No credit card required</p>
             </div>
-            <Link to="/login" className="land-btn land-btn-outline" style={{ width: '100%', justifyContent: 'center' }}>
-              Get started free
-            </Link>
+
           </div>
-
-          {/* Pro */}
-          <div style={{ background: 'white', borderRadius: 18, padding: '28px', border: '2px solid #107C10', position: 'relative', boxShadow: '0 8px 32px rgba(16,124,16,0.1)' }}>
-            <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: '#107C10', color: 'white', fontSize: 11, fontWeight: 700, padding: '3px 16px', borderRadius: 100, whiteSpace: 'nowrap' }}>Most popular</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#4A5E4A', marginBottom: 4 }}>Pro</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, marginBottom: 8 }}>
-              <span style={{ fontWeight: 800, fontSize: 36, color: '#0F1F0F' }}>$99</span>
-              <span style={{ fontSize: 14, color: '#9CA3AF' }}>/month</span>
-            </div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 12px', background: '#EBF5EB', border: '1px solid #B8D8B8', borderRadius: 8, marginBottom: 12 }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: '#107C10' }}>$790/year</span>
-              <span style={{ fontSize: 11, color: '#4A5E4A' }}>— 2 months free, save $398</span>
-            </div>
-            <p style={{ fontSize: 13, color: '#4A5E4A', marginBottom: 20, lineHeight: 1.6 }}>
-              Unlimited articles, AI-powered fixes, and direct publishing to Zendesk®.
-            </p>
-            <div style={{ marginBottom: 24 }}>
-              {[
-                'Unlimited articles per scan',
-                'Everything in Free',
-                'AI Improve Article',
-                'AI Quality Score',
-                'Email notifications',
-                'Priority support',
-              ].map(f => (
-                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <CheckCircle size={14} style={{ color: '#107C10', flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, color: '#0F1F0F' }}>{f}</span>
-                </div>
-              ))}
-            </div>
-            <Link to="/login" className="land-btn land-btn-green" style={{ width: '100%', justifyContent: 'center', marginBottom: 10 }}>
-              Start free trial
-            </Link>
-            <p style={{ fontSize: 11, color: '#9CA3AF', textAlign: 'center' }}>14-day free trial · No credit card required</p>
-          </div>
-
-        </div>
-      </section>
-
-      {/* ── Final CTA ── */}
-      <section style={{ background: '#107C10', padding: '80px 48px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: -80, left: '20%', width: 300, height: 300, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
-        <div style={{ position: 'absolute', bottom: -100, right: '15%', width: 400, height: 400, borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 640, margin: '0 auto' }}>
-          <h2 style={{ fontWeight: 800, fontSize: 38, color: 'white', letterSpacing: -1, marginBottom: 16, lineHeight: 1.2 }}>
-            Find out what's wrong with your knowledge base — free, today.
-          </h2>
-          <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.75)', marginBottom: 36, lineHeight: 1.7 }}>
-            Join teams who've already scanned over 50,000 articles and found issues they never knew existed. Your first health score in under 10 minutes.
-          </p>
-          <Link to="/login" className="land-btn land-btn-white">
-            Start scanning for free <ArrowRight size={16} />
-          </Link>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 16 }}>
-            No credit card · Read-only Zendesk® access · Cancel anytime
-          </p>
         </div>
       </section>
 
       {/* ── Footer ── */}
-      <footer style={{ background: '#0A1A0A', padding: '28px 48px 20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 24, height: 24, background: '#107C10', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Scan size={13} color="white" />
+      <footer style={{ background:'#1A1A18', padding:'28px 48px 20px' }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+            <div style={{ width:24, height:24, background:'#1B2D5B', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <Scan size={12} color="white" />
             </div>
-            <span style={{ fontWeight: 800, fontSize: 14, color: 'white' }}>Article<span style={{ color: '#4ade80' }}>IQ</span></span>
+            <span style={{ fontWeight:800, fontSize:14, color:'white' }}>Article<span style={{ color:'#4ade80' }}>IQ</span></span>
           </div>
-          <p style={{ fontSize: 12, color: '#4A5E4A' }}>© 2026 ArticleIQ. Built for knowledge base teams.</p>
-          <Link to="/login" style={{ fontSize: 13, color: '#4ade80', fontWeight: 600, textDecoration: 'none' }}>Sign in →</Link>
+          <p style={{ fontSize:12, color:'#4A4A48' }}>© 2026 ArticleIQ. All rights reserved.</p>
+          <Link to="/login" style={{ fontSize:13, color:'#4ade80', fontWeight:600, textDecoration:'none' }}>Sign in →</Link>
         </div>
-        <div style={{ borderTop: '1px solid #1a2e1a', paddingTop: 14, textAlign: 'center' }}>
-          <p style={{ fontSize: 11, color: '#3a4e3a', lineHeight: 1.6 }}>
+        <div style={{ borderTop:'1px solid #2A2A28', paddingTop:14, textAlign:'center' }}>
+          <p style={{ fontSize:11, color:'#3A3A38', lineHeight:1.6 }}>
             Zendesk® is a registered trademark of Zendesk, Inc. ArticleIQ is not affiliated with, endorsed by, or sponsored by Zendesk, Inc. in any way.
           </p>
         </div>
