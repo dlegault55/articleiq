@@ -24,7 +24,7 @@ function AvatarMenu({ name, email, plan, initials }) {
         style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '5px 10px 5px 5px', borderRadius: 100, background: open ? 'rgba(16,124,16,0.1)' : 'transparent', border: '1px solid transparent', cursor: 'pointer', transition: 'all 0.15s' }}
         onMouseEnter={e => e.currentTarget.style.background = 'rgba(16,124,16,0.08)'}
         onMouseLeave={e => { if (!open) e.currentTarget.style.background = 'transparent' }}>
-        <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--green)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'white', flexShrink: 0 }}>
+        <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'white', flexShrink: 0 }}>
           {initials}
         </div>
         <ChevronDown size={13} style={{ color: 'var(--text-2)', transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'none' }} />

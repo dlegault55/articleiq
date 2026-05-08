@@ -764,7 +764,7 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
 
       {/* Expanded */}
       {open && (
-        <div style={{ background:'var(--bg)', border:'1px solid var(--border-md)', borderTop:'none', margin:'0 16px 12px', borderRadius:'0 0 10px 10px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
+        <div style={{ background:'var(--bg)', border:'1px solid var(--border-md)', borderTop:'none', margin:'0 12px 10px', borderRadius:'0 0 10px 10px', boxShadow:'0 1px 4px rgba(0,0,0,0.04)' }}>
 
           {/* Article link — prominent */}
           {article.url && (
@@ -898,7 +898,7 @@ function Pagination({ page, totalPages, onChange }) {
       {pages.map(p => (
         <button key={p} onClick={() => onChange(p)}
           style={{ width:32, height:32, borderRadius:8, border:'none', cursor:'pointer', fontSize:13, fontWeight: page===p ? 700 : 400,
-            background: page===p ? 'var(--green)' : 'var(--bg-card)', color: page===p ? 'white' : 'var(--text-2)' }}>
+            background: page===p ? 'var(--navy)' : 'var(--bg-card)', color: page===p ? 'white' : 'var(--text-2)' }}>
           {p}
         </button>
       ))}
@@ -1088,8 +1088,8 @@ export default function ScanResultsPage() {
       {/* Progress banner */}
       {isActive && (
         <div className="card animate-in" style={{ marginBottom:16, overflow:'hidden',
-          borderColor: isStalled ? 'var(--amber-border)' : 'var(--green-border)',
-          background: isStalled ? 'var(--amber-light)' : 'var(--green-light)' }}>
+          borderColor: isStalled ? 'var(--amber-border)' : 'var(--navy-border)',
+          background: isStalled ? 'var(--amber-light)' : 'var(--navy-light)' }}>
           {isStalled && (
             <div style={{ padding:'10px 20px', borderBottom:'1px solid var(--amber-border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <span style={{ fontSize:13, fontWeight:600, color:'var(--amber)' }}>Scan appears stalled — no activity for 3+ minutes</span>
@@ -1119,7 +1119,7 @@ export default function ScanResultsPage() {
             </div>
           </div>
           <div className="progress-track" style={{ borderRadius:0, height:4 }}>
-            <div className="progress-fill" style={{ width:`${Math.max(pct,1)}%`, background: isStalled ? 'var(--amber)' : 'var(--green)' }} />
+            <div className="progress-fill" style={{ width:`${Math.max(pct,1)}%`, background: isStalled ? 'var(--amber)' : 'var(--navy)' }} />
           </div>
         </div>
       )}
@@ -1172,8 +1172,8 @@ export default function ScanResultsPage() {
       })()}
 
       {/* Hero health score */}
-      <div style={{ borderRadius:'var(--radius-xl)', background:'var(--green)', padding:'24px 28px', marginBottom:16, position:'relative', overflow:'hidden' }}>
-        <div style={{ position:'absolute', top:-40, right:-40, width:200, height:200, borderRadius:'50%', background:'rgba(255,255,255,0.06)' }} />
+      <div style={{ borderRadius:'var(--radius-xl)', background:'var(--navy)', padding:'22px 26px', marginBottom:16, position:'relative', overflow:'hidden' }}>
+        <div style={{ position:'absolute', top:-50, right:-50, width:200, height:200, borderRadius:'50%', background:'rgba(255,255,255,0.04)' }} />
         <div style={{ display:'grid', gridTemplateColumns:'auto 1fr', gap:28, alignItems:'center' }}>
           <div>
             <p style={{ fontSize:11, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(255,255,255,0.5)', marginBottom:4 }}>
@@ -1193,13 +1193,13 @@ export default function ScanResultsPage() {
           <div>
             <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:12 }}>
               {issues.filter(i=>i.severity==='critical').length > 0 && (
-                <div style={{ padding:'6px 14px', borderRadius:100, background:'#FF4444', color:'white', fontSize:13, fontWeight:700, display:'flex', alignItems:'center', gap:5 }}>
-                  <AlertOctagon size={12} /> {issues.filter(i=>i.severity==='critical').length} Critical
+                <div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(192,57,43,0.35)', color:'#FFAAAA', fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:4 }}>
+                  <AlertOctagon size={10}/> {issues.filter(i=>i.severity==='critical').length} critical
                 </div>
               )}
               {issues.filter(i=>i.severity==='warning').length > 0 && (
-                <div style={{ padding:'6px 14px', borderRadius:100, background:'#FFD93D', color:'#1A1A00', fontSize:13, fontWeight:700, display:'flex', alignItems:'center', gap:5 }}>
-                  <AlertTriangle size={12} /> {issues.filter(i=>i.severity==='warning').length} Warnings
+                <div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(255,200,80,0.18)', color:'#FFD980', fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:4 }}>
+                  <AlertTriangle size={10}/> {issues.filter(i=>i.severity==='warning').length} warnings
                 </div>
               )}
               <div style={{ padding:'6px 14px', borderRadius:100, background:'rgba(255,255,255,0.2)', color:'white', fontSize:13, fontWeight:500 }}>
@@ -1213,8 +1213,8 @@ export default function ScanResultsPage() {
             </div>
             <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
               {score !== null && score < 80 && (
-                <div style={{ padding:'8px 14px', borderRadius:8, background:'rgba(255,255,255,0.12)', fontSize:12, color:'rgba(255,255,255,0.85)', display:'flex', alignItems:'center', gap:6 }}>
-                  <Target size={12} /> {80-score} points to Healthy
+                <div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(255,255,255,0.1)', color:'rgba(255,255,255,0.65)', fontSize:11, fontWeight:600, display:'flex', alignItems:'center', gap:4 }}>
+                  <Target size={11} /> {80-score} points to Healthy
                 </div>
               )}
               <div style={{ padding:'8px 14px', borderRadius:8, background:'rgba(255,255,255,0.12)', fontSize:12, color:'rgba(255,255,255,0.85)' }}>
@@ -1231,7 +1231,7 @@ export default function ScanResultsPage() {
           {filterOpts.map(({ key, label, count }) => (
             <button key={key} onClick={() => setFilter(key)}
               style={{ padding:'5px 14px', borderRadius:100, fontSize:12, fontWeight:600, border:'none', cursor:'pointer', transition:'all 0.15s',
-                background: filter===key ? 'var(--green)' : 'transparent',
+                background: filter===key ? 'var(--navy)' : 'transparent',
                 color: filter===key ? 'white' : 'var(--text-2)',
               }}>
               {label} <span style={{ opacity:0.7 }}>({count})</span>
