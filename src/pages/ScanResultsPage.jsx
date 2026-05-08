@@ -483,7 +483,7 @@ function AIDrawer({ article, connector, action, onClose }) {
 
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                 <p style={{ fontSize:12, color:'var(--text-3)', margin:0 }}>
-                  Copy to clipboard or publish directly to Zendesk®
+                  Copy the improved text and paste it into Zendesk®
                 </p>
                 <div style={{ display:'flex', gap:8 }}>
                   <button onClick={onClose} className="btn btn-ghost btn-sm">Close</button>
