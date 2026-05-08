@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import * as Sentry from '@sentry/react'
 
 const AuthContext = createContext(null)
 
@@ -21,11 +20,9 @@ export const AuthProvider = ({ children }) => {
       if (!mounted) return
       if (session?.user) {
         setUser(session.user)
-        Sentry.setUser({ id: session.user.id, email: session.user.email })
         await loadProfile(session.user.id)
       } else {
         setUser(null)
-        Sentry.setUser(null)
       }
     }
 
@@ -33,12 +30,10 @@ export const AuthProvider = ({ children }) => {
       if (!mounted) return
       if (session?.user) {
         setUser(session.user)
-        Sentry.setUser({ id: session.user.id, email: session.user.email })
         loadProfile(session.user.id)
       } else {
         setUser(null)
         setProfile(null)
-        Sentry.setUser(null)
         if (event === 'SIGNED_OUT') window.location.replace('/login')
       }
     })

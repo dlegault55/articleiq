@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Component } from 'react'
-import * as Sentry from '@sentry/react'
 import { useAuth } from '@/hooks/useAuth'
 import Layout from '@/components/Layout'
 import LoginPage from '@/pages/LoginPage'
@@ -17,7 +16,6 @@ import ReleaseNotesPage from '@/pages/ReleaseNotesPage'
 class ErrorBoundary extends Component {
   state = { error: null }
   static getDerivedStateFromError(e) { return { error: e } }
-  componentDidCatch(error, info) { Sentry.captureException(error, { extra: info }) }
   render() {
     if (!this.state.error) return this.props.children
     return (
