@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing required fields' })
   }
 
-  const reportUrl = `https://articleiq.vercel.app/scanner/results/${scanId}`
+  const reportUrl = `https://articleiq.app/scanner/results/${scanId}`
 
   const html = `
 <!DOCTYPE html>
@@ -60,7 +60,7 @@ export default async function handler(req, res) {
       </a>
     </div>
     <div style="padding:16px 32px;border-top:1px solid #E2E2DE;background:#F5F5F4">
-      <p style="font-size:12px;color:#9B9B96;margin:0">ArticleIQ · <a href="https://articleiq.vercel.app" style="color:#107C10;text-decoration:none">articleiq.vercel.app</a></p>
+      <p style="font-size:12px;color:#9B9B96;margin:0">ArticleIQ · <a href="https://articleiq.app" style="color:#107C10;text-decoration:none">articleiq.app</a></p>
     </div>
   </div>
 </body>

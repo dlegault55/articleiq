@@ -277,7 +277,7 @@ async function runScanAsync({ scanJobId, userId, connector, preset }) {
     if (profile?.email) {
       const RESEND_KEY = process.env.RESEND_API_KEY
       if (RESEND_KEY) {
-        const reportUrl = `${process.env.APP_URL || 'https://articleiq.vercel.app'}/scanner/results/${scanJobId}`
+        const reportUrl = `${process.env.APP_URL || 'https://articleiq.app'}/scanner/results/${scanJobId}`
         const firstName = profile.full_name?.split(' ')[0]
         const scanDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
         const html = `<div style="font-family:Inter,sans-serif;max-width:560px;margin:0 auto">

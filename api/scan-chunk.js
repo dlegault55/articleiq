@@ -304,7 +304,7 @@ async function sendEmail(supabase, scanJobId, userId) {
     ])
     if (!profile?.email || !job) return
     if (profile.email_notifications === false) return
-    const url     = `${process.env.APP_URL || 'https://articleiq.vercel.app'}/scanner/results/${scanJobId}`
+    const url     = `${process.env.APP_URL || 'https://articleiq.app'}/scanner/results/${scanJobId}`
     const name    = profile.full_name?.split(' ')[0]
     const critical = job.critical_count || 0
     const warning  = job.warning_count  || 0
@@ -359,7 +359,7 @@ async function sendEmail(supabase, scanJobId, userId) {
           <a href="${url}" style="display:inline-block;padding:12px 24px;background:#107C10;color:white;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;margin-top:8px">View full report →</a>
 
           <hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0">
-          <p style="color:#9ca3af;font-size:12px;margin:0">You're receiving this because you completed a scan in ArticleIQ. <a href="${process.env.APP_URL || 'https://articleiq.vercel.app'}/settings" style="color:#107C10">Manage email settings</a></p>
+          <p style="color:#9ca3af;font-size:12px;margin:0">You're receiving this because you completed a scan in ArticleIQ. <a href="${process.env.APP_URL || 'https://articleiq.app'}/settings" style="color:#107C10">Manage email settings</a></p>
         </div>
       </div>`
 
@@ -374,7 +374,7 @@ async function sendEmail(supabase, scanJobId, userId) {
           <p style="color:#4a5e4a;margin:0 0 20px">${job.scanned_articles} articles · ${warning} warnings · ${critical} critical</p>
           <a href="${url}" style="display:inline-block;padding:11px 22px;background:#107C10;color:white;border-radius:8px;text-decoration:none;font-weight:700">View report →</a>
           <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-          <p style="color:#9ca3af;font-size:12px;margin:0"><a href="${process.env.APP_URL || 'https://articleiq.vercel.app'}/settings" style="color:#107C10">Manage email settings</a></p>
+          <p style="color:#9ca3af;font-size:12px;margin:0"><a href="${process.env.APP_URL || 'https://articleiq.app'}/settings" style="color:#107C10">Manage email settings</a></p>
         </div>
       </div>`
 
