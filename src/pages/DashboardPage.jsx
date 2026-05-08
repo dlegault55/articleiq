@@ -105,12 +105,42 @@ export default function DashboardPage() {
         .order('severity', { ascending: true })
         .limit(3),
     ]).then(([{ data: counts }, { data: wins }]) => {
-      if (counts) setLastCounts({
-        critical: counts.filter(i => i.severity==='critical').length,
-        warning:  counts.filter(i => i.severity==='warning').length,
-        info:     counts.filter(i => i.severity==='info').length,
-      })
+      if (counts) {
+        const c = {
+          critical: counts.filter(i => i.severity==='critical').length,
+          warning:  counts.filter(i => i.severity==='warning').length,
+          info:     counts.filter(i => i.severity==='info').length,
+        }
+        setLastCounts(c)
+        // Backfill scan_jobs if counts were zero from old bug
+        if (lastScan.critical_count === 0 && lastScan.warning_count === 0 && c.critical + c.warning > 0) {
+          supabase.from('scan_jobs').update({
+            critical_count: c.critical, warning_count: c.warning,
+            info_count: c.info, issues_found: c.critical + c.warning + c.info,
+          }).eq('id', lastScan.id)
+        }
+      }
       if (wins) setQuickWins(wins)
+    })
+
+    // Backfill other completed scans with zero counts (fixes history trend data)
+    const staleScans = completed.filter(s =>
+      s.id !== lastScan.id && s.status === 'completed' &&
+      s.critical_count === 0 && s.warning_count === 0 && (s.scanned_articles||0) > 0
+    ).slice(0, 5)
+
+    staleScans.forEach(async (scan) => {
+      const { data } = await supabase.from('article_issues').select('severity').eq('scan_job_id', scan.id)
+      if (!data?.length) return
+      const critical = data.filter(i => i.severity==='critical').length
+      const warning  = data.filter(i => i.severity==='warning').length
+      const info     = data.filter(i => i.severity==='info').length
+      if (critical + warning + info > 0) {
+        supabase.from('scan_jobs').update({
+          critical_count: critical, warning_count: warning,
+          info_count: info, issues_found: critical + warning + info,
+        }).eq('id', scan.id)
+      }
     })
   }, [lastScan?.id])
 

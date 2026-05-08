@@ -296,32 +296,96 @@ async function sendEmail(supabase, scanJobId, userId) {
   const key = process.env.RESEND_API_KEY
   if (!key) return
   try {
-    const [{ data: profile }, { data: job }] = await Promise.all([
+    const [{ data: profile }, { data: job }, { count: scanCount }] = await Promise.all([
       supabase.from('profiles').select('email, full_name, email_notifications').eq('id', userId).single(),
       supabase.from('scan_jobs').select('*').eq('id', scanJobId).single(),
+      supabase.from('scan_jobs').select('*', { count: 'exact', head: true })
+        .eq('user_id', userId).eq('status', 'completed'),
     ])
     if (!profile?.email || !job) return
-    if (profile.email_notifications === false) return // user opted out
-    const url = `${process.env.APP_URL || 'https://articleiq.vercel.app'}/scanner/results/${scanJobId}`
-    const name = profile.full_name?.split(' ')[0]
+    if (profile.email_notifications === false) return
+    const url     = `${process.env.APP_URL || 'https://articleiq.vercel.app'}/scanner/results/${scanJobId}`
+    const name    = profile.full_name?.split(' ')[0]
     const critical = job.critical_count || 0
+    const warning  = job.warning_count  || 0
+    const isFirst  = scanCount <= 1
+
+    const subject = isFirst
+      ? `Your knowledge base health score is in — ${job.scanned_articles} articles scanned`
+      : `Scan complete — ${critical > 0 ? `${critical} critical issue${critical !== 1 ? 's' : ''}` : 'No critical issues'} · ${job.scanned_articles} articles`
+
+    // Calculate health score
+    const penalty = (critical * 3 + warning + (job.info_count||0) * 0.2) / (job.scanned_articles || 1)
+    const score   = Math.max(0, Math.min(100, Math.round(100 - penalty * 20)))
+    const scoreColor = score >= 80 ? '#107C10' : score >= 60 ? '#D97706' : '#DC2626'
+    const scoreLabel = score >= 80 ? 'Healthy' : score >= 60 ? 'Needs attention' : 'Critical'
+
+    const firstScanHtml = `
+      <div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto">
+        <div style="background:#107C10;padding:20px 28px;border-radius:8px 8px 0 0;position:relative;overflow:hidden">
+          <span style="color:white;font-weight:800;font-size:17px;letter-spacing:-0.3px">ArticleIQ</span>
+        </div>
+        <div style="background:white;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+          <h2 style="margin:0 0 6px;color:#0f1f0f;font-size:20px">Your health score is in${name ? `, ${name}` : ''} 👋</h2>
+          <p style="color:#4a5e4a;margin:0 0 24px">Here's what we found across your ${job.scanned_articles} articles.</p>
+
+          <div style="background:#107C10;border-radius:10px;padding:20px 24px;margin-bottom:24px">
+            <div style="color:rgba(255,255,255,0.6);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">Knowledge Base Health</div>
+            <div style="font-size:64px;font-weight:800;color:white;line-height:1;letter-spacing:-2px;margin-bottom:4px">${score}</div>
+            <div style="font-size:15px;font-weight:700;color:rgba(255,255,255,0.85)">${scoreLabel}</div>
+          </div>
+
+          <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+            <tr>
+              <td style="padding:12px;text-align:center;background:#FEF2F2;border-radius:8px;margin-right:8px">
+                <div style="font-size:24px;font-weight:800;color:#DC2626">${critical}</div>
+                <div style="font-size:11px;color:#DC2626">Critical</div>
+              </td>
+              <td style="width:8px"></td>
+              <td style="padding:12px;text-align:center;background:#FFFBEB;border-radius:8px">
+                <div style="font-size:24px;font-weight:800;color:#D97706">${warning}</div>
+                <div style="font-size:11px;color:#D97706">Warnings</div>
+              </td>
+              <td style="width:8px"></td>
+              <td style="padding:12px;text-align:center;background:#EBF5EB;border-radius:8px">
+                <div style="font-size:24px;font-weight:800;color:#107C10">${job.scanned_articles - critical - warning}</div>
+                <div style="font-size:11px;color:#107C10">Clean</div>
+              </td>
+            </tr>
+          </table>
+
+          ${critical > 0 ? `<p style="color:#4a5e4a;margin:0 0 8px"><strong>What to do next:</strong> Start with the ${critical} critical issue${critical !== 1 ? 's' : ''} — these are most likely causing customers to struggle right now.</p>` : '<p style="color:#4a5e4a;margin:0 0 8px">No critical issues found — great start. Review the warnings to keep improving.</p>'}
+
+          <a href="${url}" style="display:inline-block;padding:12px 24px;background:#107C10;color:white;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;margin-top:8px">View full report →</a>
+
+          <hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0">
+          <p style="color:#9ca3af;font-size:12px;margin:0">You're receiving this because you completed a scan in ArticleIQ. <a href="${process.env.APP_URL || 'https://articleiq.vercel.app'}/settings" style="color:#107C10">Manage email settings</a></p>
+        </div>
+      </div>`
+
+    const regularHtml = `
+      <div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto">
+        <div style="background:#107C10;padding:20px 28px;border-radius:8px 8px 0 0">
+          <span style="color:white;font-weight:800;font-size:16px">ArticleIQ</span>
+        </div>
+        <div style="background:white;padding:28px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+          <h2 style="margin:0 0 8px;color:#0f1f0f">Scan complete${name ? `, ${name}` : ''}</h2>
+          <div style="display:inline-block;background:#107C10;color:white;font-size:28px;font-weight:800;padding:8px 16px;border-radius:8px;margin-bottom:12px">${score}</div>
+          <p style="color:#4a5e4a;margin:0 0 20px">${job.scanned_articles} articles · ${warning} warnings · ${critical} critical</p>
+          <a href="${url}" style="display:inline-block;padding:11px 22px;background:#107C10;color:white;border-radius:8px;text-decoration:none;font-weight:700">View report →</a>
+          <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+          <p style="color:#9ca3af;font-size:12px;margin:0"><a href="${process.env.APP_URL || 'https://articleiq.vercel.app'}/settings" style="color:#107C10">Manage email settings</a></p>
+        </div>
+      </div>`
+
     await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'ArticleIQ <onboarding@resend.dev>',
         to: [profile.email],
-        subject: `Scan complete — ${critical > 0 ? `${critical} critical issue${critical !== 1 ? 's' : ''}` : 'No critical issues'} · ${job.scanned_articles} articles`,
-        html: `<div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto">
-          <div style="background:#107C10;padding:20px 28px;border-radius:8px 8px 0 0">
-            <span style="color:white;font-weight:800;font-size:16px">ArticleIQ</span>
-          </div>
-          <div style="background:white;padding:28px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
-            <h2 style="margin:0 0 8px;color:#0f1f0f">Scan complete${name ? `, ${name}` : ''}</h2>
-            <p style="color:#4a5e4a;margin:0 0 20px">${job.scanned_articles} articles · ${job.warning_count || 0} warnings · ${critical} critical</p>
-            <a href="${url}" style="display:inline-block;padding:11px 22px;background:#107C10;color:white;border-radius:8px;text-decoration:none;font-weight:700">View report →</a>
-          </div>
-        </div>`,
+        subject,
+        html: isFirst ? firstScanHtml : regularHtml,
       }),
     })
   } catch (e) { console.error('Email error:', e.message) }
