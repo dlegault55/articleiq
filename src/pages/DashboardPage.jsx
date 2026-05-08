@@ -300,7 +300,7 @@ export default function DashboardPage() {
               </p>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8 }}>
                 {AI_CHECKS.map(({ key, label, desc }) => {
-                  const isChecked = checks[key]
+                  const isChecked = (checks || DEFAULT_CHECKS)[key]
                   return (
                     <button key={key} onClick={() => setChecks(c => ({ ...c, [key]: !c[key] }))}
                       style={{ padding:'12px', borderRadius:9, cursor:'pointer', textAlign:'left', border:'none', transition:'all 0.12s',
