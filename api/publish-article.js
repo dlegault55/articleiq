@@ -35,8 +35,18 @@ export default async function handler(req, res) {
     const safeHtml = sanitizeHtml(html)
 
     const authHeader = `Basic ${Buffer.from(connector.api_key_encrypted).toString('base64')}`
+
+    // Fetch the article's actual locale first — don't assume en-us
+    const articleRes = await fetch(
+      `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${articleId}`,
+      { headers: { Authorization: authHeader } }
+    )
+    const actualLocale = articleRes.ok
+      ? ((await articleRes.json()).article?.locale || locale)
+      : locale
+
     const zdRes = await fetch(
-      `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${articleId}/translations/${locale}`,
+      `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${articleId}/translations/${actualLocale}`,
       {
         method: 'PUT',
         headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
@@ -46,7 +56,8 @@ export default async function handler(req, res) {
 
     if (!zdRes.ok) {
       const e = await zdRes.json().catch(() => ({}))
-      throw new Error(e.error || e.description || `Zendesk® error ${zdRes.status}`)
+      const detail = e.error || e.description || e.message || JSON.stringify(e)
+      throw new Error(`Zendesk® ${zdRes.status}: ${detail}`)
     }
 
     return res.status(200).json({ success: true })
