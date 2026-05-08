@@ -45,14 +45,27 @@ export default async function handler(req, res) {
       ? ((await articleRes.json()).article?.locale || locale)
       : locale
 
-    const zdRes = await fetch(
-      `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${articleId}/translations/${actualLocale}`,
+    // Try the direct article update endpoint first, fall back to translations
+    let zdRes = await fetch(
+      `https://${connector.subdomain}.zendesk.com/api/v2/help_center/${actualLocale}/articles/${articleId}`,
       {
         method: 'PUT',
         headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ translation: { body: safeHtml } }),
+        body: JSON.stringify({ article: { body: safeHtml } }),
       }
     )
+
+    // If that fails, try the translations endpoint
+    if (!zdRes.ok) {
+      zdRes = await fetch(
+        `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${articleId}/translations/${actualLocale}`,
+        {
+          method: 'PUT',
+          headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ translation: { body: safeHtml } }),
+        }
+      )
+    }
 
     if (!zdRes.ok) {
       const e = await zdRes.json().catch(() => ({}))
