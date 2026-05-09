@@ -119,6 +119,16 @@ export default function UpgradePage() {
         </div>
       </div>
 
+
+      {/* ROI Calculator */}
+      <div style={{ marginBottom: 24 }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>What's your knowledge base costing you?</p>
+        <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 14 }}>
+          Every broken article, dead link, or hard-to-read guide generates a support ticket that costs real money. Adjust the sliders to estimate your savings.
+        </p>
+        <ROICalculator />
+      </div>
+
       {/* Comparison table */}
       <div className="card" style={{ overflow: 'hidden', marginBottom: 24 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px', padding: '10px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg)' }}>

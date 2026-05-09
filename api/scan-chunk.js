@@ -33,16 +33,27 @@ const countWords = (html) => {
 
 // Domains we trust — skip checking images from these (CDN/auth-required)
 const TRUSTED_IMAGE_DOMAINS = [
+  // Zendesk® CDN domains — require auth session, always 403 from server
+  'zendesk.com',
+  'zdassets.com',
+  'zdusercontent.com',
   'zen-marketing-documentation.s3.amazonaws.com',
   'help.zendesk.com',
   'support.zendesk.com',
   'p16.zdusercontent.com',
+  // Cloud storage — may require signed URLs or auth
+  'amazonaws.com',
+  's3.amazonaws.com',
+  'cloudfront.net',
+  'storage.googleapis.com',
   'lh3.googleusercontent.com',
   'googleapis.com',
+  // Common CDNs that block server requests
   'gravatar.com',
-  'amazonaws.com',
-  'cloudfront.net',
-  's3.amazonaws.com',
+  'wp.com',
+  'wordpress.com',
+  'squarespace-cdn.com',
+  'wixstatic.com',
 ]
 
 const isTrustedImageDomain = (url) => {
@@ -75,8 +86,9 @@ const checkBrokenLinks = async (html) => {
           headers: { Range: 'bytes=0-0' } })
       }
 
-      // For images: also skip 401/403 — likely auth-protected CDN, not broken
-      if (type === 'image' && (res.status === 401 || res.status === 403)) return
+      // For images: be conservative — only flag 404/410 (genuinely missing)
+      // 401/403/429/500+ could all be auth or CDN issues on internal content
+      if (type === 'image' && ![404, 410].includes(res.status)) return
 
       // Only flag definitive errors
       const definitelyBroken = [404, 410, 451, 500, 502, 503, 504]
