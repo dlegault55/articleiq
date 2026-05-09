@@ -89,9 +89,9 @@ const analyzeArticle = (article, checks) => {
 
   if (checks.readability && readabilityScore !== null) {
     if (readabilityScore < 30)
-      issues.push({ severity: 'critical', issue_type: 'low_readability', description: `Readability very low (${readabilityScore}/100). Most customers will struggle to follow this.`, metadata: { readabilityScore } })
+      issues.push({ severity: 'warning', issue_type: 'low_readability', description: `Readability score is ${readabilityScore}/100 — difficult to read. Use Improve Article to simplify the language without changing the meaning.`, metadata: { readabilityScore } })
     else if (readabilityScore < 50)
-      issues.push({ severity: 'warning', issue_type: 'low_readability', description: `Readability below average (${readabilityScore}/100). Consider simplifying the language.`, metadata: { readabilityScore } })
+      issues.push({ severity: 'warning', issue_type: 'low_readability', description: `Readability score is ${readabilityScore}/100 — below average. Shorter sentences and simpler words would help.`, metadata: { readabilityScore } })
   }
 
   if (!article.section_id)
@@ -226,7 +226,7 @@ export default async function handler(req, res) {
         const brokenLinks = await checkBrokenLinks(article.body || '')
         for (const url of brokenLinks) {
           analysis.issues.push({
-            severity: 'warning',
+            severity: 'critical',
             issue_type: 'broken_link',
             description: `Broken link found: ${url}`,
             metadata: { url },
