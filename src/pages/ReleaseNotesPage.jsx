@@ -162,7 +162,7 @@ export default function ReleaseNotesPage() {
           <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Have a feature request or found a bug?</p>
           <p style={{ fontSize: 13, color: 'var(--text-2)', margin: 0 }}>We'd love to hear from you.</p>
         </div>
-        <a href="mailto:support@articleiq.app" className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}>Send feedback</a>
+        <a to="/contact" className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}>Send feedback</a>
       </div>
     </div>
   )

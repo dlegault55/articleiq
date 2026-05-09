@@ -152,7 +152,7 @@ export default function UpgradePage() {
           {loading ? <Loader size={14} style={{ animation: 'spin 0.7s linear infinite' }} /> : <Zap size={14} />}
           {loading ? 'Redirecting...' : 'Get started with Pro'}
         </button>
-        <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 10 }}>Questions? <a href="mailto:support@articleiq.app" style={{ color: 'var(--navy)' }}>Contact us</a></p>
+        <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 10 }}>Questions? <a href="/contact" style={{ color: 'var(--navy)' }}>Contact us</a></p>
       </div>
 
     </div>

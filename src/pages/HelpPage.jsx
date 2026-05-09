@@ -153,7 +153,7 @@ export default function HelpPage() {
           <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Still have questions?</p>
           <p style={{ fontSize: 13, color: 'var(--text-2)', margin: 0 }}>We're happy to help — reach out and we'll get back to you.</p>
         </div>
-        <a href="mailto:support@articleiq.app" className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}>Contact support</a>
+        <a to="/contact" className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}>Contact support</a>
       </div>
     </div>
   )

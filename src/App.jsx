@@ -13,6 +13,7 @@ import HelpPage from '@/pages/HelpPage'
 import ReleaseNotesPage from '@/pages/ReleaseNotesPage'
 import SharePage from '@/pages/SharePage'
 import UpgradePage from '@/pages/UpgradePage'
+import ContactPage from '@/pages/ContactPage'
 
 // Error boundary
 class ErrorBoundary extends Component {
