@@ -2,27 +2,68 @@ import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
-import { Scan, Loader } from 'lucide-react'
+import { Scan, Loader, Mail, Eye, EyeOff } from 'lucide-react'
 
 export default function LoginPage() {
   const { user } = useAuth()
-  const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState(null)
+  const [loading,  setLoading]  = useState(null)
+  const [error,    setError]    = useState(null)
+  const [mode,     setMode]     = useState(null) // null | 'signin' | 'signup'
+  const [email,    setEmail]    = useState('')
+  const [password, setPassword] = useState('')
+  const [showPw,   setShowPw]   = useState(false)
+  const [done,     setDone]     = useState(false) // email confirmation sent
 
   if (user) return <Navigate to="/dashboard" replace />
 
-  const signIn = async () => {
-    setLoading(true); setError(null)
+  const oAuth = async (provider) => {
+    setLoading(provider); setError(null)
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider,
       options: { redirectTo: `${window.location.origin}/auth/callback` }
     })
-    if (error) { setError(error.message); setLoading(false) }
+    if (error) { setError(error.message); setLoading(null) }
   }
+
+  const handleEmail = async (e) => {
+    e.preventDefault()
+    if (!email || !password) { setError('Please enter your email and password'); return }
+    setLoading('email'); setError(null)
+    try {
+      if (mode === 'signup') {
+        const { error } = await supabase.auth.signUp({
+          email, password,
+          options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
+        })
+        if (error) throw error
+        setDone(true)
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) throw error
+      }
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  const OAuthBtn = ({ provider, label, logo }) => (
+    <button onClick={() => oAuth(provider)} disabled={!!loading}
+      style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:10, padding:'10px', borderRadius:9, border:'1px solid var(--border-md)', background:'white', cursor:'pointer', fontSize:14, fontWeight:600, color:'var(--text)', fontFamily:'inherit', transition:'background 0.15s', marginBottom:10 }}
+      onMouseEnter={e => e.currentTarget.style.background='var(--bg)'}
+      onMouseLeave={e => e.currentTarget.style.background='white'}>
+      {loading === provider
+        ? <Loader size={16} style={{ animation:'spin 0.7s linear infinite', color:'var(--text-3)' }} />
+        : logo}
+      {loading === provider ? 'Signing in...' : label}
+    </button>
+  )
 
   return (
     <div style={{ minHeight:'100vh', background:'var(--bg)', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }}>
       <div style={{ width:'100%', maxWidth:400 }}>
+
         {/* Logo */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, marginBottom:32 }}>
           <div style={{ width:36, height:36, background:'var(--navy)', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -33,12 +74,11 @@ export default function LoginPage() {
           </span>
         </div>
 
-        {/* Card */}
-        <div className="card" style={{ padding:'32px' }}>
-          <h1 style={{ fontSize:20, fontWeight:800, color:'var(--text)', marginBottom:6, textAlign:'center', letterSpacing:-0.3 }}>
+        <div className="card" style={{ padding:'28px' }}>
+          <h1 style={{ fontSize:18, fontWeight:800, color:'var(--text)', marginBottom:6, textAlign:'center', letterSpacing:-0.3 }}>
             Sign in to ArticleIQ
           </h1>
-          <p style={{ fontSize:13, color:'var(--text-3)', textAlign:'center', marginBottom:24 }}>
+          <p style={{ fontSize:13, color:'var(--text-3)', textAlign:'center', marginBottom:22 }}>
             Scan your Zendesk® knowledge base for quality issues
           </p>
 
@@ -48,26 +88,82 @@ export default function LoginPage() {
             </div>
           )}
 
-          <button onClick={signIn} disabled={loading}
-            style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:10, padding:'11px', borderRadius:9, border:'1px solid var(--border-md)', background:'white', cursor:'pointer', fontSize:14, fontWeight:600, color:'var(--text)', fontFamily:'inherit', transition:'background 0.15s' }}
-            onMouseEnter={e => e.currentTarget.style.background='var(--bg)'}
-            onMouseLeave={e => e.currentTarget.style.background='white'}>
-            {loading ? <Loader size={16} style={{ animation:'spin 0.7s linear infinite', color:'var(--text-3)' }} /> : (
-              <svg width="18" height="18" viewBox="0 0 18 18">
-                <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
-                <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/>
-                <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/>
-                <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/>
-              </svg>
-            )}
-            {loading ? 'Signing in...' : 'Continue with Google'}
-          </button>
+          {done ? (
+            <div style={{ padding:'16px', background:'var(--green-light)', border:'1px solid var(--green-border)', borderRadius:9, textAlign:'center' }}>
+              <p style={{ fontSize:14, fontWeight:700, color:'var(--green)', marginBottom:4 }}>Check your email</p>
+              <p style={{ fontSize:13, color:'var(--text-2)', margin:0 }}>We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.</p>
+            </div>
+          ) : (
+            <>
+              {/* OAuth buttons */}
+              <OAuthBtn provider="google" label="Continue with Google" logo={
+                <svg width="18" height="18" viewBox="0 0 18 18">
+                  <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
+                  <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/>
+                  <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/>
+                  <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/>
+                </svg>
+              } />
 
-          <div style={{ display:'flex', gap:8, marginTop:20, padding:'12px 14px', background:'var(--navy-light)', border:'1px solid var(--navy-border)', borderRadius:9 }}>
-            {['📅 Outdated content', '📖 Readability scores', '🔍 Duplicates'].map(t => (
-              <div key={t} style={{ flex:1, fontSize:11, fontWeight:500, color:'var(--navy)', textAlign:'center', lineHeight:1.4 }}>{t}</div>
-            ))}
-          </div>
+              <OAuthBtn provider="azure" label="Continue with Microsoft" logo={
+                <svg width="18" height="18" viewBox="0 0 23 23">
+                  <path fill="#f35325" d="M1 1h10v10H1z"/>
+                  <path fill="#81bc06" d="M12 1h10v10H12z"/>
+                  <path fill="#05a6f0" d="M1 12h10v10H1z"/>
+                  <path fill="#ffba08" d="M12 12h10v10H12z"/>
+                </svg>
+              } />
+
+              {/* Divider */}
+              <div style={{ display:'flex', alignItems:'center', gap:10, margin:'4px 0 16px' }}>
+                <div style={{ flex:1, height:1, background:'var(--border-md)' }} />
+                <span style={{ fontSize:12, color:'var(--text-3)', fontWeight:500 }}>or</span>
+                <div style={{ flex:1, height:1, background:'var(--border-md)' }} />
+              </div>
+
+              {/* Email/password */}
+              {!mode ? (
+                <div style={{ display:'flex', gap:8 }}>
+                  <button onClick={() => setMode('signin')} className="btn btn-secondary" style={{ flex:1, justifyContent:'center' }}>
+                    <Mail size={14} /> Sign in with email
+                  </button>
+                  <button onClick={() => setMode('signup')} className="btn btn-secondary" style={{ flex:1, justifyContent:'center' }}>
+                    Create account
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleEmail}>
+                  <div style={{ marginBottom:10 }}>
+                    <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                      placeholder="Email address" className="input" style={{ marginBottom:8 }} />
+                    <div style={{ position:'relative' }}>
+                      <input type={showPw ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+                        placeholder="Password" className="input" style={{ paddingRight:40 }} />
+                      <button type="button" onClick={() => setShowPw(v => !v)}
+                        style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--text-3)', display:'flex' }}>
+                        {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                  </div>
+                  <button type="submit" disabled={!!loading} className="btn btn-primary" style={{ width:'100%', justifyContent:'center', marginBottom:10 }}>
+                    {loading === 'email' ? <Loader size={14} style={{ animation:'spin 0.7s linear infinite' }} /> : <Mail size={14} />}
+                    {loading === 'email' ? 'Please wait...' : mode === 'signup' ? 'Create account' : 'Sign in'}
+                  </button>
+                  <button type="button" onClick={() => { setMode(null); setError(null) }}
+                    style={{ width:'100%', background:'none', border:'none', cursor:'pointer', fontSize:12, color:'var(--text-3)', fontFamily:'inherit' }}>
+                    ← Back
+                  </button>
+                </form>
+              )}
+
+              {/* Feature pills */}
+              <div style={{ display:'flex', gap:6, marginTop:18, padding:'12px 14px', background:'var(--navy-light)', border:'1px solid var(--navy-border)', borderRadius:9, flexWrap:'wrap' }}>
+                {['📅 Outdated content', '📖 Readability scores', '🔍 Duplicates'].map(t => (
+                  <div key={t} style={{ flex:1, fontSize:11, fontWeight:500, color:'var(--navy)', textAlign:'center', lineHeight:1.4, minWidth:100 }}>{t}</div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         <p style={{ fontSize:11, color:'var(--text-3)', textAlign:'center', marginTop:20, lineHeight:1.6 }}>
