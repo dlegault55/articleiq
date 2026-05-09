@@ -160,7 +160,7 @@ const AI_CHECKS = [
   { key: 'ai_quality',  label: 'Quality Score',   desc: 'Rate clarity and completeness' },
   { key: 'ai_labels',   label: 'Label Suggestions',desc: 'Suggest tags from content' },
 ]
-const DEFAULT_CHECKS = { outdated:true, wordCount:true, readability:true, labels:true, duplicates:false, links:true }
+const DEFAULT_CHECKS = { outdated:true, wordCount:true, readability:true, labels:true, duplicates:true, links:true }
 
 export default function DashboardPage() {
   const { userId, profile } = useAuth()
