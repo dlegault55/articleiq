@@ -348,6 +348,13 @@ function WYSIWYGEditor({ html, onChange }) {
 
 // ─── AI Drawer ─────────────────────────────────────────────────
 function AIDrawer({ article, connector, action, onClose }) {
+  // Inject image constraint styles
+  if (!document.getElementById('aiq-drawer-styles')) {
+    const s = document.createElement('style')
+    s.id = 'aiq-drawer-styles'
+    s.textContent = '.article-html img { max-width: 100%; height: auto; display: block; border-radius: 6px; margin: 8px 0; } .article-html pre { overflow-x: auto; } .article-html table { width: 100%; border-collapse: collapse; } .article-html td, .article-html th { padding: 6px 10px; border: 1px solid #E8E8E6; font-size: 12px; } .ProseMirror img { max-width: 100%; height: auto; border-radius: 6px; } .ProseMirror { outline: none; }'
+    document.head.appendChild(s)
+  }
   const [loading,  setLoading]  = useState(true)
   const [body,     setBody]     = useState('')
   const [result,   setResult]   = useState('')
@@ -374,15 +381,17 @@ function AIDrawer({ article, connector, action, onClose }) {
         const rawHtml = res.ok ? ((await res.json()).article?.body || '') : ''
         setBody(rawHtml || `<p>${article.title}</p>`)
 
-        // Run AI on raw HTML — images and links must be preserved
-        const systemPrompt = action === 'grammar'
-          ? `You are a professional editor working with HTML knowledge base articles. Fix all grammar, spelling, punctuation, and clarity issues in the TEXT CONTENT ONLY. You MUST preserve every HTML tag exactly as-is — especially <img>, <a href>, <table>, <code>, <pre> tags and all their attributes. Never remove, add or modify any HTML tags or attributes. Only fix the words between the tags. Return only the corrected HTML with no commentary or markdown fences.`
-          : `You are a professional editor and technical writer working with HTML knowledge base articles. In a single pass: fix all grammar, spelling, and punctuation errors AND rewrite the content to be clearer, more concise, and easier to follow. Use simple language, active voice, and short sentences. You MUST preserve every HTML tag exactly as-is — especially <img>, <a href>, <table>, <code>, <pre> tags and all their attributes. Never remove, add, or modify any HTML tags or attributes. Use <h2> tags for section headings. Structure as: one summary sentence, then <h2>Problem</h2>, <h2>Why This Happens</h2>, <h2>Solution</h2>. Return only the improved HTML with no commentary or markdown fences.`
-
-        const aiResult = await callAI('improve', { content: rawHtml || article.title })
-        setResult(aiResult)
-        setEditedText(aiResult)
-        setEditedTitle(article.title)
+        if (action === 'quality') {
+          // Run quality analysis — returns JSON
+          const aiResult = await callAI('quality', { title: article.title, content: rawHtml })
+          setResult(aiResult)
+        } else {
+          // Run improve/grammar — returns HTML
+          const aiResult = await callAI('improve', { content: rawHtml || article.title })
+          setResult(aiResult)
+          setEditedText(aiResult)
+          setEditedTitle(article.title)
+        }
       } catch (e) {
         setError(e.message)
       } finally {
@@ -424,8 +433,8 @@ function AIDrawer({ article, connector, action, onClose }) {
     }
   }
 
-  const actionLabel = action === 'rewrite' ? 'Improve Article' : 'Grammar Fix'
-
+  const actionLabel = action === 'rewrite' ? 'Improve Article' : action === 'quality' ? 'Quality & SEO Analysis' : 'Grammar Fix'
+  const isAnalysis  = action === 'quality'
   return (
     <>
       {/* Backdrop */}
@@ -492,26 +501,79 @@ function AIDrawer({ article, connector, action, onClose }) {
                   <p style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 6px' }}>Title</p>
                   <p style={{ fontSize:14, fontWeight:700, color:'var(--text)', margin:'0 0 18px', lineHeight:1.4 }}>{article.title}</p>
                   <p style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 8px' }}>Content</p>
-                  <div className="article-html" style={{ fontSize:13, color:'var(--text-2)' }} dangerouslySetInnerHTML={{ __html: body }} />
+                  <div className="article-html" style={{ fontSize:13, color:'var(--text-2)', wordBreak:'break-word' }} dangerouslySetInnerHTML={{ __html: body }} />
                 </div>
               </div>
 
-              {/* After — WYSIWYG editor */}
+              {/* After — WYSIWYG editor OR analysis results */}
               <div style={{ display:'flex', flexDirection:'column', overflow:'hidden' }}>
                 <div style={{ padding:'10px 20px', background:'var(--navy-light)', borderBottom:'1px solid var(--navy-border)', flexShrink:0 }}>
-                  <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--navy)' }}>ArticleIQ {actionLabel} — click to edit</span>
+                  <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--navy)' }}>ArticleIQ {actionLabel}</span>
                 </div>
-                {/* Editable title */}
-                <div style={{ padding:'12px 20px', borderBottom:'1px solid var(--border)', flexShrink:0, background:'white' }}>
-                  <p style={{ fontSize:10, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 5px' }}>Title</p>
-                  <input
-                    defaultValue={article.title}
-                    onChange={e => setEditedTitle(e.target.value)}
-                    style={{ width:'100%', fontSize:14, fontWeight:700, color:'var(--text)', border:'none', outline:'none', fontFamily:'inherit', background:'transparent', padding:0 }}
-                    placeholder="Article title..."
-                  />
-                </div>
-                <WYSIWYGEditor html={editedText || result} onChange={setEditedText} />
+
+                {isAnalysis ? (
+                  // Quality + SEO analysis results
+                  <div style={{ flex:1, overflowY:'auto', padding:'20px' }}>
+                    {loading && (
+                      <div style={{ display:'flex', alignItems:'center', gap:10, color:'var(--text-3)', padding:'40px 0' }}>
+                        <Loader size={16} style={{ animation:'spin 0.7s linear infinite' }} />
+                        <span style={{ fontSize:13 }}>Analysing article...</span>
+                      </div>
+                    )}
+                    {!loading && result && (() => {
+                      let data
+                      try { data = JSON.parse(result.replace(/```json|```/g,'').trim()) } catch { return <p style={{ color:'var(--red)', fontSize:13 }}>Could not parse results</p> }
+                      return (
+                        <div>
+                          {/* Quality score */}
+                          <div style={{ marginBottom:20 }}>
+                            <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', marginBottom:10 }}>Quality Score</p>
+                            <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:12 }}>
+                              <div style={{ textAlign:'center', flexShrink:0 }}>
+                                <div style={{ fontSize:42, fontWeight:800, color:'var(--navy)', lineHeight:1 }}>{data.score}</div>
+                                <div style={{ fontSize:10, color:'var(--text-3)' }}>/100</div>
+                              </div>
+                              <p style={{ fontSize:13, color:'var(--text-2)', margin:0, lineHeight:1.6 }}>{data.verdict}</p>
+                            </div>
+                            {data.dimensions && Object.entries(data.dimensions).map(([dim, val]) => (
+                              <div key={dim} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
+                                <span style={{ fontSize:11, fontWeight:600, color:'var(--text-3)', textTransform:'capitalize', width:90, flexShrink:0 }}>{dim}</span>
+                                <div style={{ flex:1, height:5, background:'var(--border-md)', borderRadius:100, overflow:'hidden' }}>
+                                  <div style={{ height:'100%', width:`${(val/20)*100}%`, borderRadius:100, background: val>=16?'var(--green)':val>=10?'var(--amber)':'var(--red)' }} />
+                                </div>
+                                <span style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', width:22, textAlign:'right' }}>{val}</span>
+                              </div>
+                            ))}
+                            {data.suggestions?.length > 0 && (
+                              <div style={{ marginTop:12 }}>
+                                {data.suggestions.map((s,i) => (
+                                  <div key={i} style={{ fontSize:12, color:'var(--text-2)', display:'flex', gap:6, marginBottom:5, lineHeight:1.5 }}>
+                                    <span style={{ color:'var(--navy)', flexShrink:0 }}>→</span>{s}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })()}
+                    {!loading && error && <p style={{ fontSize:13, color:'var(--red)' }}>{error}</p>}
+                  </div>
+                ) : (
+                  // Improve Article — editable title + WYSIWYG
+                  <>
+                    <div style={{ padding:'12px 20px', borderBottom:'1px solid var(--border)', flexShrink:0, background:'white' }}>
+                      <p style={{ fontSize:10, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 5px' }}>Title</p>
+                      <input
+                        defaultValue={article.title}
+                        onChange={e => setEditedTitle(e.target.value)}
+                        style={{ width:'100%', fontSize:14, fontWeight:700, color:'var(--text)', border:'none', outline:'none', fontFamily:'inherit', background:'transparent', padding:0 }}
+                        placeholder="Article title..."
+                      />
+                    </div>
+                    <WYSIWYGEditor html={editedText || result} onChange={setEditedText} />
+                  </>
+                )}
               </div>
             </div>
 
@@ -570,7 +632,7 @@ function AIDrawer({ article, connector, action, onClose }) {
                   </button>
                 </div>
               </div>
-            </div>
+            </div>}
           </>
         )}
       </div>
