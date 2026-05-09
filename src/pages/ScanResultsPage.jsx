@@ -852,11 +852,6 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
             <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
               <span style={{ fontSize:11, color:'var(--text-3)' }}>{article.word_count||0} words</span>
               {article.last_updated && <span style={{ fontSize:11, color:'var(--text-3)' }}>Updated {formatDistanceToNow(new Date(article.last_updated), { addSuffix:true })}</span>}
-              {article.readability_score != null && (
-                <span style={{ fontSize:11, fontWeight:600, color:readColor(article.readability_score), background:`${readColor(article.readability_score)}18`, padding:'1px 7px', borderRadius:4 }}>
-                  Readability {article.readability_score} · {readLabel(article.readability_score)}
-                </span>
-              )}
             </div>
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:6, flexShrink:0 }}>
@@ -1350,17 +1345,8 @@ export default function ScanResultsPage() {
         </select>
       </div>
 
-      {/* Article count + readability legend */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10, flexWrap:'wrap', gap:8 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
-          <span style={{ fontSize:11, fontWeight:600, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em' }}>Readability:</span>
-          {[['70+','Easy','var(--green)'],['50–69','Moderate','var(--amber)'],['30–49','Difficult','#ea580c'],['<30','Very hard','var(--red)']].map(([range,label,color]) => (
-            <div key={range} style={{ display:'flex', alignItems:'center', gap:4 }}>
-              <span style={{ fontSize:11, fontWeight:600, color, fontFamily:'monospace' }}>{range}</span>
-              <span style={{ fontSize:11, color:'var(--text-3)' }}>{label}</span>
-            </div>
-          ))}
-        </div>
+      {/* Article count */}
+      <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:10 }}>
         <span style={{ fontSize:11, color:'var(--text-3)' }}>{filtered.length} articles</span>
       </div>
 
