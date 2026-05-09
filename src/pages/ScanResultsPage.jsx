@@ -349,7 +349,10 @@ function AIDrawer({ article, connector, action, onClose }) {
   const [loading,  setLoading]  = useState(true)
   const [body,     setBody]     = useState('')
   const [result,   setResult]   = useState('')
-  const [copying,   setCopying]   = useState(false)
+  const [copying,    setCopying]    = useState(false)
+  const [publishing,  setPublishing]  = useState(false)
+  const [published,   setPublished]   = useState(false)
+  const [confirmPub,  setConfirmPub]  = useState(false)
   const [editedText,  setEditedText]  = useState('')
   const [error,       setError]       = useState(null)
 
@@ -391,6 +394,30 @@ function AIDrawer({ article, connector, action, onClose }) {
     setTimeout(() => setCopying(false), 2000)
   }
 
+
+  const publish = async () => {
+    if (!confirmPub) { setConfirmPub(true); return }
+    setPublishing(true); setConfirmPub(false)
+    try {
+      const html = editedText || result
+      const res = await apiFetch('/api/publish-article', {
+        method: 'POST',
+        body: JSON.stringify({
+          connectorId: connector.id,
+          articleId:   article.zendesk_article_id,
+          html,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(JSON.stringify(data))
+      setPublished(true)
+      setTimeout(() => setPublished(false), 4000)
+    } catch (e) {
+      setError(`Publish failed: ${e.message}`)
+    } finally {
+      setPublishing(false)
+    }
+  }
 
   const actionLabel = action === 'rewrite' ? 'Improve Article' : 'Grammar Fix'
 
@@ -482,14 +509,49 @@ function AIDrawer({ article, connector, action, onClose }) {
                 </div>
               )}
 
+              {/* Confirmation */}
+              {confirmPub && (
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', background:'var(--amber-light)', border:'1px solid var(--amber-border)', borderRadius:8, marginBottom:12 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <AlertTriangle size={13} style={{ color:'var(--amber)', flexShrink:0 }} />
+                    <p style={{ fontSize:12, color:'var(--text)', fontWeight:600, margin:0 }}>This will overwrite the article in Zendesk®. Are you sure?</p>
+                  </div>
+                  <button onClick={() => setConfirmPub(false)} className="btn btn-ghost btn-sm">Cancel</button>
+                </div>
+              )}
+
+              {/* Published success */}
+              {published && (
+                <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 14px', background:'var(--green-light)', border:'1px solid var(--green-border)', borderRadius:8, marginBottom:12 }}>
+                  <CheckCircle size={13} style={{ color:'var(--green)' }} />
+                  <p style={{ fontSize:12, color:'var(--green)', fontWeight:600, margin:0 }}>Article updated in Zendesk® successfully</p>
+                  {article.url && (
+                    <a href={article.url} target="_blank" rel="noreferrer"
+                      style={{ fontSize:12, color:'var(--green)', fontWeight:600, marginLeft:'auto', display:'flex', alignItems:'center', gap:4 }}>
+                      View in Zendesk® <ExternalLink size={11} />
+                    </a>
+                  )}
+                </div>
+              )}
+
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                 <p style={{ fontSize:12, color:'var(--text-3)', margin:0 }}>
-                  Copy the improved text and paste it into Zendesk®
+                  {confirmPub ? 'Confirm to overwrite the article in Zendesk®' : 'Copy or publish directly to Zendesk®'}
                 </p>
                 <div style={{ display:'flex', gap:8 }}>
                   <button onClick={onClose} className="btn btn-ghost btn-sm">Close</button>
-                  <button onClick={copy} className="btn btn-primary btn-sm">
-                    {copying ? <><Check size={13} /> Copied!</> : <><CheckSquare size={13} /> Copy improved text</>}
+                  <button onClick={copy} className="btn btn-secondary btn-sm">
+                    {copying ? <><Check size={13} /> Copied!</> : <><CheckSquare size={13} /> Copy text</>}
+                  </button>
+                  <button onClick={publish} disabled={publishing || !result}
+                    className="btn btn-primary btn-sm"
+                    style={{ background: confirmPub ? 'var(--amber)' : 'var(--navy)' }}>
+                    {publishing
+                      ? <><Loader size={13} style={{ animation:'spin 0.7s linear infinite' }} /> Publishing...</>
+                      : confirmPub
+                        ? <><AlertTriangle size={13} /> Yes, publish</>
+                        : <><ExternalLink size={13} /> Publish to Zendesk®</>
+                    }
                   </button>
                 </div>
               </div>
