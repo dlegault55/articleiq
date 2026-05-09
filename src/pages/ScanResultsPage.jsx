@@ -382,9 +382,12 @@ function AIDrawer({ article, connector, action, onClose }) {
         setBody(rawHtml || `<p>${article.title}</p>`)
 
         if (action === 'quality') {
-          // Run quality analysis — returns JSON
-          const aiResult = await callAI('quality', { title: article.title, content: rawHtml })
-          setResult(aiResult)
+          // Run quality AND SEO in parallel — both returned together
+          const [qualityRaw, seoRaw] = await Promise.all([
+            callAI('quality', { title: article.title, content: rawHtml }),
+            callAI('seo',     { title: article.title, content: rawHtml }),
+          ])
+          setResult(JSON.stringify({ quality: qualityRaw, seo: seoRaw }))
         } else {
           // Run improve/grammar — returns HTML
           const aiResult = await callAI('improve', { content: rawHtml || article.title })
@@ -522,38 +525,85 @@ function AIDrawer({ article, connector, action, onClose }) {
                       </div>
                     )}
                     {!loading && result && (() => {
-                      let data
-                      try { data = JSON.parse(result.replace(/```json|```/g,'').trim()) } catch { return <p style={{ color:'var(--red)', fontSize:13 }}>Could not parse results</p> }
+                      let quality, seo
+                      try {
+                        const parsed = JSON.parse(result)
+                        quality = JSON.parse(parsed.quality?.replace(/```json|```/g,'').trim() || '{}')
+                        seo     = JSON.parse(parsed.seo?.replace(/```json|```/g,'').trim()     || '{}')
+                      } catch { return <p style={{ color:'var(--red)', fontSize:13 }}>Could not parse results</p> }
                       return (
                         <div>
                           {/* Quality score */}
-                          <div style={{ marginBottom:20 }}>
-                            <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', marginBottom:10 }}>Quality Score</p>
-                            <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:12 }}>
-                              <div style={{ textAlign:'center', flexShrink:0 }}>
-                                <div style={{ fontSize:42, fontWeight:800, color:'var(--navy)', lineHeight:1 }}>{data.score}</div>
-                                <div style={{ fontSize:10, color:'var(--text-3)' }}>/100</div>
+                          <div style={{ marginBottom:24 }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
+                              <div style={{ textAlign:'center', flexShrink:0, background:'var(--navy-light)', border:'1px solid var(--navy-border)', borderRadius:10, padding:'10px 14px' }}>
+                                <div style={{ fontSize:32, fontWeight:800, color:'var(--navy)', lineHeight:1 }}>{quality.score}</div>
+                                <div style={{ fontSize:9, color:'var(--text-3)' }}>/100</div>
                               </div>
-                              <p style={{ fontSize:13, color:'var(--text-2)', margin:0, lineHeight:1.6 }}>{data.verdict}</p>
+                              <div>
+                                <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', margin:'0 0 3px' }}>Quality Score</p>
+                                <p style={{ fontSize:13, color:'var(--text-2)', margin:0, lineHeight:1.5 }}>{quality.verdict}</p>
+                              </div>
                             </div>
-                            {data.dimensions && Object.entries(data.dimensions).map(([dim, val]) => (
-                              <div key={dim} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
-                                <span style={{ fontSize:11, fontWeight:600, color:'var(--text-3)', textTransform:'capitalize', width:90, flexShrink:0 }}>{dim}</span>
-                                <div style={{ flex:1, height:5, background:'var(--border-md)', borderRadius:100, overflow:'hidden' }}>
+                            {quality.dimensions && Object.entries(quality.dimensions).map(([dim, val]) => (
+                              <div key={dim} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:5 }}>
+                                <span style={{ fontSize:10, fontWeight:600, color:'var(--text-3)', textTransform:'capitalize', width:88, flexShrink:0 }}>{dim}</span>
+                                <div style={{ flex:1, height:4, background:'var(--border-md)', borderRadius:100, overflow:'hidden' }}>
                                   <div style={{ height:'100%', width:`${(val/20)*100}%`, borderRadius:100, background: val>=16?'var(--green)':val>=10?'var(--amber)':'var(--red)' }} />
                                 </div>
-                                <span style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', width:22, textAlign:'right' }}>{val}</span>
+                                <span style={{ fontSize:10, fontWeight:700, color:'var(--text-3)', width:20, textAlign:'right' }}>{val}</span>
                               </div>
                             ))}
-                            {data.suggestions?.length > 0 && (
-                              <div style={{ marginTop:12 }}>
-                                {data.suggestions.map((s,i) => (
-                                  <div key={i} style={{ fontSize:12, color:'var(--text-2)', display:'flex', gap:6, marginBottom:5, lineHeight:1.5 }}>
+                            {quality.suggestions?.length > 0 && (
+                              <div style={{ marginTop:10 }}>
+                                {quality.suggestions.map((s,i) => (
+                                  <div key={i} style={{ fontSize:12, color:'var(--text-2)', display:'flex', gap:6, marginBottom:4, lineHeight:1.5 }}>
                                     <span style={{ color:'var(--navy)', flexShrink:0 }}>→</span>{s}
                                   </div>
                                 ))}
                               </div>
                             )}
+                          </div>
+
+                          {/* Divider */}
+                          <div style={{ height:1, background:'var(--border-md)', margin:'0 0 20px' }} />
+
+                          {/* SEO score */}
+                          <div>
+                            <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
+                              <div style={{ textAlign:'center', flexShrink:0, background:'var(--navy-light)', border:'1px solid var(--navy-border)', borderRadius:10, padding:'10px 14px' }}>
+                                <div style={{ fontSize:32, fontWeight:800, color:'var(--navy)', lineHeight:1 }}>{seo.score}</div>
+                                <div style={{ fontSize:9, color:'var(--text-3)', marginBottom:2 }}>/100</div>
+                                <div style={{ fontSize:11, fontWeight:800, padding:'1px 6px', borderRadius:4, display:'inline-block',
+                                  background: seo.grade<='B' ? 'var(--green-light)' : seo.grade==='C' ? 'var(--amber-light)' : 'var(--red-light)',
+                                  color: seo.grade<='B' ? 'var(--green)' : seo.grade==='C' ? 'var(--amber)' : 'var(--red)',
+                                }}>{seo.grade}</div>
+                              </div>
+                              <div>
+                                <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', margin:'0 0 3px' }}>SEO Score</p>
+                                <p style={{ fontSize:13, color:'var(--text-2)', margin:0, lineHeight:1.5 }}>{seo.verdict}</p>
+                              </div>
+                            </div>
+
+                            {seo.title_suggestion && (
+                              <div style={{ padding:'8px 12px', borderRadius:8, background:'var(--navy-light)', border:'1px solid var(--navy-border)', marginBottom:12 }}>
+                                <p style={{ fontSize:10, fontWeight:700, color:'var(--navy)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 3px' }}>Suggested title</p>
+                                <p style={{ fontSize:12, color:'var(--navy)', margin:0, fontWeight:600 }}>{seo.title_suggestion}</p>
+                              </div>
+                            )}
+
+                            {seo.issues?.map((item, i) => (
+                              <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:8, marginBottom:8 }}>
+                                <span style={{ fontSize:9, fontWeight:700, padding:'2px 6px', borderRadius:3, flexShrink:0, marginTop:1, textTransform:'uppercase',
+                                  background: item.impact==='high' ? 'var(--red-light)' : item.impact==='medium' ? 'var(--amber-light)' : 'var(--blue-light)',
+                                  color: item.impact==='high' ? 'var(--red)' : item.impact==='medium' ? 'var(--amber)' : 'var(--blue)',
+                                }}>{item.impact}</span>
+                                <div>
+                                  <p style={{ fontSize:12, fontWeight:600, color:'var(--text)', margin:'0 0 1px' }}>{item.issue}</p>
+                                  <p style={{ fontSize:11, color:'var(--text-3)', margin:0, lineHeight:1.5 }}>{item.fix}</p>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )
