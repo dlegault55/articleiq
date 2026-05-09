@@ -97,7 +97,7 @@ export default function UpgradePage() {
           {loading ? 'Redirecting to checkout...' : `Upgrade to Pro — ${plan === 'yearly' ? `$${yearly}/year` : `$${monthly}/month`}`}
         </button>
         <p style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center', marginTop: 10 }}>
-          14-day free trial · Cancel anytime · No credit card required to start
+          Cancel anytime · Billed immediately after trial
         </p>
       </div>
 
