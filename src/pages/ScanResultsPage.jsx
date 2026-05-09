@@ -347,88 +347,123 @@ function WYSIWYGEditor({ html, onChange }) {
 }
 
 // ─── AI Drawer ─────────────────────────────────────────────────
-function AIDrawer({ article, connector, action, onClose }) {
-  // Inject image constraint styles
+// Single unified flow: analyse first → improve informed by analysis
+function AIDrawer({ article, connector, onClose }) {
   if (!document.getElementById('aiq-drawer-styles')) {
     const s = document.createElement('style')
     s.id = 'aiq-drawer-styles'
-    s.textContent = '.article-html img { max-width: 100%; height: auto; display: block; border-radius: 6px; margin: 8px 0; } .article-html pre { overflow-x: auto; } .article-html table { width: 100%; border-collapse: collapse; } .article-html td, .article-html th { padding: 6px 10px; border: 1px solid #E8E8E6; font-size: 12px; } .ProseMirror img { max-width: 100%; height: auto; border-radius: 6px; } .ProseMirror { outline: none; }'
+    s.textContent = `
+      .article-html img { max-width:100% !important; width:auto !important; height:auto !important; border-radius:6px; margin:8px 0; display:block; border:1px solid var(--border); }
+      .ProseMirror img  { max-width:100% !important; width:auto !important; height:auto !important; border-radius:6px; margin:8px 0; display:block; }
+      .article-html pre { overflow-x:auto; }
+      .article-html table { width:100%; border-collapse:collapse; }
+      .article-html td, .article-html th { padding:6px 10px; border:1px solid #E8E8E6; font-size:12px; }
+      .ProseMirror { outline:none; }
+    `
     document.head.appendChild(s)
   }
-  const [loading,  setLoading]  = useState(true)
-  const [body,     setBody]     = useState('')
-  const [result,   setResult]   = useState(null)
-  const [copying,    setCopying]    = useState(false)
+
+  // Steps: analyse → review → improve → publish
+  const [step,        setStep]        = useState('analyse')  // analyse | review | improve | publish
+  const [bodyHtml,    setBodyHtml]    = useState('')
+  const [fetchErr,    setFetchErr]    = useState(null)
+  const [analysing,   setAnalysing]   = useState(true)
+  const [analysis,    setAnalysis]    = useState(null)   // { quality, seo }
+  const [improving,   setImproving]   = useState(false)
+  const [improved,    setImproved]    = useState('')
+  const [editedText,  setEditedText]  = useState('')
+  const [editedTitle, setEditedTitle] = useState('')
+  const [copying,     setCopying]     = useState(false)
   const [publishing,  setPublishing]  = useState(false)
   const [published,   setPublished]   = useState(false)
   const [confirmPub,  setConfirmPub]  = useState(false)
-  const [editedText,  setEditedText]  = useState('')
-  const [editedTitle, setEditedTitle] = useState('')
   const [error,       setError]       = useState(null)
 
-  // Fetch article body from Zendesk® then run AI
+  // Step 1 — fetch article + run analysis on open
   useEffect(() => {
-    if (!article || !connector || !action) return
+    if (!article || !connector) return
     const run = async () => {
-      setLoading(true); setError(null)
+      setAnalysing(true); setFetchErr(null)
       try {
-        // Fetch article body from Zendesk®
         const authHeader = `Basic ${btoa(connector.api_key_encrypted)}`
         const res = await fetch(
           `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${article.zendesk_article_id}`,
           { headers: { Authorization: authHeader } }
         )
-        const rawHtml = res.ok ? ((await res.json()).article?.body || '') : ''
-        setBody(rawHtml || `<p>${article.title}</p>`)
+        if (!res.ok) throw new Error(`Could not fetch article (${res.status})`)
+        const data = await res.json()
+        const html = data.article?.body || ''
+        setBodyHtml(html)
 
-        if (action === 'quality') {
-          // Run quality AND SEO in parallel — both returned together
-          const [qualityRaw, seoRaw] = await Promise.all([
-            callAI('quality', { title: article.title, content: rawHtml, readabilityScore: article.readability_score }),
-            callAI('seo',     { title: article.title, content: rawHtml }),
-          ])
-          setResult(JSON.stringify({ quality: qualityRaw, seo: seoRaw }))
-        } else {
-          // Run improve/grammar — returns HTML
-          const aiResult = await callAI('improve', { content: rawHtml || article.title })
-          setResult(aiResult)
-          setEditedText(aiResult)
-          setEditedTitle(article.title)
-        }
+        // Run quality + SEO in parallel
+        const [qualityRaw, seoRaw] = await Promise.all([
+          callAI('quality', { title: article.title, content: html, readabilityScore: article.readability_score }),
+          callAI('seo',     { title: article.title, content: html }),
+        ])
+        const quality = JSON.parse(qualityRaw.replace(/```json|```/g,'').trim())
+        const seo     = JSON.parse(seoRaw.replace(/```json|```/g,'').trim())
+        setAnalysis({ quality, seo })
+        setStep('review')
       } catch (e) {
-        setError(e.message)
+        setFetchErr(e.message)
       } finally {
-        setLoading(false)
+        setAnalysing(false)
       }
     }
     run()
-  }, [article?.id, action])
+  }, [article?.id])
 
-  const copy = async () => {
-    await navigator.clipboard.writeText(editedText || result)
-    setCopying(true)
-    setTimeout(() => setCopying(false), 2000)
+  // Step 2 — run improve informed by analysis
+  const runImprove = async () => {
+    setImproving(true); setError(null)
+    try {
+      // Build a context string from the analysis so the rewrite is targeted
+      const qualityCtx = analysis?.quality ? `
+Quality issues to fix:
+${analysis.quality.suggestions?.map(s => `- ${s}`).join('\n') || 'none'}
+Weakest dimensions: ${Object.entries(analysis.quality.dimensions || {}).filter(([,v])=>v<14).map(([k])=>k).join(', ') || 'none'}` : ''
+      const seoCtx = analysis?.seo ? `
+SEO issues to fix:
+${analysis.seo.issues?.filter(i=>i.impact==='high').map(i=>`- ${i.fix}`).join('\n') || 'none'}
+${analysis.seo.title_suggestion ? `Suggested SEO title: ${analysis.seo.title_suggestion}` : ''}` : ''
+
+      const result = await callAI('improve', {
+        content: bodyHtml,
+        title: article.title,
+        analysisContext: qualityCtx + seoCtx,
+      })
+      setImproved(result)
+      setEditedText(result)
+      setEditedTitle(analysis?.seo?.title_suggestion || article.title)
+      setStep('improve')
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setImproving(false)
+    }
   }
 
+  const copy = async () => {
+    await navigator.clipboard.writeText(editedText.replace(/<[^>]+>/g,''))
+    setCopying(true); setTimeout(() => setCopying(false), 2000)
+  }
 
   const publish = async () => {
     if (!confirmPub) { setConfirmPub(true); return }
     setPublishing(true); setConfirmPub(false)
     try {
-      const html = editedText || result
       const res = await apiFetch('/api/publish-article', {
         method: 'POST',
         body: JSON.stringify({
           connectorId: connector.id,
-          articleId:   article.zendesk_article_id,
-          title:       editedTitle || article.title,
-          html,
+          articleId: article.zendesk_article_id,
+          title: editedTitle || article.title,
+          html: editedText || improved,
         }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(JSON.stringify(data))
-      setPublished(true)
-      setTimeout(() => setPublished(false), 4000)
+      const d = await res.json()
+      if (!res.ok) throw new Error(JSON.stringify(d))
+      setPublished(true); setTimeout(() => setPublished(false), 4000)
     } catch (e) {
       setError(`Publish failed: ${e.message}`)
     } finally {
@@ -436,261 +471,257 @@ function AIDrawer({ article, connector, action, onClose }) {
     }
   }
 
-  const actionLabel = action === 'rewrite' ? 'Improve Article' : action === 'quality' ? 'Quality & SEO Analysis' : 'Grammar Fix'
-  const isAnalysis  = action === 'quality'
+  const ScoreBox = ({ score, label, grade }) => {
+    const color = score >= 70 ? 'var(--green)' : score >= 50 ? 'var(--amber)' : 'var(--red)'
+    const bg    = score >= 70 ? 'var(--green-light)' : score >= 50 ? 'var(--amber-light)' : 'var(--red-light)'
+    return (
+      <div style={{ textAlign:'center', padding:'10px 14px', borderRadius:9, background:bg, minWidth:64 }}>
+        <div style={{ fontSize:28, fontWeight:800, color, lineHeight:1 }}>{score}</div>
+        <div style={{ fontSize:9, color:'var(--text-3)' }}>/100</div>
+        {grade && <div style={{ fontSize:11, fontWeight:800, color, marginTop:2 }}>{grade}</div>}
+        <div style={{ fontSize:10, color:'var(--text-3)', marginTop:1 }}>{label}</div>
+      </div>
+    )
+  }
+
   return (
-    <>
+    <div className="ai-drawer" style={{ position:'fixed', top:0, right:0, bottom:0, width:'min(880px,92vw)', background:'white', zIndex:201, display:'flex', flexDirection:'column', boxShadow:'-8px 0 40px rgba(0,0,0,0.15)', animation:'slide-in 0.25s ease' }}>
+      <style>{`
+        @keyframes slide-in { from { transform: translateX(100%) } to { transform: translateX(0) } }
+        .article-html h1 { font-size:18px; font-weight:800; margin:16px 0 8px; }
+        .article-html h2 { font-size:15px; font-weight:700; margin:14px 0 6px; }
+        .article-html h3 { font-size:13px; font-weight:700; margin:10px 0 4px; }
+        .article-html p  { font-size:13px; line-height:1.8; margin:0 0 10px; }
+        .article-html ul, .article-html ol { padding-left:20px; margin:8px 0; }
+        .article-html li { font-size:13px; line-height:1.7; margin-bottom:4px; }
+        .article-html a  { color:var(--navy); text-decoration:underline; }
+        .article-html img { max-width:100% !important; height:auto !important; border-radius:6px; margin:8px 0; display:block; border:1px solid var(--border); }
+        .article-html code { font-family:monospace; font-size:12px; background:var(--bg); padding:1px 5px; border-radius:3px; }
+        .article-html pre { background:var(--bg); padding:12px; border-radius:8px; overflow-x:auto; font-size:12px; margin:10px 0; }
+        .article-html table { width:100%; border-collapse:collapse; font-size:13px; margin:10px 0; }
+        .article-html th, .article-html td { padding:8px 10px; border:1px solid var(--border); text-align:left; }
+        .article-html th { background:var(--bg); font-weight:700; }
+        .ProseMirror img { max-width:100% !important; height:auto !important; border-radius:6px; margin:8px 0; display:block; }
+        .ProseMirror { outline:none; min-height:200px; }
+      `}</style>
+
       {/* Backdrop */}
-      <div onClick={onClose}
-        style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.4)', zIndex:200, animation:'fade-in 0.2s ease' }} />
+      <div onClick={onClose} style={{ position:'fixed', inset:0, zIndex:-1 }} />
 
-      {/* Drawer */}
-      <div className='ai-drawer' style={{ position:'fixed', top:0, right:0, bottom:0, width:'min(820px, 90vw)', background:'var(--bg-card)', zIndex:201, display:'flex', flexDirection:'column', boxShadow:'-8px 0 40px rgba(0,0,0,0.15)', animation:'slide-in 0.25s ease' }}>
-        <style>{`
-          @keyframes slide-in { from { transform: translateX(100%) } to { transform: translateX(0) } }
-          .article-html h1 { font-size:18px; font-weight:800; margin:16px 0 8px; color:var(--text); }
-          .article-html h2 { font-size:15px; font-weight:700; margin:14px 0 6px; color:var(--text); }
-          .article-html h3 { font-size:13px; font-weight:700; margin:10px 0 4px; color:var(--text); }
-          .article-html p  { font-size:13px; line-height:1.8; margin:0 0 10px; color:inherit; }
-          .article-html ul, .article-html ol { padding-left:20px; margin:8px 0; }
-          .article-html li { font-size:13px; line-height:1.7; margin-bottom:4px; }
-          .article-html a  { color:var(--green); text-decoration:underline; }
-          .article-html img { max-width:100% !important; width:auto !important; height:auto !important; border-radius:6px; margin:8px 0; display:block; border:1px solid var(--border); }
-          .ProseMirror img { max-width:100% !important; width:auto !important; height:auto !important; border-radius:6px; margin:8px 0; display:block; }
-          .article-html code { font-family:monospace; font-size:12px; background:var(--bg); padding:1px 5px; border-radius:3px; }
-          .article-html pre { background:var(--bg); padding:12px; border-radius:8px; overflow-x:auto; font-size:12px; margin:10px 0; }
-          .article-html table { width:100%; border-collapse:collapse; font-size:13px; margin:10px 0; }
-          .article-html th, .article-html td { padding:8px 10px; border:1px solid var(--border); text-align:left; }
-          .article-html th { background:var(--bg); font-weight:700; }
-          .article-html strong { font-weight:700; }
-          .article-html em { font-style:italic; }
-        `}</style>
-
-        {/* Header */}
-        <div style={{ padding:'16px 24px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <div style={{ width:32, height:32, borderRadius:8, background:'linear-gradient(135deg, #0A5A0A, #107C10)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-              {action === 'grammar' ? <Wand2 size={15} color="white" /> : <RefreshCcw size={15} color="white" />}
-            </div>
-            <div>
-              <p style={{ fontSize:14, fontWeight:700, color:'var(--text)', margin:0 }}>AI {actionLabel}</p>
-              <p style={{ fontSize:12, color:'var(--text-3)', margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:400 }}>{article.title}</p>
+      {/* Header */}
+      <div style={{ padding:'12px 20px', borderBottom:'1px solid var(--border-md)', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0, background:'white' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+          <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ color:'var(--text-3)' }}><X size={16} /></button>
+          <div>
+            <p style={{ fontSize:13, fontWeight:700, color:'var(--text)', margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:400 }}>{article.title}</p>
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginTop:2 }}>
+              {[
+                { id:'review',  label:'1. Analysis' },
+                { id:'improve', label:'2. Improve' },
+              ].map(({ id, label }) => (
+                <div key={id} style={{ display:'flex', alignItems:'center', gap:4, fontSize:11, fontWeight: step===id||( id==='improve'&&step==='improve') ? 700 : 500,
+                  color: step===id ? 'var(--navy)' : step==='improve'&&id==='review' ? 'var(--green)' : 'var(--text-3)' }}>
+                  {step==='improve'&&id==='review' ? <CheckCircle size={11} style={{ color:'var(--green)' }} /> : <div style={{ width:6, height:6, borderRadius:'50%', background: step===id?'var(--navy)':(step==='improve'&&id==='review'?'var(--green)':'var(--border-strong)') }} />}
+                  {label}
+                </div>
+              ))}
             </div>
           </div>
-          <button onClick={onClose} className="btn btn-ghost btn-sm"><X size={16} /></button>
         </div>
-
-        {loading ? (
-          <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:12 }}>
-            <Loader size={24} style={{ color:'var(--green)', animation:'spin 0.7s linear infinite' }} />
-            <p style={{ fontSize:13, color:'var(--text-3)' }}>Fetching article and running AI...</p>
-          </div>
-        ) : error ? (
-          <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:32 }}>
-            <div style={{ textAlign:'center' }}>
-              <p style={{ color:'var(--red)', marginBottom:12 }}>{error}</p>
-              <button onClick={onClose} className="btn btn-secondary btn-sm">Close</button>
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Before / After columns */}
-            <div className='ai-drawer-cols' style={{ flex:1, display:'grid', gridTemplateColumns:'1fr 1fr', overflow:'hidden' }}>
-              {/* Before */}
-              <div className='ai-drawer-before' style={{ display:'flex', flexDirection:'column', borderRight:'1px solid var(--border)', overflow:'hidden' }}>
-                <div style={{ padding:'10px 20px', background:'var(--bg)', borderBottom:'1px solid var(--border)', flexShrink:0 }}>
-                  <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)' }}>Original</span>
-                </div>
-                <div style={{ flex:1, overflowY:'auto', padding:'20px' }}>
-                  <p style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 6px' }}>Title</p>
-                  <p style={{ fontSize:14, fontWeight:700, color:'var(--text)', margin:'0 0 18px', lineHeight:1.4 }}>{article.title}</p>
-                  <p style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 8px' }}>Content</p>
-                  <div className="article-html" style={{ fontSize:13, color:'var(--text-2)', wordBreak:'break-word' }} dangerouslySetInnerHTML={{ __html: body }} />
-                </div>
-              </div>
-
-              {/* After — WYSIWYG editor OR analysis results */}
-              <div style={{ display:'flex', flexDirection:'column', overflow:'hidden' }}>
-                <div style={{ padding:'10px 20px', background:'var(--navy-light)', borderBottom:'1px solid var(--navy-border)', flexShrink:0 }}>
-                  <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--navy)' }}>ArticleIQ {actionLabel}</span>
-                </div>
-
-                {isAnalysis ? (
-                  // Quality + SEO analysis results
-                  <div style={{ flex:1, overflowY:'auto', padding:'20px' }}>
-                    {loading && (
-                      <div style={{ display:'flex', alignItems:'center', gap:10, color:'var(--text-3)', padding:'40px 0' }}>
-                        <Loader size={16} style={{ animation:'spin 0.7s linear infinite' }} />
-                        <span style={{ fontSize:13 }}>Analysing article...</span>
-                      </div>
-                    )}
-                    {!loading && result && (() => {
-                      let quality, seo
-                      try {
-                        const parsed = typeof result === 'string' && result.startsWith('{') ? JSON.parse(result) : {}
-                        quality = typeof parsed.quality === 'string' ? JSON.parse(parsed.quality.replace(/```json|```/g,'').trim()) : (parsed.quality || {})
-                        seo     = typeof parsed.seo     === 'string' ? JSON.parse(parsed.seo.replace(/```json|```/g,'').trim())     : (parsed.seo     || {})
-                        if (!quality.score && !seo.score) throw new Error('empty')
-                      } catch (e) { return <p style={{ color:'var(--red)', fontSize:13 }}>Analysis failed — please try again</p> }
-                      return (
-                        <div>
-                          {/* Quality score */}
-                          <div style={{ marginBottom:24 }}>
-                            <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
-                              <div style={{ textAlign:'center', flexShrink:0, background:'var(--navy-light)', border:'1px solid var(--navy-border)', borderRadius:10, padding:'10px 14px' }}>
-                                <div style={{ fontSize:32, fontWeight:800, color:'var(--navy)', lineHeight:1 }}>{quality.score}</div>
-                                <div style={{ fontSize:9, color:'var(--text-3)' }}>/100</div>
-                              </div>
-                              <div>
-                                <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', margin:'0 0 3px' }}>Quality Score</p>
-                                <p style={{ fontSize:13, color:'var(--text-2)', margin:0, lineHeight:1.5 }}>{quality.verdict}</p>
-                              </div>
-                            </div>
-                            {quality.dimensions && Object.entries(quality.dimensions).map(([dim, val]) => (
-                              <div key={dim} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:5 }}>
-                                <span style={{ fontSize:10, fontWeight:600, color:'var(--text-3)', textTransform:'capitalize', width:88, flexShrink:0 }}>{dim}</span>
-                                <div style={{ flex:1, height:4, background:'var(--border-md)', borderRadius:100, overflow:'hidden' }}>
-                                  <div style={{ height:'100%', width:`${(val/20)*100}%`, borderRadius:100, background: val>=16?'var(--green)':val>=10?'var(--amber)':'var(--red)' }} />
-                                </div>
-                                <span style={{ fontSize:10, fontWeight:700, color:'var(--text-3)', width:20, textAlign:'right' }}>{val}</span>
-                              </div>
-                            ))}
-                            {quality.suggestions?.length > 0 && (
-                              <div style={{ marginTop:10 }}>
-                                {quality.suggestions.map((s,i) => (
-                                  <div key={i} style={{ fontSize:12, color:'var(--text-2)', display:'flex', gap:6, marginBottom:4, lineHeight:1.5 }}>
-                                    <span style={{ color:'var(--navy)', flexShrink:0 }}>→</span>{s}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Divider */}
-                          <div style={{ height:1, background:'var(--border-md)', margin:'0 0 20px' }} />
-
-                          {/* SEO score */}
-                          <div>
-                            <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
-                              <div style={{ textAlign:'center', flexShrink:0, background:'var(--navy-light)', border:'1px solid var(--navy-border)', borderRadius:10, padding:'10px 14px' }}>
-                                <div style={{ fontSize:32, fontWeight:800, color:'var(--navy)', lineHeight:1 }}>{seo.score}</div>
-                                <div style={{ fontSize:9, color:'var(--text-3)', marginBottom:2 }}>/100</div>
-                                <div style={{ fontSize:11, fontWeight:800, padding:'1px 6px', borderRadius:4, display:'inline-block',
-                                  background: seo.grade<='B' ? 'var(--green-light)' : seo.grade==='C' ? 'var(--amber-light)' : 'var(--red-light)',
-                                  color: seo.grade<='B' ? 'var(--green)' : seo.grade==='C' ? 'var(--amber)' : 'var(--red)',
-                                }}>{seo.grade}</div>
-                              </div>
-                              <div>
-                                <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', margin:'0 0 3px' }}>SEO Score</p>
-                                <p style={{ fontSize:13, color:'var(--text-2)', margin:0, lineHeight:1.5 }}>{seo.verdict}</p>
-                              </div>
-                            </div>
-
-                            {seo.title_suggestion && (
-                              <div style={{ padding:'8px 12px', borderRadius:8, background:'var(--navy-light)', border:'1px solid var(--navy-border)', marginBottom:12 }}>
-                                <p style={{ fontSize:10, fontWeight:700, color:'var(--navy)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 3px' }}>Suggested title</p>
-                                <p style={{ fontSize:12, color:'var(--navy)', margin:0, fontWeight:600 }}>{seo.title_suggestion}</p>
-                              </div>
-                            )}
-
-                            {seo.issues?.map((item, i) => (
-                              <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:8, marginBottom:8 }}>
-                                <span style={{ fontSize:9, fontWeight:700, padding:'2px 6px', borderRadius:3, flexShrink:0, marginTop:1, textTransform:'uppercase',
-                                  background: item.impact==='high' ? 'var(--red-light)' : item.impact==='medium' ? 'var(--amber-light)' : 'var(--blue-light)',
-                                  color: item.impact==='high' ? 'var(--red)' : item.impact==='medium' ? 'var(--amber)' : 'var(--blue)',
-                                }}>{item.impact}</span>
-                                <div>
-                                  <p style={{ fontSize:12, fontWeight:600, color:'var(--text)', margin:'0 0 1px' }}>{item.issue}</p>
-                                  <p style={{ fontSize:11, color:'var(--text-3)', margin:0, lineHeight:1.5 }}>{item.fix}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    })()}
-                    {!loading && error && <p style={{ fontSize:13, color:'var(--red)' }}>{error}</p>}
-                  </div>
-                ) : (
-                  // Improve Article — editable title + WYSIWYG
-                  <>
-                    <div style={{ padding:'12px 20px', borderBottom:'1px solid var(--border)', flexShrink:0, background:'white' }}>
-                      <p style={{ fontSize:10, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 5px' }}>Title</p>
-                      <input
-                        defaultValue={article.title}
-                        onChange={e => setEditedTitle(e.target.value)}
-                        style={{ width:'100%', fontSize:14, fontWeight:700, color:'var(--text)', border:'none', outline:'none', fontFamily:'inherit', background:'transparent', padding:0 }}
-                        placeholder="Article title..."
-                      />
-                    </div>
-                    <WYSIWYGEditor html={editedText || result || ''} onChange={setEditedText} />
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Footer actions */}
-            <div style={{ padding:'14px 24px', borderTop:'1px solid var(--border)', flexShrink:0, background:'var(--bg)' }}>
-
-              {error && (
-                <div style={{ padding:'8px 14px', background:'var(--red-light)', border:'1px solid var(--red-border)', borderRadius:8, marginBottom:12 }}>
-                  <p style={{ fontSize:12, color:'var(--red)', margin:0 }}>{error}</p>
-                </div>
-              )}
-
-              {/* Confirmation */}
-              {confirmPub && (
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', background:'var(--amber-light)', border:'1px solid var(--amber-border)', borderRadius:8, marginBottom:12 }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                    <AlertTriangle size={13} style={{ color:'var(--amber)', flexShrink:0 }} />
-                    <p style={{ fontSize:12, color:'var(--text)', fontWeight:600, margin:0 }}>This will overwrite the article in Zendesk®. Are you sure?</p>
-                  </div>
-                  <button onClick={() => setConfirmPub(false)} className="btn btn-ghost btn-sm">Cancel</button>
-                </div>
-              )}
-
-              {/* Published success */}
-              {published && (
-                <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 14px', background:'var(--green-light)', border:'1px solid var(--green-border)', borderRadius:8, marginBottom:12 }}>
-                  <CheckCircle size={13} style={{ color:'var(--green)' }} />
-                  <p style={{ fontSize:12, color:'var(--green)', fontWeight:600, margin:0 }}>Article updated in Zendesk® successfully</p>
-                  {article.url && (
-                    <a href={article.url} target="_blank" rel="noreferrer"
-                      style={{ fontSize:12, color:'var(--green)', fontWeight:600, marginLeft:'auto', display:'flex', alignItems:'center', gap:4 }}>
-                      View in Zendesk® <ExternalLink size={11} />
-                    </a>
-                  )}
-                </div>
-              )}
-
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                <p style={{ fontSize:12, color:'var(--text-3)', margin:0 }}>
-                  {confirmPub ? 'Confirm to overwrite the article in Zendesk®' : 'Copy or publish directly to Zendesk®'}
-                </p>
-                <div style={{ display:'flex', gap:8 }}>
-                  <button onClick={onClose} className="btn btn-ghost btn-sm">Close</button>
-                  <button onClick={copy} className="btn btn-secondary btn-sm">
-                    {copying ? <><Check size={13} /> Copied!</> : <><CheckSquare size={13} /> Copy text</>}
-                  </button>
-                  <button onClick={publish} disabled={publishing || !result}
-                    className="btn btn-primary btn-sm"
-                    style={{ background: confirmPub ? 'var(--amber)' : 'var(--navy)' }}>
-                    {publishing
-                      ? <><Loader size={13} style={{ animation:'spin 0.7s linear infinite' }} /> Publishing...</>
-                      : confirmPub
-                        ? <><AlertTriangle size={13} /> Yes, publish</>
-                        : <><ExternalLink size={13} /> Publish to Zendesk®</>
-                    }
-                  </button>
-                </div>
-              </div>
-            </div>}
-          </>
+        {article.url && (
+          <a href={article.url} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
+            <ExternalLink size={12} /> Open in Zendesk®
+          </a>
         )}
       </div>
-    </>
+
+      {/* Body */}
+      <div style={{ flex:1, display:'grid', gridTemplateColumns:'1fr 1fr', overflow:'hidden' }} className="ai-drawer-cols">
+
+        {/* Left — original article */}
+        <div className="ai-drawer-before" style={{ display:'flex', flexDirection:'column', borderRight:'1px solid var(--border-md)', overflow:'hidden' }}>
+          <div style={{ padding:'8px 18px', background:'var(--bg)', borderBottom:'1px solid var(--border)', flexShrink:0 }}>
+            <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)' }}>Original</span>
+          </div>
+          <div style={{ flex:1, overflowY:'auto', padding:'18px' }}>
+            <p style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 4px' }}>Title</p>
+            <p style={{ fontSize:14, fontWeight:700, color:'var(--text)', margin:'0 0 16px', lineHeight:1.4 }}>{article.title}</p>
+            <div className="article-html" dangerouslySetInnerHTML={{ __html: bodyHtml || '<p style="color:var(--text-3)">Loading...</p>' }} />
+          </div>
+        </div>
+
+        {/* Right — analysis or editor */}
+        <div style={{ display:'flex', flexDirection:'column', overflow:'hidden' }}>
+
+          {/* Step: analyse (loading) */}
+          {analysing && (
+            <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12, color:'var(--text-3)', padding:40 }}>
+              <Loader size={22} style={{ animation:'spin 0.8s linear infinite', color:'var(--navy)' }} />
+              <p style={{ fontSize:13, fontWeight:600, color:'var(--text-2)', margin:0 }}>Analysing article quality and SEO...</p>
+              <p style={{ fontSize:11, color:'var(--text-3)', margin:0 }}>This takes about 10 seconds</p>
+            </div>
+          )}
+
+          {/* Step: review — show analysis, offer to improve */}
+          {!analysing && step === 'review' && analysis && (
+            <>
+              <div style={{ padding:'8px 18px', background:'var(--navy-light)', borderBottom:'1px solid var(--navy-border)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--navy)' }}>Quality & SEO Analysis</span>
+                <button onClick={runImprove} disabled={improving} className="btn btn-primary btn-sm">
+                  {improving ? <><Loader size={12} style={{ animation:'spin 0.7s linear infinite' }} /> Improving...</> : <><Wand2 size={12} /> Improve Article</>}
+                </button>
+              </div>
+              <div style={{ flex:1, overflowY:'auto', padding:'16px 18px' }}>
+                {fetchErr && <p style={{ color:'var(--red)', fontSize:13 }}>{fetchErr}</p>}
+
+                {/* Score summary */}
+                <div style={{ display:'flex', gap:10, marginBottom:16 }}>
+                  <ScoreBox score={analysis.quality?.score} label="Quality" />
+                  <ScoreBox score={analysis.seo?.score} label="SEO" grade={analysis.seo?.grade} />
+                  <div style={{ flex:1, padding:'10px 12px', borderRadius:9, background:'var(--bg)', border:'1px solid var(--border-md)' }}>
+                    <p style={{ fontSize:11, color:'var(--text-3)', margin:'0 0 4px' }}>Verdict</p>
+                    <p style={{ fontSize:12, color:'var(--text)', margin:0, lineHeight:1.5 }}>{analysis.quality?.verdict}</p>
+                  </div>
+                </div>
+
+                {/* Quality dimensions */}
+                {analysis.quality?.dimensions && (
+                  <div style={{ marginBottom:16 }}>
+                    <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', marginBottom:8 }}>Quality breakdown</p>
+                    {Object.entries(analysis.quality.dimensions).map(([dim, val]) => (
+                      <div key={dim} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:5 }}>
+                        <span style={{ fontSize:11, fontWeight:600, color:'var(--text-3)', textTransform:'capitalize', width:92, flexShrink:0 }}>{dim}</span>
+                        <div style={{ flex:1, height:4, background:'var(--border-md)', borderRadius:100, overflow:'hidden' }}>
+                          <div style={{ height:'100%', width:`${(val/20)*100}%`, borderRadius:100, background: val>=16?'var(--green)':val>=10?'var(--amber)':'var(--red)' }} />
+                        </div>
+                        <span style={{ fontSize:10, fontWeight:700, color:'var(--text-3)', width:20, textAlign:'right' }}>{val}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Quality suggestions */}
+                {analysis.quality?.suggestions?.length > 0 && (
+                  <div style={{ marginBottom:16 }}>
+                    <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', marginBottom:8 }}>Quality improvements</p>
+                    {analysis.quality.suggestions.map((s,i) => (
+                      <div key={i} style={{ fontSize:12, color:'var(--text-2)', display:'flex', gap:6, marginBottom:5, lineHeight:1.5 }}>
+                        <span style={{ color:'var(--navy)', flexShrink:0 }}>→</span>{s}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div style={{ height:1, background:'var(--border-md)', margin:'0 0 14px' }} />
+
+                {/* SEO title suggestion */}
+                {analysis.seo?.title_suggestion && (
+                  <div style={{ padding:'8px 12px', borderRadius:8, background:'var(--navy-light)', border:'1px solid var(--navy-border)', marginBottom:12 }}>
+                    <p style={{ fontSize:10, fontWeight:700, color:'var(--navy)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 3px' }}>Suggested SEO title</p>
+                    <p style={{ fontSize:12, color:'var(--navy)', margin:0, fontWeight:600 }}>{analysis.seo.title_suggestion}</p>
+                  </div>
+                )}
+
+                {/* SEO issues */}
+                {analysis.seo?.issues?.length > 0 && (
+                  <div>
+                    <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', marginBottom:8 }}>SEO improvements</p>
+                    {analysis.seo.issues.map((item, i) => (
+                      <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:7, marginBottom:8 }}>
+                        <span style={{ fontSize:9, fontWeight:700, padding:'2px 5px', borderRadius:3, flexShrink:0, marginTop:1, textTransform:'uppercase',
+                          background: item.impact==='high' ? 'var(--red-light)' : item.impact==='medium' ? 'var(--amber-light)' : 'var(--blue-light)',
+                          color: item.impact==='high' ? 'var(--red)' : item.impact==='medium' ? 'var(--amber)' : 'var(--blue)',
+                        }}>{item.impact}</span>
+                        <div>
+                          <p style={{ fontSize:12, fontWeight:600, color:'var(--text)', margin:'0 0 1px' }}>{item.issue}</p>
+                          <p style={{ fontSize:11, color:'var(--text-3)', margin:0, lineHeight:1.5 }}>{item.fix}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {error && <p style={{ fontSize:12, color:'var(--red)', marginTop:8 }}>{error}</p>}
+
+                <div style={{ marginTop:16, padding:'12px', borderRadius:9, background:'var(--bg)', border:'1px solid var(--border-md)', display:'flex', alignItems:'center', gap:10 }}>
+                  <Wand2 size={14} style={{ color:'var(--navy)', flexShrink:0 }} />
+                  <p style={{ fontSize:12, color:'var(--text-2)', margin:0, lineHeight:1.5 }}>
+                    Click <strong>Improve Article</strong> above to generate a rewrite that addresses these issues — informed by the quality and SEO feedback.
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Step: improve — editable result */}
+          {step === 'improve' && (
+            <>
+              <div style={{ padding:'8px 18px', background:'var(--navy-light)', borderBottom:'1px solid var(--navy-border)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--navy)' }}>ArticleIQ Rewrite — click to edit</span>
+                <button onClick={() => { setStep('review'); setError(null) }} className="btn btn-ghost btn-xs" style={{ color:'var(--text-3)', fontSize:11 }}>
+                  ← Back to analysis
+                </button>
+              </div>
+              <div style={{ padding:'12px 18px', borderBottom:'1px solid var(--border)', flexShrink:0, background:'white' }}>
+                <p style={{ fontSize:10, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 4px' }}>Title</p>
+                <input value={editedTitle} onChange={e => setEditedTitle(e.target.value)}
+                  style={{ width:'100%', fontSize:14, fontWeight:700, color:'var(--text)', border:'none', outline:'none', fontFamily:'inherit', background:'transparent', padding:0 }}
+                  placeholder="Article title..." />
+              </div>
+              <WYSIWYGEditor html={editedText || improved} onChange={setEditedText} />
+            </>
+          )}
+
+          {/* fetch error state */}
+          {!analysing && fetchErr && step === 'analyse' && (
+            <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:40 }}>
+              <p style={{ fontSize:13, color:'var(--red)' }}>{fetchErr}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Footer — only in improve step */}
+      {step === 'improve' && (
+        <div style={{ padding:'12px 20px', borderTop:'1px solid var(--border-md)', flexShrink:0, background:'white' }}>
+          {confirmPub && (
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 12px', background:'var(--amber-light)', border:'1px solid var(--amber-border)', borderRadius:8, marginBottom:10 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+                <AlertTriangle size={12} style={{ color:'var(--amber)' }} />
+                <p style={{ fontSize:12, fontWeight:600, color:'var(--text)', margin:0 }}>This will overwrite the article in Zendesk®. Are you sure?</p>
+              </div>
+              <button onClick={() => setConfirmPub(false)} className="btn btn-ghost btn-sm">Cancel</button>
+            </div>
+          )}
+          {published && (
+            <div style={{ display:'flex', alignItems:'center', gap:7, padding:'8px 12px', background:'var(--green-light)', border:'1px solid var(--green-border)', borderRadius:8, marginBottom:10 }}>
+              <CheckCircle size={13} style={{ color:'var(--green)' }} />
+              <p style={{ fontSize:12, fontWeight:600, color:'var(--green)', margin:0 }}>Published to Zendesk® successfully</p>
+            </div>
+          )}
+          {error && <p style={{ fontSize:11, color:'var(--red)', marginBottom:8 }}>{error}</p>}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <p style={{ fontSize:11, color:'var(--text-3)', margin:0 }}>
+              {confirmPub ? 'Confirm to publish to Zendesk®' : 'Review edits, then copy or publish directly'}
+            </p>
+            <div style={{ display:'flex', gap:8 }}>
+              <button onClick={onClose} className="btn btn-ghost btn-sm">Close</button>
+              <button onClick={copy} className="btn btn-secondary btn-sm">
+                {copying ? <><Check size={12} /> Copied!</> : <><CheckSquare size={12} /> Copy text</>}
+              </button>
+              <button onClick={publish} disabled={publishing} className="btn btn-primary btn-sm" style={{ background: confirmPub ? 'var(--amber)' : 'var(--navy)' }}>
+                {publishing ? <Loader size={12} style={{ animation:'spin 0.7s linear infinite' }} /> : confirmPub ? <AlertTriangle size={12} /> : <ExternalLink size={12} />}
+                {publishing ? 'Publishing...' : confirmPub ? 'Yes, publish' : 'Publish to Zendesk®'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
+
+
 
 // ─── AI Panel ──────────────────────────────────────────────────
 function AIPanel({ article, isPaid, connector, onOpenDrawer }) {
@@ -1473,7 +1504,6 @@ export default function ScanResultsPage() {
         <AIDrawer
           article={drawer.article}
           connector={connector}
-          action={drawer.action}
           onClose={() => setDrawer(null)}
         />
       )}
