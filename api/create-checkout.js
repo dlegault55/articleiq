@@ -17,6 +17,8 @@ export default async function handler(req, res) {
   }
 
   try {
+    const { plan = 'monthly' } = req.body
+
     const { data: profile } = await supabase
       .from('profiles').select('stripe_customer_id, plan').eq('id', auth.userId).single()
 
