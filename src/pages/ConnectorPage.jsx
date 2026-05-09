@@ -108,9 +108,14 @@ function ConnectorCard({ connector, onRemove }) {
             {testing ? <Loader size={11} style={{ animation: 'spin 0.7s linear infinite' }} /> : null}
             {testing ? 'Testing...' : 'Test connection'}
           </button>
-          <button onClick={() => onRemove(connector.id)} className="btn btn-ghost btn-xs" style={{ color: 'var(--text-3)' }}>
-            <Trash2 size={12} />
-          </button>
+          <div style={{ position:'relative' }} className="remove-menu-wrap">
+            <button onClick={() => onRemove(connector.id)} className="btn btn-ghost btn-xs" style={{ color: 'var(--text-3)' }} title="Remove connector">
+              <Trash2 size={12} />
+            </button>
+            <button onClick={() => onRemove(connector.id, true)} className="btn btn-ghost btn-xs" style={{ color: 'var(--red)', fontSize:10, marginLeft:2 }} title="Remove and delete all history">
+              Delete all history
+            </button>
+          </div>
         </div>
       </div>
 
@@ -190,11 +195,24 @@ export default function ConnectorPage() {
     finally { setSaving(false) }
   }
 
-  const remove = async (id) => {
-    const ok = await toast.confirm('Remove this connector? Scan history will be preserved.', 'Remove', 'Cancel')
+  const remove = async (id, deleteHistory = false) => {
+    const msg = deleteHistory
+      ? 'Remove this connector and delete all scan history? This cannot be undone.'
+      : 'Remove this connector? Scan history will be preserved.'
+    const ok = await toast.confirm(msg, 'Remove', 'Cancel')
     if (!ok) return
+    if (deleteHistory) {
+      // Delete all scan data for this connector
+      const { data: jobs } = await supabase.from('scan_jobs').select('id').eq('connector_id', id)
+      if (jobs?.length) {
+        const jobIds = jobs.map(j => j.id)
+        await supabase.from('article_issues').delete().in('scan_job_id', jobIds)
+        await supabase.from('scanned_articles').delete().in('scan_job_id', jobIds)
+        await supabase.from('scan_jobs').delete().in('id', jobIds)
+      }
+    }
     await supabase.from('zendesk_connectors').delete().eq('id', id).eq('user_id', userId)
-    toast.success('Connector removed')
+    toast.success(deleteHistory ? 'Connector and scan history removed' : 'Connector removed')
     load()
   }
 
