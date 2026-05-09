@@ -117,10 +117,11 @@ export default function LandingPage() {
               Fix issues with AI, not manual editing
             </h2>
             <p style={{ fontSize:15, color:'#4A4A48', lineHeight:1.7, marginBottom:20 }}>
-              ArticleIQ uses Claude to improve your articles in one click — better grammar, clearer structure, and suggested labels. Copy the result and paste it into Zendesk®.
+              ArticleIQ uses Claude to improve your articles in one click — better grammar, clearer structure, and suggested labels. Review the result and publish directly to Zendesk®.
             </p>
             {[
               'Fix grammar and rewrite for clarity in a single pass',
+              'Publish the improved article directly to Zendesk®',
               'Quality scoring with specific improvement suggestions',
               'AI-suggested labels based on article content',
             ].map(f => (
@@ -138,17 +139,18 @@ export default function LandingPage() {
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', height:200 }}>
               <div style={{ padding:'16px', borderRight:'1px solid #E8E8E6', overflow:'hidden' }}>
                 <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#9B9B98', marginBottom:8 }}>Original</p>
-                <p style={{ fontSize:11, color:'#9B9B98', lineHeight:1.7 }}>Riva Cloud or Riva On-Premise does not sync multiday appointments from Outlook to NetSuite. NetSuite does not support events that span multiple calendar days...</p>
+                <p style={{ fontSize:11, color:'#9B9B98', lineHeight:1.7 }}>Users cannot reset their password using the self-service portal. The reset email is delivered but clicking the link returns an error page. This affects all users on the Enterprise plan...</p>
               </div>
               <div style={{ padding:'16px', background:'#FAFFFE', overflow:'hidden' }}>
                 <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#107C10', marginBottom:8 }}>Improved</p>
-                <p style={{ fontSize:11, fontWeight:700, color:'#1A1A18', marginBottom:6 }}>Multiday Appointments Won't Sync</p>
+                <p style={{ fontSize:11, fontWeight:700, color:'#1A1A18', marginBottom:6 }}>Password Reset Link Returns an Error</p>
                 <p style={{ fontSize:10, fontWeight:700, color:'#4A4A48', marginBottom:4 }}>Problem</p>
-                <p style={{ fontSize:11, color:'#6B6B68', lineHeight:1.7 }}>Outlook multiday appointments don't sync to NetSuite because NetSuite doesn't support events spanning multiple days...</p>
+                <p style={{ fontSize:11, color:'#6B6B68', lineHeight:1.7 }}>The self-service password reset link expires after 15 minutes. If the link is clicked after this window, users see a generic error page...</p>
               </div>
             </div>
-            <div style={{ padding:'10px 16px', borderTop:'1px solid #E8E8E6', display:'flex', justifyContent:'flex-end' }}>
-              <div style={{ padding:'6px 14px', borderRadius:7, background:'#1B2D5B', color:'white', fontSize:11, fontWeight:700 }}>Copy improved text</div>
+            <div style={{ padding:'10px 16px', borderTop:'1px solid #E8E8E6', display:'flex', justifyContent:'flex-end', gap:8 }}>
+              <div style={{ padding:'6px 14px', borderRadius:7, background:'#F0F0EE', color:'#6B6B68', fontSize:11, fontWeight:600 }}>Copy text</div>
+              <div style={{ padding:'6px 14px', borderRadius:7, background:'#1B2D5B', color:'white', fontSize:11, fontWeight:700 }}>Publish to Zendesk® →</div>
             </div>
           </div>
         </div>
@@ -203,6 +205,7 @@ export default function LandingPage() {
                   'Unlimited articles per scan',
                   'Everything in Free',
                   'AI Improve Article — grammar + rewrite',
+                  'Publish improvements directly to Zendesk®',
                   'AI Quality Score',
                   'AI label suggestions',
                   'Email notifications on scan complete',
