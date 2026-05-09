@@ -587,7 +587,7 @@ function AIPanel({ article, isPaid, connector, onOpenDrawer }) {
     if (!isPaid) return
     setLoading('quality'); setResult(null)
     try {
-      const raw = await callAI('quality', { title: article.title })
+      const raw = await callAI('quality', { title: article.title, content: body })
       setResult({ type: 'quality', data: JSON.parse(raw.replace(/```json|```/g,'').trim()) })
     } catch (e) {
       setResult({ type: 'error', message: e.message })
@@ -819,7 +819,20 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
   const runInlineAI = async (action) => {
     setAiLoading(action); setAiResult(null)
     try {
-      const raw = await callAI(action, { title: article.title })
+      // Fetch article body from Zendesk® so AI has full content, not just title
+      let articleContent = ''
+      if (connector && article.zendesk_article_id) {
+        const authHeader = `Basic ${btoa(connector.api_key_encrypted)}`
+        const res = await fetch(
+          `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${article.zendesk_article_id}`,
+          { headers: { Authorization: authHeader } }
+        )
+        if (res.ok) {
+          const data = await res.json()
+          articleContent = data.article?.body || ''
+        }
+      }
+      const raw = await callAI(action, { title: article.title, content: articleContent })
       setAiResult({ type: action, data: JSON.parse(raw.replace(/```json|```/g,'').trim()) })
     } catch (e) {
       setAiResult({ type: 'error', message: e.message })
