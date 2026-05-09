@@ -1069,8 +1069,17 @@ export default function ScanResultsPage() {
   useEffect(() => setPage(1), [filter, sort])
 
   const resolveIssue = async (issueId, resolved) => {
-    await supabase.from('article_issues').update({ resolved, resolved_at: resolved ? new Date().toISOString() : null }).eq('id', issueId)
+    // Optimistic update first
     setResolvedIssues(prev => { const n = new Set(prev); resolved ? n.add(issueId) : n.delete(issueId); return n })
+    const { error } = await supabase.from('article_issues')
+      .update({ resolved, resolved_at: resolved ? new Date().toISOString() : null })
+      .eq('id', issueId)
+      .eq('user_id', profile?.id) // ensure user owns this issue
+    if (error) {
+      console.error('resolveIssue error:', error)
+      // Revert optimistic update on failure
+      setResolvedIssues(prev => { const n = new Set(prev); resolved ? n.delete(issueId) : n.add(issueId); return n })
+    }
   }
 
 
