@@ -69,6 +69,8 @@ export default function App() {
           <Route path="settings"            element={<SettingsPage />} />
           <Route path="help"               element={<HelpPage />} />
           <Route path="release-notes"      element={<ReleaseNotesPage />} />
+          <Route path="upgrade"            element={<UpgradePage />} />
+          <Route path="contact"            element={<ContactPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
