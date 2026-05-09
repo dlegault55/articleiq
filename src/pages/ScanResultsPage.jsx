@@ -543,16 +543,83 @@ ${analysis.seo.title_suggestion ? `Suggested SEO title: ${analysis.seo.title_sug
       {/* Body */}
       <div style={{ flex:1, display:'grid', gridTemplateColumns:'1fr 1fr', overflow:'hidden' }} className="ai-drawer-cols">
 
-        {/* Left — original article */}
+        {/* Left — original article OR analysis reference */}
         <div className="ai-drawer-before" style={{ display:'flex', flexDirection:'column', borderRight:'1px solid var(--border-md)', overflow:'hidden' }}>
-          <div style={{ padding:'8px 18px', background:'var(--bg)', borderBottom:'1px solid var(--border)', flexShrink:0 }}>
-            <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)' }}>Original</span>
+          <div style={{ padding:'8px 18px', background:'var(--bg)', borderBottom:'1px solid var(--border)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)' }}>
+              {step === 'improve' && analysis ? 'Recommendations' : 'Original'}
+            </span>
+            {step === 'improve' && analysis && (
+              <div style={{ display:'flex', gap:8 }}>
+                <span style={{ fontSize:11, fontWeight:700, padding:'1px 8px', borderRadius:4,
+                  background: analysis.quality?.score >= 70 ? 'var(--green-light)' : analysis.quality?.score >= 50 ? 'var(--amber-light)' : 'var(--red-light)',
+                  color: analysis.quality?.score >= 70 ? 'var(--green)' : analysis.quality?.score >= 50 ? 'var(--amber)' : 'var(--red)',
+                }}>Quality {analysis.quality?.score}</span>
+                <span style={{ fontSize:11, fontWeight:700, padding:'1px 8px', borderRadius:4,
+                  background: analysis.seo?.grade <= 'B' ? 'var(--green-light)' : analysis.seo?.grade === 'C' ? 'var(--amber-light)' : 'var(--red-light)',
+                  color: analysis.seo?.grade <= 'B' ? 'var(--green)' : analysis.seo?.grade === 'C' ? 'var(--amber)' : 'var(--red)',
+                }}>SEO {analysis.seo?.grade}</span>
+              </div>
+            )}
           </div>
-          <div style={{ flex:1, overflowY:'auto', padding:'18px' }}>
-            <p style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 4px' }}>Title</p>
-            <p style={{ fontSize:14, fontWeight:700, color:'var(--text)', margin:'0 0 16px', lineHeight:1.4 }}>{article.title}</p>
-            <div className="article-html" dangerouslySetInnerHTML={{ __html: bodyHtml || '<p style="color:var(--text-3)">Loading...</p>' }} />
-          </div>
+
+          {step === 'improve' && analysis ? (
+            // Show analysis as reference while editing
+            <div style={{ flex:1, overflowY:'auto', padding:'14px 16px' }}>
+              <p style={{ fontSize:11, color:'var(--text-3)', margin:'0 0 12px', lineHeight:1.5 }}>
+                These are your recommendations — apply them manually in the editor, or use Re-analyse to check progress.
+              </p>
+
+              {/* Quality suggestions */}
+              {analysis.quality?.suggestions?.length > 0 && (
+                <div style={{ marginBottom:16 }}>
+                  <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:8 }}>Quality</p>
+                  {analysis.quality.suggestions.map((s, i) => (
+                    <div key={i} style={{ display:'flex', gap:6, marginBottom:6, padding:'7px 10px', borderRadius:7, background:'var(--bg)', border:'1px solid var(--border-md)' }}>
+                      <span style={{ color:'var(--navy)', flexShrink:0, fontSize:12 }}>→</span>
+                      <span style={{ fontSize:12, color:'var(--text-2)', lineHeight:1.5 }}>{s}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* SEO title */}
+              {analysis.seo?.title_suggestion && (
+                <div style={{ marginBottom:16 }}>
+                  <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:8 }}>Suggested title</p>
+                  <div style={{ padding:'8px 10px', borderRadius:7, background:'var(--navy-light)', border:'1px solid var(--navy-border)' }}>
+                    <p style={{ fontSize:12, color:'var(--navy)', fontWeight:600, margin:0 }}>{analysis.seo.title_suggestion}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* SEO issues */}
+              {analysis.seo?.issues?.length > 0 && (
+                <div>
+                  <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:8 }}>SEO</p>
+                  {analysis.seo.issues.map((item, i) => (
+                    <div key={i} style={{ display:'flex', gap:7, marginBottom:6, padding:'7px 10px', borderRadius:7, background:'var(--bg)', border:'1px solid var(--border-md)' }}>
+                      <span style={{ fontSize:9, fontWeight:700, padding:'2px 5px', borderRadius:3, flexShrink:0, marginTop:1, textTransform:'uppercase',
+                        background: item.impact==='high' ? 'var(--red-light)' : item.impact==='medium' ? 'var(--amber-light)' : 'var(--blue-light)',
+                        color: item.impact==='high' ? 'var(--red)' : item.impact==='medium' ? 'var(--amber)' : 'var(--blue)',
+                      }}>{item.impact}</span>
+                      <div>
+                        <p style={{ fontSize:12, fontWeight:600, color:'var(--text)', margin:'0 0 1px' }}>{item.issue}</p>
+                        <p style={{ fontSize:11, color:'var(--text-3)', margin:0, lineHeight:1.4 }}>{item.fix}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            // Show original article
+            <div style={{ flex:1, overflowY:'auto', padding:'18px' }}>
+              <p style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 4px' }}>Title</p>
+              <p style={{ fontSize:14, fontWeight:700, color:'var(--text)', margin:'0 0 16px', lineHeight:1.4 }}>{article.title}</p>
+              <div className="article-html" dangerouslySetInnerHTML={{ __html: bodyHtml || '<p style="color:var(--text-3)">Loading...</p>' }} />
+            </div>
+          )}
         </div>
 
         {/* Right — analysis or editor */}
