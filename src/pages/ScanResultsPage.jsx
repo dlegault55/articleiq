@@ -663,9 +663,11 @@ function AIPanel({ article, isPaid, connector, onOpenDrawer }) {
 }
 
 // ─── Issue card ───────────────────────────────────────────────
-function IssueCard({ issue, Icon, s, resolved, article, onResolve }) {
-  const [suggesting, setSuggesting] = useState(false)
-  const [labels,     setLabels]     = useState(null)
+function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve }) {
+  const [suggesting,   setSuggesting]   = useState(false)
+  const [labels,       setLabels]       = useState(null)
+  const [publishing,   setPublishing]   = useState(null)  // label being published
+  const [published,    setPublished]    = useState(new Set())
 
   const suggestLabels = async () => {
     setSuggesting(true)
@@ -675,6 +677,32 @@ function IssueCard({ issue, Icon, s, resolved, article, onResolve }) {
       setLabels(data.labels || [])
     } catch (e) { setLabels([`Error: ${e.message}`]) }
     finally { setSuggesting(false) }
+  }
+
+  const publishLabel = async (label) => {
+    if (!connector) { navigator.clipboard.writeText(label); return }
+    setPublishing(label)
+    try {
+      const res = await apiFetch('/api/publish-labels', {
+        method: 'POST',
+        body: JSON.stringify({
+          connectorId: connector.id,
+          articleId:   article.zendesk_article_id,
+          labels:      [label],
+        }),
+      })
+      if (!res.ok) {
+        const e = await res.json()
+        throw new Error(e.error)
+      }
+      setPublished(prev => new Set([...prev, label]))
+    } catch (e) {
+      // Fall back to clipboard
+      navigator.clipboard.writeText(label)
+      alert(`Couldn't publish to Zendesk® — copied to clipboard instead. Error: ${e.message}`)
+    } finally {
+      setPublishing(null)
+    }
   }
 
   return (
@@ -703,16 +731,32 @@ function IssueCard({ issue, Icon, s, resolved, article, onResolve }) {
               )}
               {labels?.length > 0 && (
                 <div>
-                  <p style={{ fontSize:10, fontWeight:700, color:'var(--text-3)', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' }}>Suggested — click to copy</p>
+                  <p style={{ fontSize:10, fontWeight:700, color:'var(--text-3)', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' }}>
+                    {connector ? 'Click to publish to Zendesk®' : 'Click to copy'}
+                  </p>
                   <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
-                    {labels.map(label => (
-                      <button key={label} onClick={() => navigator.clipboard.writeText(label)} title="Click to copy"
-                        style={{ padding:'3px 10px', borderRadius:100, background:'var(--navy-light)', border:'1px solid var(--navy-border)', fontSize:11, fontWeight:600, color:'var(--navy)', cursor:'pointer', fontFamily:'inherit' }}>
-                        {label}
-                      </button>
-                    ))}
+                    {labels.map(label => {
+                      const isPublished = published.has(label)
+                      const isLoading   = publishing === label
+                      return (
+                        <button key={label} onClick={() => publishLabel(label)}
+                          disabled={isLoading || isPublished}
+                          title={isPublished ? 'Added to Zendesk®' : connector ? 'Click to publish to Zendesk®' : 'Click to copy'}
+                          style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 10px', borderRadius:100, fontSize:11, fontWeight:600, cursor: isPublished ? 'default' : 'pointer', fontFamily:'inherit', transition:'all 0.15s',
+                            background: isPublished ? 'var(--green-light)' : 'var(--navy-light)',
+                            border: `1px solid ${isPublished ? 'var(--green-border)' : 'var(--navy-border)'}`,
+                            color: isPublished ? 'var(--green)' : 'var(--navy)',
+                          }}>
+                          {isLoading  ? <Loader size={9} style={{ animation:'spin 0.7s linear infinite' }} /> : null}
+                          {isPublished ? <CheckCircle size={9} /> : null}
+                          {label}
+                        </button>
+                      )
+                    })}
                   </div>
-                  <p style={{ fontSize:10, color:'var(--text-3)', marginTop:5 }}>Add labels in Zendesk®</p>
+                  <p style={{ fontSize:10, color:'var(--text-3)', marginTop:5 }}>
+                    {connector ? 'Labels are added to Zendesk® immediately — existing labels are preserved' : 'Add labels in Zendesk®'}
+                  </p>
                 </div>
               )}
               {labels !== null && labels.length === 0 && (
@@ -852,7 +896,7 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
                   const resolved = resolvedIssues.has(issue.id)
                   return (
                     <IssueCard key={issue.id} issue={issue} Icon={Icon} s={s} resolved={resolved}
-                      article={article}
+                      article={article} connector={connector}
                       onResolve={() => onResolveIssue(issue.id, !resolved)} />
                   )
                 })}
