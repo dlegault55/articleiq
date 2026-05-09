@@ -16,38 +16,57 @@ export default async function handler(req, res) {
     .eq('id', connectorId).eq('user_id', auth.userId).single()
   if (!connector) return res.status(404).json({ error: 'No connector' })
 
-  const authHeader = `Basic ${Buffer.from(connector.api_key_encrypted).toString('base64')}`
   const base = `https://${connector.subdomain}.zendesk.com`
 
-  // Test 1: can we READ the article?
-  const readRes = await fetch(`${base}/api/v2/help_center/articles/${articleId}`, {
-    headers: { Authorization: authHeader }
-  })
-  const readData = await readRes.json().catch(() => ({}))
+  // Test both auth header formats
+  const authV1 = `Basic ${Buffer.from(connector.api_key_encrypted).toString('base64')}`
 
-  // Test 2: can we read the current user's permissions?
-  const meRes = await fetch(`${base}/api/v2/users/me.json`, {
-    headers: { Authorization: authHeader }
-  })
-  const meData = await meRes.json().catch(() => ({}))
+  // Also try without /token suffix in case it's being double-applied
+  const credParts = connector.api_key_encrypted.split(':')
+  const apiKey    = credParts[credParts.length - 1]
+  const emailPart = credParts[0].replace('/token', '')
+  const authV2    = `Basic ${Buffer.from(`${emailPart}/token:${apiKey}`).toString('base64')}`
+  const authV3    = `Basic ${Buffer.from(`${emailPart}:${apiKey}`).toString('base64')}`
 
-  // Test 3: try a PATCH on the article (less strict than PUT)
-  const patchRes = await fetch(`${base}/api/v2/help_center/articles/${articleId}`, {
-    method: 'PATCH',
-    headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ article: { draft: false } })
-  })
-  const patchBody = await patchRes.text()
+  const results = {}
 
-  return res.status(200).json({
-    read: { status: readRes.status, locale: readData.article?.locale, title: readData.article?.title },
-    me: {
-      status: meRes.status,
-      role: meData.user?.role,
-      name: meData.user?.name,
-      email: meData.user?.email,
-    },
-    patch: { status: patchRes.status, body: patchBody.slice(0, 300) },
-    credential: connector.api_key_encrypted.split(':')[0], // show email/token part only
+  // Test GET with each auth format
+  for (const [name, header] of [['stored', authV1], ['rebuilt', authV2], ['no-token', authV3]]) {
+    const r = await fetch(`${base}/api/v2/help_center/articles/${articleId}`, {
+      headers: { Authorization: header }
+    })
+    results[`get_${name}`] = r.status
+  }
+
+  // Test PUT with stored auth — minimal body
+  const putR = await fetch(`${base}/api/v2/help_center/articles/${articleId}/translations/en-us`, {
+    method: 'PUT',
+    headers: { Authorization: authV1, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ translation: { body: '<p>test</p>' } }),
   })
+  const putBody = await putR.text()
+  results.put_stored = { status: putR.status, body: putBody.slice(0, 500) }
+
+  // Test PUT with rebuilt auth
+  const putR2 = await fetch(`${base}/api/v2/help_center/articles/${articleId}/translations/en-us`, {
+    method: 'PUT',
+    headers: { Authorization: authV2, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ translation: { body: '<p>test</p>' } }),
+  })
+  const putBody2 = await putR2.text()
+  results.put_rebuilt = { status: putR2.status, body: putBody2.slice(0, 500) }
+
+  // Check if article is a draft — drafts can't be updated via API sometimes
+  const articleR = await fetch(`${base}/api/v2/help_center/articles/${articleId}`, {
+    headers: { Authorization: authV1 }
+  })
+  const articleData = await articleR.json().catch(() => ({}))
+  results.article_info = {
+    draft: articleData.article?.draft,
+    managed_by: articleData.article?.user_segment_id,
+    permission_group: articleData.article?.permission_group_id,
+    section_id: articleData.article?.section_id,
+  }
+
+  return res.status(200).json(results)
 }
