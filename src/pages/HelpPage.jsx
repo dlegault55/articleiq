@@ -27,6 +27,26 @@ const FAQ = ({ q, a }) => {
   )
 }
 
+const Check = ({ icon: Icon, title, desc, severity }) => {
+  const colors = {
+    critical: { bg: 'var(--red-light)',   border: 'var(--red-border)',   color: 'var(--red)'   },
+    warning:  { bg: 'var(--amber-light)', border: 'var(--amber-border)', color: 'var(--amber)' },
+    info:     { bg: 'var(--blue-light)',  border: 'var(--blue-border)',  color: 'var(--blue)'  },
+  }
+  const c = colors[severity] || colors.info
+  return (
+    <div style={{ display: 'flex', gap: 14, padding: '14px 16px', borderRadius: 10, background: c.bg, border: `1px solid ${c.border}`, marginBottom: 10 }}>
+      <div style={{ width: 34, height: 34, borderRadius: 8, background: 'white', border: `1px solid ${c.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon size={16} style={{ color: c.color }} />
+      </div>
+      <div>
+        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 3 }}>{title}</p>
+        <p style={{ fontSize: 12, color: 'var(--text-2)', margin: 0, lineHeight: 1.6 }}>{desc}</p>
+      </div>
+    </div>
+  )
+}
+
 export default function HelpPage() {
   usePageTitle('Help & docs')
   return (
