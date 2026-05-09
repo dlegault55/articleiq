@@ -567,10 +567,19 @@ ${analysis.seo.title_suggestion ? `Suggested SEO title: ${analysis.seo.title_sug
           {!analysing && step === 'review' && analysis && (
             <>
               <div style={{ padding:'8px 18px', background:'var(--navy-light)', borderBottom:'1px solid var(--navy-border)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--navy)' }}>Quality & SEO Analysis</span>
-                <button onClick={runImprove} disabled={improving} className="btn btn-primary btn-sm">
-                  {improving ? <><Loader size={12} style={{ animation:'spin 0.7s linear infinite' }} /> Improving...</> : <><Wand2 size={12} /> Improve Article</>}
-                </button>
+                <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--navy)' }}>
+                  Quality & SEO Analysis {improved ? '· updated after rewrite' : '· original'}
+                </span>
+                <div style={{ display:'flex', gap:6 }}>
+                  {improved && (
+                    <button onClick={() => setStep('improve')} className="btn btn-secondary btn-sm">
+                      <CheckSquare size={12} /> View rewrite
+                    </button>
+                  )}
+                  <button onClick={runImprove} disabled={improving} className="btn btn-primary btn-sm">
+                    {improving ? <><Loader size={12} style={{ animation:'spin 0.7s linear infinite' }} /> Improving...</> : <><Wand2 size={12} /> {improved ? 'Re-improve' : 'Improve Article'}</>}
+                  </button>
+                </div>
               </div>
               <div style={{ flex:1, overflowY:'auto', padding:'16px 18px' }}>
                 {fetchErr && <p style={{ color:'var(--red)', fontSize:13 }}>{fetchErr}</p>}
@@ -646,8 +655,11 @@ ${analysis.seo.title_suggestion ? `Suggested SEO title: ${analysis.seo.title_sug
 
                 <div style={{ marginTop:16, padding:'12px', borderRadius:9, background:'var(--bg)', border:'1px solid var(--border-md)', display:'flex', alignItems:'center', gap:10 }}>
                   <Wand2 size={14} style={{ color:'var(--navy)', flexShrink:0 }} />
-                  <p style={{ fontSize:12, color:'var(--text-2)', margin:0, lineHeight:1.5 }}>
-                    Click <strong>Improve Article</strong> above to generate a rewrite that addresses these issues — informed by the quality and SEO feedback.
+                  <p style={{ fontSize:12, color:'var(--text-2)', margin:0, lineHeight:1.5, flex:1 }}>
+                    {improved
+                      ? 'This analysis reflects the improved version. Click Re-improve above to generate another pass.'
+                      : <>Click <strong>Improve Article</strong> above to generate a rewrite that addresses these issues.</>
+                    }
                   </p>
                 </div>
               </div>
