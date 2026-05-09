@@ -128,3 +128,38 @@ a  { color: inherit; text-decoration: none; }
 
 /* Smooth row hovers */
 .article-row { transition: background 0.1s ease; }
+
+/* ─── Mobile responsive ──────────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Nav */
+  .nav-logo-text { display: none; }
+
+  /* Dashboard */
+  .stats-grid     { grid-template-columns: 1fr 1fr !important; }
+  .onboard-grid   { grid-template-columns: 1fr !important; }
+  .checks-grid    { grid-template-columns: 1fr !important; }
+  .health-score   { font-size: 56px !important; letter-spacing: -2px !important; }
+
+  /* Results page */
+  .results-hero-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .filter-pills      { flex-wrap: wrap !important; }
+  .ai-drawer         { width: 100vw !important; }
+  .ai-drawer-cols    { grid-template-columns: 1fr !important; overflow-y: auto !important; }
+  .ai-drawer-before  { display: none !important; }
+
+  /* Landing */
+  .landing-hero    { grid-template-columns: 1fr !important; gap: 32px !important; padding: 48px 24px 40px !important; }
+  .landing-checks  { grid-template-columns: 1fr 1fr !important; }
+  .landing-ai      { grid-template-columns: 1fr !important; gap: 28px !important; padding: 40px 24px !important; }
+  .landing-pricing { grid-template-columns: 1fr !important; }
+  .landing-nav     { padding: 0 20px !important; }
+  .landing-nav-links { display: none !important; }
+  .landing-footer  { padding: 24px 20px 16px !important; }
+  .landing-footer-row { flex-direction: column !important; gap: 12px !important; align-items: flex-start !important; }
+
+  /* General */
+  .hide-mobile   { display: none !important; }
+  .stack-mobile  { flex-direction: column !important; }
+  .full-mobile   { width: 100% !important; }
+  .pad-mobile    { padding: 16px !important; }
+}

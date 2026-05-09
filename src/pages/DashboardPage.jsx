@@ -275,7 +275,7 @@ export default function DashboardPage() {
   const scoreColor = (s) => s >= 80 ? 'var(--green)' : s >= 60 ? 'var(--amber)' : 'var(--red)'
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px' }}>
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: 'clamp(16px, 4vw, 24px)' }}>
 
       {/* ── Active scan banner ── */}
       {activeScan && (
@@ -314,7 +314,7 @@ export default function DashboardPage() {
               Connect Zendesk® in 2 minutes and we'll tell you exactly what's hurting your customer experience — and what to fix first.
             </p>
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12, marginBottom:16 }}>
+          <div className='stats-grid' className='onboard-grid' style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12, marginBottom:16 }}>
             {[
               { step:1, icon:<Plug size={16} style={{ color:'var(--navy)' }} />, title:'Connect Zendesk®', desc:'Add your subdomain and API token. Read-only — we never touch your articles.', action:true },
               { step:2, icon:<Scan size={16} style={{ color:'var(--text-3)' }} />, title:'Run a scan', desc:'We analyze every article for readability, freshness, duplicates, and more.', action:false },
@@ -356,7 +356,7 @@ export default function DashboardPage() {
               Knowledge base health · {formatDistanceToNow(new Date(lastScan.created_at), { addSuffix:true })}
             </p>
             <div style={{ display:'flex', alignItems:'flex-end', gap:16, marginBottom:14 }}>
-              <div style={{ fontSize:76, fontWeight:800, color:'white', lineHeight:1, letterSpacing:-3 }}>{lastH}</div>
+              <div className='health-score' style={{ fontSize:76, fontWeight:800, color:'white', lineHeight:1, letterSpacing:-3 }}>{lastH}</div>
               <div style={{ paddingBottom:10 }}>
                 <div style={{ fontSize:15, fontWeight:700, color:'rgba(255,255,255,0.85)', marginBottom:4 }}>{healthLabel(lastH)}</div>
                 {trend !== null && (
@@ -389,7 +389,7 @@ export default function DashboardPage() {
 
       {/* ── Stats row ── */}
       {!activeScan && lastScan && (
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:16 }} className="animate-in">
+        <div className='stats-grid animate-in' style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:16 }}>
           {[
             { label:'Articles scanned', value: (lastScan.scanned_articles||0).toLocaleString(), sub:'last scan' },
             { label:'Issues found',     value: total.toLocaleString(),                          sub:'across all checks' },
@@ -442,11 +442,11 @@ export default function DashboardPage() {
           {/* Quality checks */}
           <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', marginBottom:8 }}>Quality checks</p>
           {!checksReady ? (
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6, marginBottom:16 }}>
+            <div className='checks-grid' style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6, marginBottom:16 }}>
               {[...Array(6)].map((_,i) => <div key={i} style={{ height:56, borderRadius:8, background:'var(--bg)', border:'1px solid var(--border-md)', opacity:0.6 }} />)}
             </div>
           ) : (
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6, marginBottom:16 }}>
+            <div className='checks-grid' style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6, marginBottom:16 }}>
               {SCAN_CHECKS.map(({ key, label, desc }) => {
                 const on = (checks || DEFAULT_CHECKS)[key]
                 return (

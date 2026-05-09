@@ -431,7 +431,7 @@ function AIDrawer({ article, connector, action, onClose }) {
         style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.4)', zIndex:200, animation:'fade-in 0.2s ease' }} />
 
       {/* Drawer */}
-      <div style={{ position:'fixed', top:0, right:0, bottom:0, width:'min(820px, 90vw)', background:'var(--bg-card)', zIndex:201, display:'flex', flexDirection:'column', boxShadow:'-8px 0 40px rgba(0,0,0,0.15)', animation:'slide-in 0.25s ease' }}>
+      <div className='ai-drawer' style={{ position:'fixed', top:0, right:0, bottom:0, width:'min(820px, 90vw)', background:'var(--bg-card)', zIndex:201, display:'flex', flexDirection:'column', boxShadow:'-8px 0 40px rgba(0,0,0,0.15)', animation:'slide-in 0.25s ease' }}>
         <style>{`
           @keyframes slide-in { from { transform: translateX(100%) } to { transform: translateX(0) } }
           .article-html h1 { font-size:18px; font-weight:800; margin:16px 0 8px; color:var(--text); }
@@ -480,9 +480,9 @@ function AIDrawer({ article, connector, action, onClose }) {
         ) : (
           <>
             {/* Before / After columns */}
-            <div style={{ flex:1, display:'grid', gridTemplateColumns:'1fr 1fr', overflow:'hidden' }}>
+            <div className='ai-drawer-cols' style={{ flex:1, display:'grid', gridTemplateColumns:'1fr 1fr', overflow:'hidden' }}>
               {/* Before */}
-              <div style={{ display:'flex', flexDirection:'column', borderRight:'1px solid var(--border)', overflow:'hidden' }}>
+              <div className='ai-drawer-before' style={{ display:'flex', flexDirection:'column', borderRight:'1px solid var(--border)', overflow:'hidden' }}>
                 <div style={{ padding:'10px 20px', background:'var(--bg)', borderBottom:'1px solid var(--border)', flexShrink:0 }}>
                   <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)' }}>Original</span>
                 </div>
@@ -1168,7 +1168,7 @@ export default function ScanResultsPage() {
   )
 
   return (
-    <div style={{ maxWidth:960, margin:'0 auto', padding:'24px' }}>
+    <div style={{ maxWidth:960, margin:'0 auto', padding:'clamp(12px,4vw,24px)' }}>
 
       {/* Back + actions */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
@@ -1277,7 +1277,7 @@ export default function ScanResultsPage() {
       {/* Hero health score */}
       <div style={{ borderRadius:'var(--radius-xl)', background:'var(--navy)', padding:'22px 26px', marginBottom:16, position:'relative', overflow:'hidden' }}>
         <div style={{ position:'absolute', top:-50, right:-50, width:200, height:200, borderRadius:'50%', background:'rgba(255,255,255,0.04)' }} />
-        <div style={{ display:'grid', gridTemplateColumns:'auto 1fr', gap:28, alignItems:'center' }}>
+        <div className='results-hero-grid' style={{ display:'grid', gridTemplateColumns:'auto 1fr', gap:28, alignItems:'center' }}>
           <div>
             <p style={{ fontSize:11, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(255,255,255,0.5)', marginBottom:4 }}>
               Scan Report · {format(new Date(scan.created_at), 'MMM d, yyyy')}
@@ -1330,7 +1330,7 @@ export default function ScanResultsPage() {
 
       {/* Filters + sort */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:12, flexWrap:'wrap' }}>
-        <div style={{ display:'flex', gap:2, background:'rgba(255,255,255,0.7)', borderRadius:100, padding:4, border:'1px solid var(--border-md)', flexWrap:'wrap' }}>
+        <div className='filter-pills' style={{ display:'flex', gap:2, background:'rgba(255,255,255,0.7)', borderRadius:100, padding:4, border:'1px solid var(--border-md)', flexWrap:'wrap' }}>
           {filterOpts.map(({ key, label, count }) => (
             <button key={key} onClick={() => setFilter(key)}
               style={{ padding:'5px 14px', borderRadius:100, fontSize:12, fontWeight:600, border:'none', cursor:'pointer', transition:'all 0.15s',

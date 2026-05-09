@@ -15,14 +15,14 @@ export default function LandingPage() {
       `}</style>
 
       {/* ── Nav ── */}
-      <nav style={{ background:'rgba(247,247,245,0.92)', backdropFilter:'blur(12px)', borderBottom:'1px solid #E8E8E6', padding:'0 48px', height:54, display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:50 }}>
+      <nav className='landing-nav' style={{ background:'rgba(247,247,245,0.92)', backdropFilter:'blur(12px)', borderBottom:'1px solid #E8E8E6', padding:'0 48px', height:54, display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:50 }}>
         <div style={{ display:'flex', alignItems:'center', gap:7 }}>
           <div style={{ width:26, height:26, background:'#1B2D5B', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
             <Scan size={13} color="white" />
           </div>
           <span style={{ fontWeight:800, fontSize:15, letterSpacing:-0.3 }}>Article<span style={{ color:'#107C10' }}>IQ</span></span>
         </div>
-        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+        <div className='landing-nav-links' style={{ display:'flex', alignItems:'center', gap:8 }}>
           <a href="#pricing" className="land-btn land-btn-ghost" style={{ padding:'7px 14px' }}>Pricing</a>
           <Link to="/login" className="land-btn land-btn-outline" style={{ padding:'7px 16px' }}>Sign in</Link>
           <Link to="/login" className="land-btn land-btn-navy">Get started free</Link>
@@ -30,7 +30,7 @@ export default function LandingPage() {
       </nav>
 
       {/* ── Hero ── */}
-      <section style={{ padding:'80px 48px 60px', maxWidth:1100, margin:'0 auto', display:'grid', gridTemplateColumns:'1fr 1fr', gap:60, alignItems:'center' }}>
+      <section className='landing-hero' style={{ padding:'80px 48px 60px', maxWidth:1100, margin:'0 auto', display:'grid', gridTemplateColumns:'1fr 1fr', gap:60, alignItems:'center' }}>
         <div>
           <div style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'5px 12px', borderRadius:100, background:'#EBF5EB', border:'1px solid #A8D5A8', marginBottom:20 }}>
             <div style={{ width:6, height:6, borderRadius:'50%', background:'#107C10' }} />
@@ -80,11 +80,11 @@ export default function LandingPage() {
       </section>
 
       {/* ── Checks ── */}
-      <section style={{ padding:'60px 48px', background:'white', borderTop:'1px solid #E8E8E6', borderBottom:'1px solid #E8E8E6' }}>
+      <section style={{ padding:'clamp(32px,6vw,60px) clamp(20px,5vw,48px)', background:'white', borderTop:'1px solid #E8E8E6', borderBottom:'1px solid #E8E8E6' }}>
         <div style={{ maxWidth:900, margin:'0 auto' }}>
           <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9B9B98', textAlign:'center', marginBottom:10 }}>What we scan for</p>
           <h2 style={{ fontSize:30, fontWeight:800, textAlign:'center', letterSpacing:-0.8, marginBottom:40, color:'#1A1A18' }}>Six checks. One health score.</h2>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
+          <div className='landing-checks' style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
             {[
               { icon:Clock,       title:'Outdated content',    desc:'Articles not updated in 180+ days. Your instructions may be wrong.' },
               { icon:BookOpen,    title:'Readability score',   desc:'Flesch-Kincaid scoring on every article. Low scores mean customers call instead of reading.' },
@@ -106,8 +106,8 @@ export default function LandingPage() {
       </section>
 
       {/* ── AI ── */}
-      <section style={{ padding:'60px 48px' }}>
-        <div style={{ maxWidth:900, margin:'0 auto', display:'grid', gridTemplateColumns:'1fr 1fr', gap:48, alignItems:'center' }}>
+      <section style={{ padding:'clamp(32px,6vw,60px) clamp(20px,5vw,48px)' }}>
+        <div className='landing-ai' style={{ maxWidth:900, margin:'0 auto', display:'grid', gridTemplateColumns:'1fr 1fr', gap:48, alignItems:'center' }}>
           <div>
             <div style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'4px 12px', borderRadius:100, background:'#FEF9EC', border:'1px solid #F5D98A', marginBottom:16 }}>
               <Zap size={12} style={{ color:'#D97706' }} />
@@ -157,11 +157,11 @@ export default function LandingPage() {
       </section>
 
       {/* ── Pricing ── */}
-      <section id="pricing" style={{ padding:'60px 48px', background:'white', borderTop:'1px solid #E8E8E6' }}>
+      <section id="pricing" style={{ padding:'clamp(32px,6vw,60px) clamp(20px,5vw,48px)', background:'white', borderTop:'1px solid #E8E8E6' }}>
         <div style={{ maxWidth:780, margin:'0 auto' }}>
           <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9B9B98', textAlign:'center', marginBottom:10 }}>Pricing</p>
           <h2 style={{ fontSize:30, fontWeight:800, textAlign:'center', letterSpacing:-0.8, marginBottom:40, color:'#1A1A18' }}>Simple, honest pricing</h2>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+          <div className='landing-pricing' style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
 
             {/* Free */}
             <div style={{ borderRadius:14, padding:'24px', border:'1px solid #E8E8E6', background:'#FAFAF8' }}>
@@ -225,8 +225,8 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ── */}
-      <footer style={{ background:'#1A1A18', padding:'28px 48px 20px' }}>
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+      <footer className='landing-footer' style={{ background:'#1A1A18', padding:'28px 48px 20px' }}>
+        <div className='landing-footer-row' style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
           <div style={{ display:'flex', alignItems:'center', gap:7 }}>
             <div style={{ width:24, height:24, background:'#1B2D5B', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center' }}>
               <Scan size={12} color="white" />

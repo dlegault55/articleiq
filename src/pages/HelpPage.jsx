@@ -30,7 +30,7 @@ const FAQ = ({ q, a }) => {
 export default function HelpPage() {
   usePageTitle('Help & docs')
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto', padding: '28px 24px' }}>
+    <div style={{ maxWidth: 720, margin: '0 auto', padding: 'clamp(16px,4vw,28px) clamp(16px,4vw,24px)' }}>
       <div style={{ marginBottom: 32 }}>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 4, letterSpacing: -0.3 }}>Help & Documentation</h1>
         <p style={{ fontSize: 13, color: 'var(--text-2)' }}>Everything you need to get the most out of ArticleIQ</p>

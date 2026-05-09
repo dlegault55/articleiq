@@ -128,7 +128,7 @@ const TYPE_CONFIG = {
 export default function ReleaseNotesPage() {
   usePageTitle("What's new")
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', padding: '28px 24px' }}>
+    <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(16px,4vw,28px) clamp(16px,4vw,24px)' }}>
       <div style={{ marginBottom: 32 }}>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginBottom: 4, letterSpacing: -0.3 }}>What's New</h1>
         <p style={{ fontSize: 13, color: 'var(--text-2)' }}>Every update, fix, and improvement to ArticleIQ</p>

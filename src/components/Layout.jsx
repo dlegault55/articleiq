@@ -90,7 +90,7 @@ export default function Layout() {
 
   return (
     <div style={{ minHeight:'100vh', background:'var(--bg)' }}>
-      <nav style={{ position:'sticky', top:0, zIndex:100, background:'rgba(247,247,245,0.92)', backdropFilter:'blur(12px)', borderBottom:'1px solid var(--border-md)', padding:'0 24px', height:52, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+      <nav style={{ position:'sticky', top:0, zIndex:100, background:'rgba(247,247,245,0.92)', backdropFilter:'blur(12px)', borderBottom:'1px solid var(--border-md)', padding:'0 clamp(12px,4vw,24px)', height:52, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
 
         {/* Logo */}
         <div style={{ display:'flex', alignItems:'center', gap:7 }}>
