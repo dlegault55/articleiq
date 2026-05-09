@@ -6,7 +6,6 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  // Verify JWT — userId comes from token, not request body
   let auth
   try {
     auth = await requireAuth(req)
@@ -19,35 +18,59 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing required fields' })
   }
 
-  // Hard limit on HTML size — prevent abuse
   if (html.length > 500000) {
     return res.status(400).json({ error: 'Content too large' })
   }
 
   try {
-    // Verify connector belongs to authenticated user (not request body userId)
     const { data: connector } = await supabase
       .from('zendesk_connectors').select('*')
       .eq('id', connectorId).eq('user_id', auth.userId).single()
     if (!connector) return res.status(404).json({ error: 'Connector not found' })
 
-    // Sanitize HTML before publishing
     const safeHtml = sanitizeHtml(html)
 
+    // api_key_encrypted is stored as "email/token:apikey"
+    // Basic auth needs this base64 encoded
     const authHeader = `Basic ${Buffer.from(connector.api_key_encrypted).toString('base64')}`
+    const base = `https://${connector.subdomain}.zendesk.com`
 
-    // Fetch the article's actual locale first — don't assume en-us
-    const articleRes = await fetch(
-      `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${articleId}`,
-      { headers: { Authorization: authHeader } }
+    // Step 1: fetch article to get actual locale
+    const articleRes = await fetch(`${base}/api/v2/help_center/articles/${articleId}`, {
+      headers: { Authorization: authHeader }
+    })
+
+    if (!articleRes.ok) {
+      const txt = await articleRes.text()
+      return res.status(500).json({ error: `Could not fetch article: ${articleRes.status} ${txt.slice(0,200)}` })
+    }
+
+    const articleData = await articleRes.json()
+    const actualLocale = articleData.article?.locale || locale
+    const sourceLocale = articleData.article?.source_locale || actualLocale
+
+    console.log('Article locale:', actualLocale, 'Source locale:', sourceLocale)
+
+    // Step 2: update via translations endpoint using source locale
+    const translationRes = await fetch(
+      `${base}/api/v2/help_center/articles/${articleId}/translations/${sourceLocale}`,
+      {
+        method: 'PUT',
+        headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ translation: { body: safeHtml } }),
+      }
     )
-    const actualLocale = articleRes.ok
-      ? ((await articleRes.json()).article?.locale || locale)
-      : locale
 
-    // Try the direct article update endpoint first, fall back to translations
-    let zdRes = await fetch(
-      `https://${connector.subdomain}.zendesk.com/api/v2/help_center/${actualLocale}/articles/${articleId}`,
+    if (translationRes.ok) {
+      return res.status(200).json({ success: true, method: 'translations', locale: sourceLocale })
+    }
+
+    const translationErr = await translationRes.text()
+    console.log('Translations endpoint failed:', translationRes.status, translationErr)
+
+    // Step 3: try the locale-based article update endpoint
+    const localeRes = await fetch(
+      `${base}/api/v2/help_center/${sourceLocale}/articles/${articleId}`,
       {
         method: 'PUT',
         headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
@@ -55,25 +78,24 @@ export default async function handler(req, res) {
       }
     )
 
-    // If that fails, try the translations endpoint
-    if (!zdRes.ok) {
-      zdRes = await fetch(
-        `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${articleId}/translations/${actualLocale}`,
-        {
-          method: 'PUT',
-          headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ translation: { body: safeHtml } }),
-        }
-      )
+    if (localeRes.ok) {
+      return res.status(200).json({ success: true, method: 'locale', locale: sourceLocale })
     }
 
-    if (!zdRes.ok) {
-      const e = await zdRes.json().catch(() => ({}))
-      const detail = e.error || e.description || e.message || JSON.stringify(e)
-      throw new Error(`Zendesk® ${zdRes.status}: ${detail}`)
-    }
+    const localeErr = await localeRes.text()
+    console.log('Locale endpoint failed:', localeRes.status, localeErr)
 
-    return res.status(200).json({ success: true })
+    // Return detailed error so we can see what Zendesk is actually saying
+    return res.status(500).json({
+      error: `Zendesk® rejected both endpoints`,
+      translationsStatus: translationRes.status,
+      translationsBody: translationErr.slice(0, 500),
+      localeStatus: localeRes.status,
+      localeBody: localeErr.slice(0, 500),
+      articleLocale: actualLocale,
+      sourceLocale,
+    })
+
   } catch (err) {
     console.error('publish-article error:', err.message)
     return res.status(500).json({ error: err.message })
