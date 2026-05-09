@@ -418,6 +418,10 @@ function AIDrawer({ article, connector, onClose }) {
   const runImprove = async () => {
     setImproving(true); setError(null)
     try {
+      // Use the current edited content if user has made changes, otherwise use original
+      const sourceContent = editedText || improved || bodyHtml
+      const sourceTitle   = editedTitle || article.title
+
       // Build a context string from the analysis so the rewrite is targeted
       const qualityCtx = analysis?.quality ? `
 Quality issues to fix:
@@ -429,13 +433,13 @@ ${analysis.seo.issues?.filter(i=>i.impact==='high').map(i=>`- ${i.fix}`).join('\
 ${analysis.seo.title_suggestion ? `Suggested SEO title: ${analysis.seo.title_suggestion}` : ''}` : ''
 
       const result = await callAI('improve', {
-        content: bodyHtml,
-        title: article.title,
+        content: sourceContent,
+        title: sourceTitle,
         analysisContext: qualityCtx + seoCtx,
       })
       setImproved(result)
       setEditedText(result)
-      setEditedTitle(analysis?.seo?.title_suggestion || article.title)
+      setEditedTitle(analysis?.seo?.title_suggestion || sourceTitle)
       setStep('improve')
     } catch (e) {
       setError(e.message)
@@ -673,15 +677,16 @@ ${analysis.seo.title_suggestion ? `Suggested SEO title: ${analysis.seo.title_sug
                 <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--navy)' }}>ArticleIQ Rewrite — click to edit</span>
                 <button onClick={async () => {
                   setError(null)
-                  // Re-run analysis on the improved content so scores reflect the rewrite
-                  const improvedContent = editedText || improved
-                  if (improvedContent) {
+                  // Re-run analysis on the improved/edited content so scores reflect the rewrite
+                  const sourceContent = editedText || improved
+                  const sourceTitle   = editedTitle || article.title
+                  if (sourceContent) {
                     setStep('review')
                     setAnalysing(true)
                     try {
                       const [qualityRaw, seoRaw] = await Promise.all([
-                        callAI('quality', { title: editedTitle || article.title, content: improvedContent, readabilityScore: article.readability_score }),
-                        callAI('seo',     { title: editedTitle || article.title, content: improvedContent }),
+                        callAI('quality', { title: sourceTitle, content: sourceContent, readabilityScore: article.readability_score }),
+                        callAI('seo',     { title: sourceTitle, content: sourceContent }),
                       ])
                       let quality = {}, seo = {}
                       try { quality = JSON.parse(qualityRaw.replace(/```json|```/g,'').trim()) } catch {}
