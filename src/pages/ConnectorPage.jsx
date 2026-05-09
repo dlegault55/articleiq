@@ -96,7 +96,10 @@ function ConnectorCard({ connector, onRemove }) {
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)' }} />
             </div>
             <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0 }}>
-              Connected {connector.created_at ? new Date(connector.created_at).toLocaleDateString() : ''}
+              Connected {connector.created_at ? new Date(connector.created_at).toLocaleDateString() : ''} ·{' '}
+              <span style={{ color: connector.published_only !== false ? 'var(--green)' : 'var(--amber)', fontWeight:600 }}>
+                {connector.published_only !== false ? 'Published only' : 'All articles'}
+              </span>
             </p>
           </div>
         </div>
@@ -154,7 +157,7 @@ export default function ConnectorPage() {
   const [loading,       setLoading]       = useState(true)
   const [saving,        setSaving]        = useState(false)
   const [selectedPlat,  setSelectedPlat]  = useState(null)
-  const [form,          setForm]          = useState({})
+  const [form,          setForm]          = useState({ published_only: true })
 
   const load = async () => {
     if (!userId) return
@@ -176,6 +179,7 @@ export default function ConnectorPage() {
         subdomain: subdomain.replace(/\.zendesk\.com$/, '').trim().toLowerCase(),
         api_key_encrypted: cred,
         is_active: true,
+        published_only: form.published_only !== false,
       })
       if (error) throw new Error(error.message)
       setForm({})
@@ -260,6 +264,19 @@ export default function ConnectorPage() {
                   {hint && <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>{hint}</p>}
                 </div>
               ))}
+            </div>
+
+            {/* Published only toggle */}
+            <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16, padding:'12px 14px', borderRadius:9, border:'1px solid var(--border-md)', background:'var(--bg)', marginBottom:4 }}>
+              <div>
+                <p style={{ fontSize:13, fontWeight:600, color:'var(--text)', marginBottom:2 }}>Published articles only</p>
+                <p style={{ fontSize:11, color:'var(--text-3)', margin:0, lineHeight:1.5 }}>Skip internal and draft articles. Recommended — private articles have auth-protected images and links that trigger false positives in the broken link checker.</p>
+              </div>
+              <button onClick={() => setForm(f => ({ ...f, published_only: !f.published_only }))}
+                style={{ width:40, height:22, borderRadius:11, border:'none', cursor:'pointer', flexShrink:0, transition:'background 0.2s', position:'relative', marginTop:2,
+                  background: form.published_only !== false ? 'var(--navy)' : 'var(--border-md)' }}>
+                <div style={{ position:'absolute', top:2, left: form.published_only !== false ? 20 : 2, width:18, height:18, borderRadius:'50%', background:'white', transition:'left 0.2s', boxShadow:'0 1px 3px rgba(0,0,0,0.15)' }} />
+              </button>
             </div>
 
             {/* Warning about Guide Admin */}

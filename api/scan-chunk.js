@@ -216,9 +216,10 @@ export default async function handler(req, res) {
       ...(page === 1 ? { started_at: now } : {}),
     }).eq('id', scanJobId)
 
-    // Fetch articles from Zendesk
+    // Fetch articles from Zendesk — filter to published only if setting enabled
+    const draftFilter = connector.published_only !== false ? '&draft=false' : ''
     const zdRes = await fetch(
-      `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles?per_page=${PER_PAGE}&page=${page}`,
+      `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles?per_page=${PER_PAGE}&page=${page}${draftFilter}`,
       { headers: { Authorization: authHeader } }
     )
     if (!zdRes.ok) throw new Error(`Zendesk API error ${zdRes.status}`)
