@@ -27,7 +27,7 @@ export default async function handler(req, res) {
 
   // Verify user is Pro for most AI actions (label suggestions are free)
   const { data: profile } = await supabase.from('profiles').select('plan').eq('id', auth.userId).single()
-  if (profile?.plan !== 'paid' && action !== 'labels') {
+  if (profile?.plan !== 'paid' && action !== 'labels' && action !== 'seo') {
     return res.status(403).json({ error: 'AI features require a Pro subscription' })
   }
 
@@ -49,6 +49,14 @@ export default async function handler(req, res) {
       system: `You are a knowledge base manager. Suggest 3-5 short, specific labels or tags for a Zendesk® Help Center article based on its title. Labels should be lowercase, concise (1-3 words), and help customers find the article. Return JSON only: {"labels": ["label1","label2","label3"]}`,
       user: `Article title: ${title}`,
       maxTokens: 256,
+    },
+    seo: {
+      system: `You are an SEO expert specialising in knowledge base and help centre content. Analyse this article for search engine optimisation. Score it 0-100 based on: title length and keyword clarity (ideal 50-60 chars), heading structure (H2/H3 usage), content depth (300+ words for SEO), first paragraph clarity, internal linking signals, and whether the title matches what customers would actually search for. Return JSON only, no markdown: {"score": 0-100, "grade": "A/B/C/D/F", "verdict": "one sentence summary", "issues": [{"issue": "short description", "fix": "specific actionable fix", "impact": "high/medium/low"}], "title_suggestion": "improved SEO title or null if fine"}`,
+      user: `Article title: ${title}
+
+Article content (HTML):
+${content || title}`,
+      maxTokens: 800,
     },
   }
 

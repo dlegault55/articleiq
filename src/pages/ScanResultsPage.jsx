@@ -11,7 +11,7 @@ import {
   ChevronDown, ChevronUp, ExternalLink, Download, Share2, Check,
   ChevronLeft, ChevronRight, Square, CheckSquare,
   Loader, Wand2, RefreshCcw, Star, BookOpen, Type, Clock, Tag,
-  FileText, Link2, Zap, Target, Scan, ImageOff
+  FileText, Link2, Zap, Target, Scan, ImageOff, BarChart2
 } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 import { useEditor, EditorContent } from '@tiptap/react'
@@ -816,12 +816,11 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
     info:     { color:'var(--blue)',  label:'Info'     },
   }
 
-  const runQuality = async () => {
-    if (!isPaid) return
-    setAiLoading('quality'); setAiResult(null)
+  const runInlineAI = async (action) => {
+    setAiLoading(action); setAiResult(null)
     try {
-      const raw = await callAI('quality', { title: article.title })
-      setAiResult({ type: 'quality', data: JSON.parse(raw.replace(/```json|```/g,'').trim()) })
+      const raw = await callAI(action, { title: article.title })
+      setAiResult({ type: action, data: JSON.parse(raw.replace(/```json|```/g,'').trim()) })
     } catch (e) {
       setAiResult({ type: 'error', message: e.message })
     } finally { setAiLoading(null) }
