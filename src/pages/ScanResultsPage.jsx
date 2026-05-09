@@ -357,7 +357,7 @@ function AIDrawer({ article, connector, action, onClose }) {
   }
   const [loading,  setLoading]  = useState(true)
   const [body,     setBody]     = useState('')
-  const [result,   setResult]   = useState('')
+  const [result,   setResult]   = useState(null)
   const [copying,    setCopying]    = useState(false)
   const [publishing,  setPublishing]  = useState(false)
   const [published,   setPublished]   = useState(false)
@@ -527,10 +527,11 @@ function AIDrawer({ article, connector, action, onClose }) {
                     {!loading && result && (() => {
                       let quality, seo
                       try {
-                        const parsed = JSON.parse(result)
-                        quality = JSON.parse(parsed.quality?.replace(/```json|```/g,'').trim() || '{}')
-                        seo     = JSON.parse(parsed.seo?.replace(/```json|```/g,'').trim()     || '{}')
-                      } catch { return <p style={{ color:'var(--red)', fontSize:13 }}>Could not parse results</p> }
+                        const parsed = typeof result === 'string' && result.startsWith('{') ? JSON.parse(result) : {}
+                        quality = typeof parsed.quality === 'string' ? JSON.parse(parsed.quality.replace(/```json|```/g,'').trim()) : (parsed.quality || {})
+                        seo     = typeof parsed.seo     === 'string' ? JSON.parse(parsed.seo.replace(/```json|```/g,'').trim())     : (parsed.seo     || {})
+                        if (!quality.score && !seo.score) throw new Error('empty')
+                      } catch (e) { return <p style={{ color:'var(--red)', fontSize:13 }}>Analysis failed — please try again</p> }
                       return (
                         <div>
                           {/* Quality score */}
@@ -622,7 +623,7 @@ function AIDrawer({ article, connector, action, onClose }) {
                         placeholder="Article title..."
                       />
                     </div>
-                    <WYSIWYGEditor html={editedText || result} onChange={setEditedText} />
+                    <WYSIWYGEditor html={editedText || result || ''} onChange={setEditedText} />
                   </>
                 )}
               </div>
