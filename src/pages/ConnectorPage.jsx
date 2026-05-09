@@ -130,8 +130,11 @@ export default function ConnectorPage() {
 
       {/* Help note */}
       <div style={{ marginTop:20, padding:'12px 14px', borderRadius:9, background:'var(--bg)', border:'1px solid var(--border-md)' }}>
+        <p style={{ fontSize:12, color:'var(--text-3)', margin:0, lineHeight:1.7, marginBottom:8 }}>
+          ArticleIQ uses read-only access for scanning. To use the <strong>Publish to Zendesk®</strong> feature, your API token must belong to a user with <strong>Guide Admin</strong> role — a regular admin token won't have write access to Help Center articles.
+        </p>
         <p style={{ fontSize:12, color:'var(--text-3)', margin:0, lineHeight:1.7 }}>
-          ArticleIQ uses read-only API access. We never modify your articles unless you explicitly copy an AI improvement into Zendesk® yourself. Your API token is stored securely and never exposed.
+          To create a token: Zendesk® Admin Center → Apps & Integrations → APIs → Zendesk® API → API Tokens → Add token. Use your Guide Admin account email when connecting.
         </p>
       </div>
     </div>
