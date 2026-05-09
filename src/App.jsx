@@ -12,6 +12,7 @@ import LandingPage from '@/pages/LandingPage'
 import HelpPage from '@/pages/HelpPage'
 import ReleaseNotesPage from '@/pages/ReleaseNotesPage'
 import SharePage from '@/pages/SharePage'
+import UpgradePage from '@/pages/UpgradePage'
 
 // Error boundary
 class ErrorBoundary extends Component {
