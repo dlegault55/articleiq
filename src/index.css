@@ -158,6 +158,7 @@ a  { color: inherit; text-decoration: none; }
   .landing-footer-row { flex-direction: column !important; gap: 12px !important; align-items: flex-start !important; }
 
   /* General */
+  .roi-grid      { grid-template-columns: 1fr !important; }
   .hide-mobile   { display: none !important; }
   .stack-mobile  { flex-direction: column !important; }
   .full-mobile   { width: 100% !important; }

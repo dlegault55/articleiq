@@ -26,6 +26,103 @@ const COMPARE = [
   { feature: 'Email notifications',        free: false,       pro: true },
 ]
 
+
+function ROICalculator() {
+  const [articles,  setArticles]  = useState(500)
+  const [tickets,   setTickets]   = useState(200)
+  const [kbPct,     setKbPct]     = useState(30)
+  const [costPer,   setCostPer]   = useState(15)
+
+  const kbTickets   = Math.round(tickets * (kbPct / 100))
+  const deflectable = Math.round(kbTickets * 0.25) // conservative 25% deflectable with good KB
+  const savings     = deflectable * costPer
+  const cost        = 99
+  const net         = savings - cost
+  const roi         = cost > 0 ? Math.round((net / cost) * 100) : 0
+
+  const Slider = ({ label, value, min, max, step = 1, onChange, format = v => v }) => (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)' }}>{label}</span>
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--navy)' }}>{format(value)}</span>
+      </div>
+      <input type="range" min={min} max={max} step={step} value={value}
+        onChange={e => onChange(Number(e.target.value))}
+        style={{ width: '100%', accentColor: 'var(--navy)', cursor: 'pointer' }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 10, color: 'var(--text-3)' }}>{format(min)}</span>
+        <span style={{ fontSize: 10, color: 'var(--text-3)' }}>{format(max)}</span>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="card" style={{ overflow: 'hidden' }}>
+      <div className='roi-grid' style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
+
+        {/* Inputs */}
+        <div style={{ padding: '20px', borderRight: '1px solid var(--border)' }}>
+          <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-3)', marginBottom: 16 }}>Your numbers</p>
+          <Slider label="Articles in your KB" value={articles} min={50} max={5000} step={50}
+            onChange={setArticles} format={v => v.toLocaleString()} />
+          <Slider label="Support tickets per month" value={tickets} min={50} max={5000} step={50}
+            onChange={setTickets} format={v => v.toLocaleString()} />
+          <Slider label="Tickets caused by bad KB content" value={kbPct} min={5} max={60} step={5}
+            onChange={setKbPct} format={v => `${v}%`} />
+          <Slider label="Cost per support ticket" value={costPer} min={5} max={50} step={1}
+            onChange={setCostPer} format={v => `$${v}`} />
+          <p style={{ fontSize: 10, color: 'var(--text-3)', lineHeight: 1.6, margin: 0 }}>
+            Industry average: 30% of tickets are KB-related · $15 avg ticket cost · 25% deflection rate with a healthy KB
+          </p>
+        </div>
+
+        {/* Results */}
+        <div style={{ padding: '20px', background: net > 0 ? 'var(--navy)' : 'var(--bg)' }}>
+          <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: net > 0 ? 'rgba(255,255,255,0.5)' : 'var(--text-3)', marginBottom: 16 }}>
+            Estimated monthly impact
+          </p>
+
+          {/* Key metrics */}
+          {[
+            { label: 'KB-related tickets/mo', value: kbTickets.toLocaleString(), sub: `${kbPct}% of ${tickets.toLocaleString()} total` },
+            { label: 'Deflectable with good KB', value: deflectable.toLocaleString(), sub: '25% conservative estimate' },
+            { label: 'Cost of those tickets', value: `$${(kbTickets * costPer).toLocaleString()}`, sub: `at $${costPer} per ticket` },
+          ].map(({ label, value, sub }) => (
+            <div key={label} style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, color: net > 0 ? 'rgba(255,255,255,0.5)' : 'var(--text-3)', marginBottom: 2 }}>{label}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: net > 0 ? 'white' : 'var(--text)', letterSpacing: -0.5 }}>{value}</div>
+              <div style={{ fontSize: 10, color: net > 0 ? 'rgba(255,255,255,0.35)' : 'var(--text-3)' }}>{sub}</div>
+            </div>
+          ))}
+
+          <div style={{ height: 1, background: net > 0 ? 'rgba(255,255,255,0.15)' : 'var(--border)', margin: '14px 0' }} />
+
+          {/* Net savings */}
+          <div style={{ marginBottom: 6 }}>
+            <div style={{ fontSize: 11, color: net > 0 ? 'rgba(255,255,255,0.5)' : 'var(--text-3)', marginBottom: 4 }}>
+              Ticket savings − ArticleIQ Pro ($99/mo)
+            </div>
+            <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: -1, color: net > 0 ? '#4ade80' : 'var(--text-3)' }}>
+              {net >= 0 ? '+' : ''}${net.toLocaleString()}<span style={{ fontSize: 14, fontWeight: 500 }}>/mo</span>
+            </div>
+          </div>
+
+          {net > 0 && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 100, background: 'rgba(255,255,255,0.12)', marginBottom: 12 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'white' }}>{roi}% ROI</span>
+              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>on your $99 investment</span>
+            </div>
+          )}
+
+          <p style={{ fontSize: 10, color: net > 0 ? 'rgba(255,255,255,0.3)' : 'var(--text-3)', lineHeight: 1.6, margin: 0 }}>
+            Conservative estimate based on 25% deflection rate. Real impact varies by KB quality and customer self-service behaviour.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function UpgradePage() {
   usePageTitle('Upgrade to Pro')
   const navigate  = useNavigate()
