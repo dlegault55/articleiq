@@ -771,7 +771,7 @@ function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve }) 
           background: resolved ? 'var(--green-light)' : 'white',
           color: resolved ? 'var(--green)' : 'var(--text-3)',
         }}>
-          {resolved ? <><CheckCircle size={11}/> Resolved</> : <><Square size={11}/> Mark resolved</>}
+          {resolved ? <><CheckCircle size={11}/> Reviewed</> : <><Square size={11}/> Mark reviewed</>}
         </button>
       </div>
     </div>
@@ -1017,7 +1017,7 @@ export default function ScanResultsPage() {
   const [articles, setArticles] = useState([])
   const [issues,   setIssues]   = useState([])
   const [loading,  setLoading]  = useState(true)
-  const [filter,   setFilter]   = useState('all')
+  const [filter,   setFilter]   = useState('critical')
   const [sort,     setSort]     = useState('severity')
   const [page,     setPage]     = useState(1)
   const [exporting,setExporting]= useState(false)
@@ -1088,10 +1088,10 @@ export default function ScanResultsPage() {
 
   const filterOpts = [
     { key:'all',      label:'All',         count: articles.length },
-    { key:'issues',   label:'Has issues',  count: articles.filter(a => issues.some(i=>i.article_id===a.id && !resolvedIssues.has(i.id))).length },
+    { key:'issues',   label:'Needs review', count: articles.filter(a => issues.some(i=>i.article_id===a.id && !resolvedIssues.has(i.id))).length },
     { key:'critical', label:'Critical',    count: articles.filter(a => issues.some(i=>i.article_id===a.id && i.severity==='critical' && !resolvedIssues.has(i.id))).length },
     { key:'clean',    label:'Clean',       count: articles.filter(a => !issues.some(i=>i.article_id===a.id)).length },
-    { key:'resolved', label:'Resolved',    count: articles.filter(a => { const ai = issues.filter(i=>i.article_id===a.id); return ai.length > 0 && ai.every(i=>resolvedIssues.has(i.id)) }).length },
+    { key:'reviewed', label:'Reviewed',    count: articles.filter(a => { const ai = issues.filter(i=>i.article_id===a.id); return ai.length > 0 && ai.every(i=>resolvedIssues.has(i.id)) }).length },
   ]
 
   const filtered = articles
@@ -1099,9 +1099,9 @@ export default function ScanResultsPage() {
       const ai      = issues.filter(i => i.article_id===a.id)
       const unrec   = ai.filter(i => !resolvedIssues.has(i.id))
       const allRes  = ai.length > 0 && ai.every(i => resolvedIssues.has(i.id))
-      if (filter==='resolved') return allRes
-      if (allRes) return false
-      if (filter==='all')      return true
+      if (filter==='reviewed') return allRes
+      if (allRes && filter !== 'reviewed') return false
+      if (filter==='all')      return !allRes
       if (filter==='issues')   return unrec.length > 0
       if (filter==='critical') return unrec.some(i=>i.severity==='critical')
       if (filter==='clean')    return ai.length === 0
@@ -1110,12 +1110,16 @@ export default function ScanResultsPage() {
     .sort((a, b) => {
       const ai = issues.filter(i=>i.article_id===a.id && !resolvedIssues.has(i.id))
       const bi = issues.filter(i=>i.article_id===b.id && !resolvedIssues.has(i.id))
+      // Critical always first regardless of sort
+      const aCrit = ai.some(i=>i.severity==='critical')
+      const bCrit = bi.some(i=>i.severity==='critical')
+      if (aCrit && !bCrit) return -1
+      if (!aCrit && bCrit) return 1
       if (sort==='severity') {
         const sev = x => x.some(i=>i.severity==='critical') ? 0 : x.some(i=>i.severity==='warning') ? 1 : x.length ? 2 : 3
         return sev(ai) - sev(bi)
       }
-      if (sort==='readability') return (a.readability_score||0) - (b.readability_score||0)
-      if (sort==='words')       return (a.word_count||0) - (b.word_count||0)
+      if (sort==='words') return (a.word_count||0) - (b.word_count||0)
       return 0
     })
 
@@ -1340,7 +1344,6 @@ export default function ScanResultsPage() {
         <select value={sort} onChange={e => setSort(e.target.value)} className="input"
           style={{ width:'auto', padding:'6px 10px', fontSize:13 }}>
           <option value="severity">Sort by severity</option>
-          <option value="readability">Sort by readability</option>
           <option value="words">Sort by word count</option>
         </select>
       </div>
