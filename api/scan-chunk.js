@@ -82,9 +82,9 @@ const analyzeArticle = (article, checks) => {
 
   if (checks.wordCount) {
     if (wordCount < 50)
-      issues.push({ severity: 'critical', issue_type: 'low_word_count', description: `Very thin content — only ${wordCount} words. Unlikely to help customers.`, metadata: { wordCount } })
+      issues.push({ severity: 'warning', issue_type: 'low_word_count', description: `Very short article — only ${wordCount} words. May not have enough detail to help customers, but could be intentional (e.g. redirect or notice).`, metadata: { wordCount } })
     else if (wordCount < 150)
-      issues.push({ severity: 'warning', issue_type: 'low_word_count', description: `Short article (${wordCount} words). Consider adding more detail.`, metadata: { wordCount } })
+      issues.push({ severity: 'warning', issue_type: 'low_word_count', description: `Short article (${wordCount} words). Consider adding more detail if this is a how-to or troubleshooting guide.`, metadata: { wordCount } })
   }
 
   if (checks.outdated && daysSince > 180)
