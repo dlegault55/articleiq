@@ -452,7 +452,8 @@ function AIDrawer({ article, connector, action, onClose }) {
           .article-html ul, .article-html ol { padding-left:20px; margin:8px 0; }
           .article-html li { font-size:13px; line-height:1.7; margin-bottom:4px; }
           .article-html a  { color:var(--green); text-decoration:underline; }
-          .article-html img { max-width:100%; border-radius:6px; margin:8px 0; border:1px solid var(--border); }
+          .article-html img { max-width:100% !important; width:auto !important; height:auto !important; border-radius:6px; margin:8px 0; display:block; border:1px solid var(--border); }
+          .ProseMirror img { max-width:100% !important; width:auto !important; height:auto !important; border-radius:6px; margin:8px 0; display:block; }
           .article-html code { font-family:monospace; font-size:12px; background:var(--bg); padding:1px 5px; border-radius:3px; }
           .article-html pre { background:var(--bg); padding:12px; border-radius:8px; overflow-x:auto; font-size:12px; margin:10px 0; }
           .article-html table { width:100%; border-collapse:collapse; font-size:13px; margin:10px 0; }
@@ -1010,42 +1011,11 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
                       <p style={{ fontSize:13, fontWeight:700, color:'var(--text)', margin:'0 0 3px' }}>{label}</p>
                       <p style={{ fontSize:12, color:'var(--text-2)', margin:0, lineHeight:1.6 }}>{desc}</p>
                     </div>
-                    {action === 'quality' ? (
-                      <button onClick={() => runInlineAI(action)} disabled={!!aiLoading}
-                        className="btn btn-secondary btn-sm" style={{ flexShrink:0 }}>
-                        {aiLoading === 'quality' ? <Loader size={12} style={{ animation:'spin 0.7s linear infinite' }} /> : <Star size={12} />}
-                        Run score
-                      </button>
-                    ) : (
-                      <button onClick={() => isPaid && onOpenDrawer(action)} disabled={!isPaid}
-                        className="btn btn-secondary btn-sm" style={{ flexShrink:0 }}>
-                        <Icon size={12} /> Open editor
-                      </button>
-                    )}
+                    <button onClick={() => isPaid && onOpenDrawer(action)} disabled={!isPaid}
+                      className="btn btn-secondary btn-sm" style={{ flexShrink:0 }}>
+                      <Icon size={12} /> Open
+                    </button>
                   </div>
-
-                  {/* Quality score result inline */}
-                  {action === 'quality' && aiResult?.type === 'quality' && (
-                    <div style={{ padding:'12px 16px', borderTop:'1px solid var(--border)', background:'var(--green-light)' }}>
-                      <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:8 }}>
-                        <div style={{ textAlign:'center', flexShrink:0 }}>
-                          <div style={{ fontSize:32, fontWeight:800, color:'var(--green)', lineHeight:1 }}>{aiResult.data.score}</div>
-                          <div style={{ fontSize:10, color:'var(--text-3)' }}>/100</div>
-                        </div>
-                        <p style={{ fontSize:13, color:'var(--text-2)', margin:0, lineHeight:1.6 }}>{aiResult.data.verdict}</p>
-                      </div>
-                      {aiResult.data.suggestions?.map((s,i) => (
-                        <div key={i} style={{ fontSize:12, color:'var(--text-2)', display:'flex', gap:6, marginBottom:4 }}>
-                          <span style={{ color:'var(--green)', flexShrink:0 }}>→</span>{s}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {action === 'quality' && aiResult?.type === 'error' && (
-                    <div style={{ padding:'10px 16px', borderTop:'1px solid var(--border)', background:'var(--red-light)' }}>
-                      <p style={{ fontSize:12, color:'var(--red)', margin:0 }}>{aiResult.message}</p>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
