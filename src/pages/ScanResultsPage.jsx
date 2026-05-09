@@ -659,8 +659,29 @@ ${analysis.seo.title_suggestion ? `Suggested SEO title: ${analysis.seo.title_sug
             <>
               <div style={{ padding:'8px 18px', background:'var(--navy-light)', borderBottom:'1px solid var(--navy-border)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                 <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--navy)' }}>ArticleIQ Rewrite — click to edit</span>
-                <button onClick={() => { setStep('review'); setError(null) }} className="btn btn-ghost btn-xs" style={{ color:'var(--text-3)', fontSize:11 }}>
-                  ← Back to analysis
+                <button onClick={async () => {
+                  setError(null)
+                  // Re-run analysis on the improved content so scores reflect the rewrite
+                  const improvedContent = editedText || improved
+                  if (improvedContent) {
+                    setStep('review')
+                    setAnalysing(true)
+                    try {
+                      const [qualityRaw, seoRaw] = await Promise.all([
+                        callAI('quality', { title: editedTitle || article.title, content: improvedContent, readabilityScore: article.readability_score }),
+                        callAI('seo',     { title: editedTitle || article.title, content: improvedContent }),
+                      ])
+                      let quality = {}, seo = {}
+                      try { quality = JSON.parse(qualityRaw.replace(/```json|```/g,'').trim()) } catch {}
+                      try { seo     = JSON.parse(seoRaw.replace(/```json|```/g,'').trim())     } catch {}
+                      setAnalysis({ quality, seo })
+                    } catch (e) { setFetchErr(e.message) }
+                    finally { setAnalysing(false) }
+                  } else {
+                    setStep('review')
+                  }
+                }} className="btn btn-ghost btn-xs" style={{ color:'var(--text-3)', fontSize:11 }}>
+                  ← Re-analyse improved version
                 </button>
               </div>
               <div style={{ padding:'12px 18px', borderBottom:'1px solid var(--border)', flexShrink:0, background:'white' }}>
