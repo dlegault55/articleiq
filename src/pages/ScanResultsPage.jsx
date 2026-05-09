@@ -673,33 +673,8 @@ ${analysis.seo.title_suggestion ? `Suggested SEO title: ${analysis.seo.title_sug
           {/* Step: improve — editable result */}
           {step === 'improve' && (
             <>
-              <div style={{ padding:'8px 18px', background:'var(--navy-light)', borderBottom:'1px solid var(--navy-border)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <div style={{ padding:'8px 18px', background:'var(--navy-light)', borderBottom:'1px solid var(--navy-border)', flexShrink:0 }}>
                 <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--navy)' }}>ArticleIQ Rewrite — click to edit</span>
-                <button onClick={async () => {
-                  setError(null)
-                  // Re-run analysis on the improved/edited content so scores reflect the rewrite
-                  const sourceContent = editedText || improved
-                  const sourceTitle   = editedTitle || article.title
-                  if (sourceContent) {
-                    setStep('review')
-                    setAnalysing(true)
-                    try {
-                      const [qualityRaw, seoRaw] = await Promise.all([
-                        callAI('quality', { title: sourceTitle, content: sourceContent, readabilityScore: article.readability_score }),
-                        callAI('seo',     { title: sourceTitle, content: sourceContent }),
-                      ])
-                      let quality = {}, seo = {}
-                      try { quality = JSON.parse(qualityRaw.replace(/```json|```/g,'').trim()) } catch {}
-                      try { seo     = JSON.parse(seoRaw.replace(/```json|```/g,'').trim())     } catch {}
-                      setAnalysis({ quality, seo })
-                    } catch (e) { setFetchErr(e.message) }
-                    finally { setAnalysing(false) }
-                  } else {
-                    setStep('review')
-                  }
-                }} className="btn btn-ghost btn-xs" style={{ color:'var(--text-3)', fontSize:11 }}>
-                  ← Re-analyse improved version
-                </button>
               </div>
               <div style={{ padding:'12px 18px', borderBottom:'1px solid var(--border)', flexShrink:0, background:'white' }}>
                 <p style={{ fontSize:10, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 4px' }}>Title</p>
@@ -739,20 +714,40 @@ ${analysis.seo.title_suggestion ? `Suggested SEO title: ${analysis.seo.title_sug
             </div>
           )}
           {error && <p style={{ fontSize:11, color:'var(--red)', marginBottom:8 }}>{error}</p>}
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-            <p style={{ fontSize:11, color:'var(--text-3)', margin:0 }}>
-              {confirmPub ? 'Confirm to publish to Zendesk®' : 'Review edits, then copy or publish directly'}
-            </p>
-            <div style={{ display:'flex', gap:8 }}>
-              <button onClick={onClose} className="btn btn-ghost btn-sm">Close</button>
-              <button onClick={copy} className="btn btn-secondary btn-sm">
-                {copying ? <><Check size={12} /> Copied!</> : <><CheckSquare size={12} /> Copy text</>}
-              </button>
-              <button onClick={publish} disabled={publishing} className="btn btn-primary btn-sm" style={{ background: confirmPub ? 'var(--amber)' : 'var(--navy)' }}>
-                {publishing ? <Loader size={12} style={{ animation:'spin 0.7s linear infinite' }} /> : confirmPub ? <AlertTriangle size={12} /> : <ExternalLink size={12} />}
-                {publishing ? 'Publishing...' : confirmPub ? 'Yes, publish' : 'Publish to Zendesk®'}
-              </button>
-            </div>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            {/* Re-analyse — first action */}
+            <button onClick={async () => {
+              setError(null)
+              const sourceContent = editedText || improved
+              const sourceTitle   = editedTitle || article.title
+              if (!sourceContent) { setStep('review'); return }
+              setStep('review'); setAnalysing(true)
+              try {
+                const [qualityRaw, seoRaw] = await Promise.all([
+                  callAI('quality', { title: sourceTitle, content: sourceContent, readabilityScore: article.readability_score }),
+                  callAI('seo',     { title: sourceTitle, content: sourceContent }),
+                ])
+                let quality = {}, seo = {}
+                try { quality = JSON.parse(qualityRaw.replace(/```json|```/g,'').trim()) } catch {}
+                try { seo     = JSON.parse(seoRaw.replace(/```json|```/g,'').trim())     } catch {}
+                setAnalysis({ quality, seo })
+              } catch (e) { setFetchErr(e.message) }
+              finally { setAnalysing(false) }
+            }} className="btn btn-secondary btn-sm">
+              <BarChart2 size={12} /> Re-analyse
+            </button>
+
+            <div style={{ flex:1 }} />
+
+            {/* Copy + Publish */}
+            <button onClick={onClose} className="btn btn-ghost btn-sm">Close</button>
+            <button onClick={copy} className="btn btn-secondary btn-sm">
+              {copying ? <><Check size={12} /> Copied!</> : <><CheckSquare size={12} /> Copy text</>}
+            </button>
+            <button onClick={publish} disabled={publishing} className="btn btn-primary btn-sm" style={{ background: confirmPub ? 'var(--amber)' : 'var(--navy)' }}>
+              {publishing ? <Loader size={12} style={{ animation:'spin 0.7s linear infinite' }} /> : confirmPub ? <AlertTriangle size={12} /> : <ExternalLink size={12} />}
+              {publishing ? 'Publishing...' : confirmPub ? 'Yes, publish' : 'Publish to Zendesk®'}
+            </button>
           </div>
         </div>
       )}
