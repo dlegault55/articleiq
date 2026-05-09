@@ -724,6 +724,105 @@ ${analysis.seo.title_suggestion ? `Suggested SEO title: ${analysis.seo.title_sug
 
 // ─── AI Panel ──────────────────────────────────────────────────
 
+// ─── Issue card ───────────────────────────────────────────────
+function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve }) {
+  const [suggesting,   setSuggesting]   = useState(false)
+  const [labels,       setLabels]       = useState(null)
+  const [publishing,   setPublishing]   = useState(null)
+  const [published,    setPublished]    = useState(new Set())
+
+  const suggestLabels = async () => {
+    setSuggesting(true)
+    try {
+      const raw  = await callAI('labels', { title: article.title })
+      const data = JSON.parse(raw.replace(/```json|```/g, '').trim())
+      setLabels(data.labels || [])
+    } catch (e) { setLabels([`Error: ${e.message}`]) }
+    finally { setSuggesting(false) }
+  }
+
+  const publishLabel = async (label) => {
+    if (!connector) { navigator.clipboard.writeText(label); return }
+    setPublishing(label)
+    try {
+      const res = await apiFetch('/api/publish-labels', {
+        method: 'POST',
+        body: JSON.stringify({ connectorId: connector.id, articleId: article.zendesk_article_id, labels: [label] }),
+      })
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error) }
+      setPublished(prev => new Set([...prev, label]))
+    } catch (e) {
+      navigator.clipboard.writeText(label)
+      alert(`Couldn't publish — copied to clipboard. Error: ${e.message}`)
+    } finally { setPublishing(null) }
+  }
+
+  return (
+    <div style={{ background:'white', border:'1px solid var(--border-md)', borderLeft:`3px solid ${resolved ? 'var(--border-strong)' : s.color}`, borderRadius:9, overflow:'hidden', opacity: resolved ? 0.5 : 1, transition:'opacity 0.2s' }}>
+      <div style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'12px 14px' }}>
+        <div style={{ width:30, height:30, borderRadius:7, background:'var(--bg)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+          <Icon size={14} style={{ color: resolved ? 'var(--text-3)' : s.color }} />
+        </div>
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
+            <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color: resolved ? 'var(--text-3)' : s.color }}>{s.label}</span>
+            <span style={{ fontSize:13, fontWeight:700, color: resolved ? 'var(--text-3)' : 'var(--text)', textTransform:'capitalize' }}>{issue.issue_type.replace(/_/g,' ')}</span>
+          </div>
+          <p style={{ fontSize:12, color:'var(--text-2)', margin:0, lineHeight:1.65 }}>{issue.description}</p>
+
+          {issue.issue_type === 'missing_labels' && !resolved && (
+            <div style={{ marginTop:10 }}>
+              {!labels && (
+                <button onClick={suggestLabels} disabled={suggesting}
+                  style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'5px 10px', borderRadius:6, border:'1px solid var(--border-md)', background:'var(--bg)', cursor:'pointer', fontSize:11, fontWeight:600, color:'var(--text-2)', fontFamily:'inherit' }}>
+                  {suggesting ? <><Loader size={10} style={{ animation:'spin 0.7s linear infinite' }} /> Suggesting...</> : <><Tag size={10} /> Suggest labels</>}
+                </button>
+              )}
+              {labels?.length > 0 && (
+                <div>
+                  <p style={{ fontSize:10, fontWeight:700, color:'var(--text-3)', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' }}>
+                    {connector ? 'Click to publish to Zendesk®' : 'Click to copy'}
+                  </p>
+                  <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
+                    {labels.map(label => {
+                      const isPublished = published.has(label)
+                      const isLoading   = publishing === label
+                      return (
+                        <button key={label} onClick={() => publishLabel(label)} disabled={isLoading || isPublished}
+                          style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 10px', borderRadius:100, fontSize:11, fontWeight:600, cursor: isPublished ? 'default' : 'pointer', fontFamily:'inherit', transition:'all 0.15s',
+                            background: isPublished ? 'var(--green-light)' : 'var(--navy-light)',
+                            border: `1px solid ${isPublished ? 'var(--green-border)' : 'var(--navy-border)'}`,
+                            color: isPublished ? 'var(--green)' : 'var(--navy)',
+                          }}>
+                          {isLoading && <Loader size={9} style={{ animation:'spin 0.7s linear infinite' }} />}
+                          {isPublished && <CheckCircle size={9} />}
+                          {label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <p style={{ fontSize:10, color:'var(--text-3)', marginTop:5 }}>
+                    {connector ? 'Labels added immediately — existing labels preserved' : 'Add labels in Zendesk®'}
+                  </p>
+                </div>
+              )}
+              {labels !== null && labels.length === 0 && (
+                <p style={{ fontSize:11, color:'var(--text-3)', marginTop:6 }}>Couldn't suggest labels.</p>
+              )}
+            </div>
+          )}
+        </div>
+        <button onClick={onResolve} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 10px', borderRadius:6, border:'1px solid var(--border-md)', cursor:'pointer', fontSize:11, fontWeight:600, flexShrink:0, whiteSpace:'nowrap', fontFamily:'inherit',
+          background: resolved ? 'var(--green-light)' : 'white',
+          color: resolved ? 'var(--green)' : 'var(--text-3)',
+        }}>
+          {resolved ? <><CheckCircle size={11}/> Reviewed</> : <><Square size={11}/> Mark reviewed</>}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 const AI_ACTIONS = [
   {
     key: 'analyse',
