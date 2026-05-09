@@ -583,7 +583,7 @@ function AIPanel({ article, isPaid, connector, onOpenDrawer }) {
   const [loading, setLoading] = useState(null)
   const [result,  setResult]  = useState(null)
 
-  const runQuality = async () => {
+  const runQualityInPanel = async () => {
     if (!isPaid) return
     setLoading('quality'); setResult(null)
     try {
@@ -633,7 +633,7 @@ function AIPanel({ article, isPaid, connector, onOpenDrawer }) {
           <span style={{ fontSize:9, opacity:0.7 }}>↗</span>
         </button>
         {/* Quality score stays inline */}
-        <button onClick={runQuality} disabled={!!loading}
+        <button onClick={runQualityInPanel} disabled={!!loading}
           style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 10px', borderRadius:7, border:'none', cursor:'pointer', fontSize:12, fontWeight:600,
             background: loading==='quality' ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.15)', color:'white' }}>
           {loading==='quality' ? <Loader size={11} style={{ animation:'spin 0.7s linear infinite' }} /> : <Star size={11} />}
@@ -936,7 +936,7 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
                       <p style={{ fontSize:12, color:'var(--text-2)', margin:0, lineHeight:1.6 }}>{desc}</p>
                     </div>
                     {action === 'quality' ? (
-                      <button onClick={runQuality} disabled={!isPaid || aiLoading === 'quality'}
+                      <button onClick={() => runInlineAI(action)} disabled={!!aiLoading}
                         className="btn btn-secondary btn-sm" style={{ flexShrink:0 }}>
                         {aiLoading === 'quality' ? <Loader size={12} style={{ animation:'spin 0.7s linear infinite' }} /> : <Star size={12} />}
                         Run score
