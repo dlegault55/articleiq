@@ -11,7 +11,7 @@ import {
   ChevronDown, ChevronUp, ExternalLink, Download, Share2, Check,
   ChevronLeft, ChevronRight, Square, CheckSquare,
   Loader, Wand2, RefreshCcw, Star, BookOpen, Type, Clock, Tag,
-  FileText, Link2, Zap, Target, Scan
+  FileText, Link2, Zap, Target, Scan, ImageOff
 } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 import { useEditor, EditorContent } from '@tiptap/react'
@@ -30,6 +30,7 @@ const ISSUE_ICONS = {
   missing_section:   FileText,
   missing_metadata:  FileText,
   broken_link:       Link2,
+  broken_image:      ImageOff,
   duplicate_content: CheckSquare,
   missing_title:     FileText,
 }

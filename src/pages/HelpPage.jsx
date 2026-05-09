@@ -84,7 +84,7 @@ export default function HelpPage() {
         <Check icon={BookOpen}  severity="warning"  title="Readability score"  desc="Uses the Flesch-Kincaid formula (0–100). Below 50 is flagged as a warning — readability affects how easy articles are to follow, but doesn't mean the content is wrong. Note: readability and AI Quality Score measure different things — an article can have low readability but a high quality score. Readability measures how easy the writing is to follow; Quality Score measures structure, completeness, and usefulness. Use Improve Article to simplify language without changing the content." />
         <Check icon={Tag}       severity="warning"  title="Missing labels"     desc="Articles with no tags assigned. Makes them harder to find and manage. Use Suggest Labels to get AI-powered tag ideas." />
         <Check icon={Copy}      severity="warning"  title="Duplicate detection" desc="Compares article titles using similarity scoring (85%+ match). Good for catching near-duplicate titles — does not compare article body content." />
-        <Check icon={Link2}     severity="critical" title="Broken links"       desc="Checks hyperlinks inside articles and flags dead links as critical — a customer clicking a broken link gets nothing. Enabled by default. Can slow down scans on very large knowledge bases." />
+        <Check icon={Link2}     severity="critical" title="Broken links"       desc="Checks hyperlinks and images inside articles. Dead links and broken images are flagged as critical — a customer clicking a broken link gets nothing. Enabled by default. Can slow down scans on very large knowledge bases." />
       </div>
 
       {/* AI features */}

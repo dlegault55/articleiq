@@ -33,14 +33,20 @@ const countWords = (html) => {
 
 const checkBrokenLinks = async (html) => {
   if (!html) return []
-  const matches = [...html.matchAll(/href=["']([^"']+)["']/g)]
-  const urls = [...new Set(matches.map(m => m[1]).filter(u => u.startsWith('http')))]
+  // Collect both href links and img src URLs
+  const linkMatches = [...html.matchAll(/href=["']([^"']+)["']/g)].map(m => ({ url: m[1], type: 'link' }))
+  const imgMatches  = [...html.matchAll(/src=["']([^"']+)["']/g)].map(m => ({ url: m[1], type: 'image' }))
+  const all = [...linkMatches, ...imgMatches]
+    .filter(({ url }) => url.startsWith('http'))
+    .filter(({ url }, i, arr) => arr.findIndex(a => a.url === url) === i) // dedupe
+    .slice(0, 15) // cap at 15 per article
+
   const broken = []
-  await Promise.all(urls.slice(0, 10).map(async (url) => { // cap at 10 per article
+  await Promise.all(all.map(async ({ url, type }) => {
     try {
       const res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(5000) })
-      if (res.status >= 400) broken.push(url)
-    } catch { broken.push(url) }
+      if (res.status >= 400) broken.push({ url, type })
+    } catch { broken.push({ url, type }) }
   }))
   return broken
 }
@@ -223,13 +229,15 @@ export default async function handler(req, res) {
 
       // Broken links check (async — runs after article saved)
       if (checks.links && analysis.checkLinks && saved) {
-        const brokenLinks = await checkBrokenLinks(article.body || '')
-        for (const url of brokenLinks) {
+        const broken = await checkBrokenLinks(article.body || '')
+        for (const { url, type } of broken) {
           analysis.issues.push({
             severity: 'critical',
-            issue_type: 'broken_link',
-            description: `Broken link found: ${url}`,
-            metadata: { url },
+            issue_type: type === 'image' ? 'broken_image' : 'broken_link',
+            description: type === 'image'
+              ? `Broken image: ${url} — customers will see a broken image icon instead of the screenshot or diagram.`
+              : `Broken link: ${url} — customers clicking this will reach a dead end.`,
+            metadata: { url, type },
           })
         }
       }
