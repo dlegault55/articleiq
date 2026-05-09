@@ -19,10 +19,10 @@ const PLATFORMS = [
       { key: 'api_key',   label: 'API token', placeholder: 'Paste your API token here', hint: 'Admin Center → Apps & Integrations → APIs → Zendesk® API → API Tokens', type: 'password' },
     ],
   },
-  { id: 'helpscout', name: 'Help Scout', logo: '🔭', description: 'Scan your Docs knowledge base', available: false },
-  { id: 'notion',    name: 'Notion',     logo: '📝', description: 'Scan your Notion wiki', available: false },
-  { id: 'confluence',name: 'Confluence', logo: '🔷', description: 'Scan your Confluence space', available: false },
-  { id: 'intercom',  name: 'Intercom',   logo: '💬', description: 'Scan your Articles', available: false },
+  { id: 'helpscout', name: 'Help Scout', description: 'Scan your Docs knowledge base', available: false },
+  { id: 'notion',    name: 'Notion',     description: 'Scan your Notion wiki', available: false },
+  { id: 'confluence',name: 'Confluence', description: 'Scan your Confluence space', available: false },
+  { id: 'intercom',  name: 'Intercom',   description: 'Scan your Articles', available: false },
 ]
 
 function TokenGuide() {
@@ -220,7 +220,9 @@ export default function ConnectorPage() {
                 }}
                 onMouseEnter={e => p.available && (e.currentTarget.style.borderColor = 'var(--navy-border)')}
                 onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-md)'}>
-                <span style={{ fontSize: 20 }}>{p.logo}</span>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: p.available ? 'var(--navy-light)' : 'var(--bg)', border: `1px solid ${p.available ? 'var(--navy-border)' : 'var(--border-md)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Plug size={15} style={{ color: p.available ? 'var(--navy)' : 'var(--text-3)' }} />
+                </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: '0 0 1px' }}>{p.name}</p>
                   <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.description}</p>
@@ -239,7 +241,7 @@ export default function ConnectorPage() {
         <div className="animate-in">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 18 }}>🎫</span>
+              <div style={{ width: 28, height: 28, borderRadius: 7, background: 'var(--navy-light)', border: '1px solid var(--navy-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plug size={13} style={{ color: 'var(--navy)' }} /></div>
               <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Connect Zendesk®</p>
             </div>
             <button onClick={() => { setSelectedPlat(null); setForm({}) }} className="btn btn-ghost btn-xs" style={{ color: 'var(--text-3)' }}>Cancel</button>
