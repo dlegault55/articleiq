@@ -93,7 +93,7 @@ Return this exact JSON structure:
 
 Suggestions must be specific — not "improve clarity" but "the third step is ambiguous — specify which button to click and where it appears in the UI".`,
       user: `Article title: ${title}${readabilityScore != null ? `\nFlesch-Kincaid readability score: ${readabilityScore}/100 (note: scores below 50 suggest difficult reading level)` : ''}\n\nArticle content (HTML):\n${content || '(no content provided)'}`,
-      maxTokens: 600,
+      maxTokens: 1200,
     },
     labels: {
       system: `You are a knowledge base manager. Suggest 3-5 short, specific labels or tags for a Zendesk® Help Center article based on its title. Labels should be lowercase, concise (1-3 words), and help customers find the article. Return JSON only: {"labels": ["label1","label2","label3"]}`,
@@ -106,7 +106,7 @@ Suggestions must be specific — not "improve clarity" but "the third step is am
 
 Article content (HTML):
 ${content || title}`,
-      maxTokens: 800,
+      maxTokens: 1000,
     },
   }
 

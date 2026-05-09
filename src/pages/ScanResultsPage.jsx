@@ -399,8 +399,10 @@ function AIDrawer({ article, connector, onClose }) {
           callAI('quality', { title: article.title, content: html, readabilityScore: article.readability_score }),
           callAI('seo',     { title: article.title, content: html }),
         ])
-        const quality = JSON.parse(qualityRaw.replace(/```json|```/g,'').trim())
-        const seo     = JSON.parse(seoRaw.replace(/```json|```/g,'').trim())
+        let quality = {}, seo = {}
+        try { quality = JSON.parse(qualityRaw.replace(/```json|```/g,'').trim()) } catch (e) { console.error('quality parse error:', e.message, qualityRaw?.slice(-200)) }
+        try { seo     = JSON.parse(seoRaw.replace(/```json|```/g,'').trim())     } catch (e) { console.error('seo parse error:',     e.message, seoRaw?.slice(-200))     }
+        if (!quality.score && !seo.score) throw new Error('Analysis returned incomplete results — try again')
         setAnalysis({ quality, seo })
         setStep('review')
       } catch (e) {
