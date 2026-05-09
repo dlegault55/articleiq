@@ -354,6 +354,7 @@ function AIDrawer({ article, connector, action, onClose }) {
   const [published,   setPublished]   = useState(false)
   const [confirmPub,  setConfirmPub]  = useState(false)
   const [editedText,  setEditedText]  = useState('')
+  const [editedTitle, setEditedTitle] = useState('')
   const [error,       setError]       = useState(null)
 
   // Fetch article body from Zendesk® then run AI
@@ -379,6 +380,7 @@ function AIDrawer({ article, connector, action, onClose }) {
         const aiResult = await callAI('improve', { content: rawHtml || article.title })
         setResult(aiResult)
         setEditedText(aiResult)
+        setEditedTitle(article.title)
       } catch (e) {
         setError(e.message)
       } finally {
@@ -405,6 +407,7 @@ function AIDrawer({ article, connector, action, onClose }) {
         body: JSON.stringify({
           connectorId: connector.id,
           articleId:   article.zendesk_article_id,
+          title:       editedTitle || article.title,
           html,
         }),
       })
@@ -493,8 +496,18 @@ function AIDrawer({ article, connector, action, onClose }) {
 
               {/* After — WYSIWYG editor */}
               <div style={{ display:'flex', flexDirection:'column', overflow:'hidden' }}>
-                <div style={{ padding:'10px 20px', background:'var(--green-light)', borderBottom:'1px solid var(--green-border)', flexShrink:0 }}>
-                  <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--green)' }}>ArticleIQ {actionLabel} — click to edit</span>
+                <div style={{ padding:'10px 20px', background:'var(--navy-light)', borderBottom:'1px solid var(--navy-border)', flexShrink:0 }}>
+                  <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--navy)' }}>ArticleIQ {actionLabel} — click to edit</span>
+                </div>
+                {/* Editable title */}
+                <div style={{ padding:'12px 20px', borderBottom:'1px solid var(--border)', flexShrink:0, background:'white' }}>
+                  <p style={{ fontSize:10, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 5px' }}>Title</p>
+                  <input
+                    defaultValue={article.title}
+                    onChange={e => setEditedTitle(e.target.value)}
+                    style={{ width:'100%', fontSize:14, fontWeight:700, color:'var(--text)', border:'none', outline:'none', fontFamily:'inherit', background:'transparent', padding:0 }}
+                    placeholder="Article title..."
+                  />
                 </div>
                 <WYSIWYGEditor html={editedText || result} onChange={setEditedText} />
               </div>

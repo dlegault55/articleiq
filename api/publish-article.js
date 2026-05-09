@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     return res.status(e.status || 401).json({ error: e.message })
   }
 
-  const { connectorId, articleId, html, locale = 'en-us' } = req.body
+  const { connectorId, articleId, html, title, locale = 'en-us' } = req.body
   if (!connectorId || !articleId || !html) {
     return res.status(400).json({ error: 'Missing required fields' })
   }
@@ -57,7 +57,7 @@ export default async function handler(req, res) {
       {
         method: 'PUT',
         headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ translation: { body: safeHtml } }),
+        body: JSON.stringify({ translation: { title: title || undefined, body: safeHtml } }),
       }
     )
 
@@ -74,7 +74,7 @@ export default async function handler(req, res) {
       {
         method: 'PUT',
         headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ article: { body: safeHtml } }),
+        body: JSON.stringify({ article: { title: title || undefined, body: safeHtml } }),
       }
     )
 
