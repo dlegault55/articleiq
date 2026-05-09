@@ -1198,43 +1198,7 @@ export default function ScanResultsPage() {
       </div>
 
       {/* Progress banner */}
-      {isActive && (
-        <div className="card animate-in" style={{ marginBottom:16, overflow:'hidden',
-          borderColor: isStalled ? 'var(--amber-border)' : 'var(--navy-border)',
-          background: isStalled ? 'var(--amber-light)' : 'var(--navy-light)' }}>
-          {isStalled && (
-            <div style={{ padding:'10px 20px', borderBottom:'1px solid var(--amber-border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-              <span style={{ fontSize:13, fontWeight:600, color:'var(--amber)' }}>Scan appears stalled — no activity for 3+ minutes</span>
-              <button onClick={() => resumeScan(scan)} className="btn btn-primary btn-sm">Resume scan</button>
-            </div>
-          )}
-          <div style={{ padding:'14px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:16 }}>
-            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-              {!isStalled && <div className="pulse-dot" style={{ width:8, height:8, borderRadius:'50%', background:'var(--navy)' }} />}
-              <div>
-                <p style={{ fontSize:14, fontWeight:700, color: isStalled ? 'var(--amber)' : 'var(--green)', margin:0 }}>
-                  {isStalled ? 'Scan paused' : 'Scan in progress'}
-                </p>
-                <p style={{ fontSize:12, color:'var(--text-2)', margin:0 }}>
-                  {scan.scanned_articles||0} of {scan.total_articles||'?'} articles · {!isStalled && 'keep this tab open'}
-                </p>
-              </div>
-            </div>
-            <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-              <span style={{ fontSize:22, fontWeight:800, color: isStalled ? 'var(--amber)' : 'var(--green)' }}>
-                {scan.total_articles ? `${pct}%` : '...'}
-              </span>
-              <button onClick={async () => {
-                await supabase.from('scan_jobs').update({ status:'failed', error_message:'Cancelled', completed_at:new Date().toISOString() }).eq('id', scanId)
-                setScan(s => ({ ...s, status:'failed' }))
-              }} className="btn btn-ghost btn-sm" style={{ color:'var(--red)', fontSize:12 }}>Stop</button>
-            </div>
-          </div>
-          <div className="progress-track" style={{ borderRadius:0, height:4 }}>
-            <div className="progress-fill" style={{ width:`${Math.max(pct,1)}%`, background: isStalled ? 'var(--amber)' : 'var(--navy)' }} />
-          </div>
-        </div>
-      )}
+{/* nothing — active scan is merged into hero below */}
 
       {/* Free tier limit reached banner */}
       {scan.status === 'completed' && scan.error_message === 'free_limit_reached' && (() => {
@@ -1283,57 +1247,81 @@ export default function ScanResultsPage() {
         )
       })()}
 
-      {/* Hero health score */}
-      <div style={{ borderRadius:'var(--radius-xl)', background:'var(--navy)', padding:'22px 26px', marginBottom:16, position:'relative', overflow:'hidden' }}>
+      {/* Combined hero — handles active scan and completed */}
+      <div style={{ borderRadius:'var(--radius-xl)', background:'var(--navy)', padding:'22px 26px', marginBottom:16, position:'relative', overflow:'hidden' }} className="animate-in">
         <div style={{ position:'absolute', top:-50, right:-50, width:200, height:200, borderRadius:'50%', background:'rgba(255,255,255,0.04)' }} />
-        <div className='results-hero-grid' style={{ display:'grid', gridTemplateColumns:'auto 1fr', gap:28, alignItems:'center' }}>
-          <div>
-            <p style={{ fontSize:11, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(255,255,255,0.5)', marginBottom:4 }}>
-              Scan Report · {format(new Date(scan.created_at), 'MMM d, yyyy')}
+        <div style={{ position:'relative' }}>
+          {/* Label row */}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
+            <p style={{ fontSize:11, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(255,255,255,0.4)', margin:0 }}>
+              Scan Report · {format(new Date(scan.created_at), 'MMM d, yyyy')} · {scan.preset ? `${scan.preset.split(',').length} checks` : ''}
             </p>
-            {score !== null && !isActive ? (
-              <>
-                <div style={{ fontSize:80, fontWeight:800, color:'white', lineHeight:1, letterSpacing:-3 }}>{score}</div>
-                <div style={{ fontSize:16, fontWeight:700, color:'rgba(255,255,255,0.85)', marginTop:4 }}>{healthLabel(score)}</div>
-              </>
-            ) : (
-              <div style={{ fontSize:48, fontWeight:800, color:'rgba(255,255,255,0.3)', lineHeight:1, letterSpacing:-2 }}>
-                {isActive ? `${pct}%` : '—'}
+            {isActive && (
+              <button onClick={async () => {
+                await supabase.from('scan_jobs').update({ status:'failed', error_message:'Cancelled', completed_at:new Date().toISOString() }).eq('id', scanId)
+                setScan(s => ({ ...s, status:'failed' }))
+              }} className="btn btn-ghost btn-sm" style={{ color:'rgba(255,255,255,0.5)', fontSize:11 }}>Stop</button>
+            )}
+          </div>
+
+          {/* Score + status */}
+          <div style={{ display:'flex', alignItems:'flex-end', gap:16, marginBottom:14 }}>
+            <div style={{ fontSize:72, fontWeight:800, color: isActive ? 'rgba(255,255,255,0.4)' : 'white', lineHeight:1, letterSpacing:-3 }}>
+              {isActive ? `${pct}%` : (score ?? '—')}
+            </div>
+            <div style={{ paddingBottom:10 }}>
+              {isActive ? (
+                <div>
+                  <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
+                    {isStalled
+                      ? <span style={{ fontSize:15, fontWeight:700, color:'#FFD980' }}>Scan paused</span>
+                      : <><div className="pulse-dot" style={{ width:8, height:8, borderRadius:'50%', background:'white', opacity:0.7 }} /><span style={{ fontSize:15, fontWeight:700, color:'white' }}>Scan in progress</span></>
+                    }
+                  </div>
+                  <p style={{ fontSize:12, color:'rgba(255,255,255,0.5)', margin:0 }}>
+                    {scan.scanned_articles||0} of {scan.total_articles||'?'} articles · keep this tab open
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ fontSize:15, fontWeight:700, color:'rgba(255,255,255,0.85)', marginBottom:3 }}>{score ? healthLabel(score) : '—'}</div>
+                  <div style={{ fontSize:12, color:'rgba(255,255,255,0.4)' }}>{formatDistanceToNow(new Date(scan.created_at), { addSuffix:true })}</div>
+                </div>
+              )}
+            </div>
+            {isStalled && (
+              <button onClick={() => resumeScan(scan)} className="btn btn-sm" style={{ background:'#FFD93D', color:'#1A1A18', fontWeight:700, marginBottom:8 }}>Resume scan</button>
+            )}
+          </div>
+
+          {/* Pills */}
+          <div style={{ display:'flex', gap:6, flexWrap:'wrap', alignItems:'center' }}>
+            {issues.filter(i=>i.severity==='critical').length > 0 && (
+              <div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(192,57,43,0.35)', color:'#FFAAAA', fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:4 }}>
+                <AlertOctagon size={10}/> {issues.filter(i=>i.severity==='critical').length} critical
+              </div>
+            )}
+            {issues.filter(i=>i.severity==='warning').length > 0 && (
+              <div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(255,200,80,0.18)', color:'#FFD980', fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:4 }}>
+                <AlertTriangle size={10}/> {issues.filter(i=>i.severity==='warning').length} warnings
+              </div>
+            )}
+            <div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(255,255,255,0.1)', color:'rgba(255,255,255,0.65)', fontSize:11 }}>
+              {articles.length || scan.scanned_articles || 0} articles
+            </div>
+            {score !== null && score < 80 && !isActive && (
+              <div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(255,255,255,0.1)', color:'rgba(255,255,255,0.55)', fontSize:11, display:'flex', alignItems:'center', gap:4 }}>
+                <Target size={10}/> {80-score} points to Healthy
               </div>
             )}
           </div>
-          <div>
-            <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:12 }}>
-              {issues.filter(i=>i.severity==='critical').length > 0 && (
-                <div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(192,57,43,0.35)', color:'#FFAAAA', fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:4 }}>
-                  <AlertOctagon size={10}/> {issues.filter(i=>i.severity==='critical').length} critical
-                </div>
-              )}
-              {issues.filter(i=>i.severity==='warning').length > 0 && (
-                <div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(255,200,80,0.18)', color:'#FFD980', fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:4 }}>
-                  <AlertTriangle size={10}/> {issues.filter(i=>i.severity==='warning').length} warnings
-                </div>
-              )}
-              <div style={{ padding:'6px 14px', borderRadius:100, background:'rgba(255,255,255,0.2)', color:'white', fontSize:13, fontWeight:500 }}>
-                {articles.length} articles
-              </div>
-              {scan.preset && (
-                <div style={{ padding:'6px 14px', borderRadius:100, background:'rgba(255,255,255,0.15)', color:'white', fontSize:12, fontWeight:600 }}>
-                  {scan.preset.split(',').length} checks
-                </div>
-              )}
+
+          {/* Progress bar — only when active */}
+          {isActive && (
+            <div style={{ marginTop:14, height:3, background:'rgba(255,255,255,0.15)', borderRadius:100, overflow:'hidden' }}>
+              <div style={{ height:'100%', width:`${Math.max(pct,1)}%`, background: isStalled ? '#FFD93D' : 'rgba(255,255,255,0.6)', borderRadius:100, transition:'width 0.4s ease' }} />
             </div>
-            <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-              {score !== null && score < 80 && (
-                <div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(255,255,255,0.1)', color:'rgba(255,255,255,0.65)', fontSize:11, fontWeight:600, display:'flex', alignItems:'center', gap:4 }}>
-                  <Target size={11} /> {80-score} points to Healthy
-                </div>
-              )}
-              <div style={{ padding:'8px 14px', borderRadius:8, background:'rgba(255,255,255,0.12)', fontSize:12, color:'rgba(255,255,255,0.85)' }}>
-                {formatDistanceToNow(new Date(scan.created_at), { addSuffix:true })}
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
