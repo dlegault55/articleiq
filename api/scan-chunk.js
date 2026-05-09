@@ -33,20 +33,39 @@ const countWords = (html) => {
 
 const checkBrokenLinks = async (html) => {
   if (!html) return []
-  // Collect both href links and img src URLs
   const linkMatches = [...html.matchAll(/href=["']([^"']+)["']/g)].map(m => ({ url: m[1], type: 'link' }))
   const imgMatches  = [...html.matchAll(/src=["']([^"']+)["']/g)].map(m => ({ url: m[1], type: 'image' }))
   const all = [...linkMatches, ...imgMatches]
     .filter(({ url }) => url.startsWith('http'))
     .filter(({ url }, i, arr) => arr.findIndex(a => a.url === url) === i) // dedupe
-    .slice(0, 15) // cap at 15 per article
+    .slice(0, 15)
 
   const broken = []
   await Promise.all(all.map(async ({ url, type }) => {
     try {
-      const res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(5000) })
-      if (res.status >= 400) broken.push({ url, type })
-    } catch { broken.push({ url, type }) }
+      // Try HEAD first
+      let res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(6000), redirect: 'follow' })
+
+      // Some servers block HEAD — fall back to GET with small range
+      if (res.status === 405 || res.status === 403) {
+        res = await fetch(url, { method: 'GET', signal: AbortSignal.timeout(6000), redirect: 'follow',
+          headers: { Range: 'bytes=0-0' } })
+      }
+
+      // Only flag definitive errors — 404, 410, 500, 503 etc
+      // Ignore 401/403 (auth required but exists), 405 (method not allowed but exists)
+      // Ignore 429 (rate limited but exists)
+      const definitelyBroken = [404, 410, 451, 500, 502, 503, 504]
+      if (definitelyBroken.includes(res.status)) {
+        broken.push({ url, type, status: res.status })
+      }
+    } catch (e) {
+      // Only flag as broken if it's a genuine DNS/connection error, not a timeout
+      // Timeouts could just be slow servers
+      if (e.name !== 'TimeoutError' && !e.message?.includes('timeout')) {
+        broken.push({ url, type, status: 0 })
+      }
+    }
   }))
   return broken
 }
@@ -235,14 +254,15 @@ export default async function handler(req, res) {
       // Broken links check (async — runs after article saved)
       if (checks.links && analysis.checkLinks && saved) {
         const broken = await checkBrokenLinks(article.body || '')
-        for (const { url, type } of broken) {
+        for (const { url, type, status } of broken) {
+          const statusNote = status ? ` (HTTP ${status})` : ' (connection failed)'
           analysis.issues.push({
             severity: 'critical',
             issue_type: type === 'image' ? 'broken_image' : 'broken_link',
             description: type === 'image'
-              ? `Broken image: ${url} — customers will see a broken image icon instead of the screenshot or diagram.`
-              : `Broken link: ${url} — customers clicking this will reach a dead end.`,
-            metadata: { url, type },
+              ? `Broken image${statusNote}: ${url}`
+              : `Broken link${statusNote}: ${url}`,
+            metadata: { url, type, status },
           })
         }
       }
