@@ -35,11 +35,20 @@ export default async function handler(req, res) {
       await supabase.from('profiles').update({ stripe_customer_id: customerId }).eq('id', auth.userId)
     }
 
+    const priceId = plan === 'yearly'
+      ? process.env.STRIPE_PRICE_ID_YEARLY
+      : process.env.STRIPE_PRICE_ID_MONTHLY || process.env.STRIPE_PRICE_ID
+
+    if (!priceId) {
+      console.error('Missing STRIPE_PRICE_ID env var')
+      return res.status(500).json({ error: 'Billing not configured — contact support' })
+    }
+
     const baseUrl = (process.env.APP_URL || 'https://articleiq.app').replace(/\/$/, '')
     const session = await stripe.checkout.sessions.create({
       customer:   customerId,
       mode:       'subscription',
-      line_items: [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${baseUrl}/dashboard?upgraded=true`,
       cancel_url:  `${baseUrl}/dashboard`,
       allow_promotion_codes: true,
