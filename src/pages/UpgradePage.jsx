@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useUpgrade } from '@/hooks/useUpgrade'
+import { useCheckout } from '@/hooks/useUpgrade'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { CheckCircle, Zap, ArrowLeft, Loader, Star, BookOpen, Tag, Wand2 } from 'lucide-react'
 
@@ -29,8 +29,7 @@ const COMPARE = [
 export default function UpgradePage() {
   usePageTitle('Upgrade to Pro')
   const navigate  = useNavigate()
-  const upgrade   = useUpgrade()
-  const checkout  = upgrade.checkout
+  const checkout  = useCheckout()
   const [plan,    setPlan]    = useState('yearly')
   const [loading, setLoading] = useState(false)
 

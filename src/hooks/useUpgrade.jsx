@@ -3,16 +3,18 @@ import { useAuth } from './useAuth'
 import { useToast } from './useToast'
 import { apiFetch } from '@/lib/api'
 
+// Generic upgrade button — navigates to /upgrade page
 export const useUpgrade = () => {
-  const { userId, user } = useAuth()
-  const toast    = useToast()
   const navigate = useNavigate()
+  return () => navigate('/upgrade')
+}
 
-  // Navigate to upgrade page (for generic upgrade prompts)
-  const goToUpgrade = () => navigate('/upgrade')
+// Used by UpgradePage — direct Stripe checkout with chosen plan
+export const useCheckout = () => {
+  const { userId, user } = useAuth()
+  const toast = useToast()
 
-  // Direct checkout (for when plan is already chosen)
-  const checkout = async (plan = 'monthly') => {
+  return async (plan = 'monthly') => {
     if (!userId || !user?.email) { toast.error('Please sign in first'); return }
     try {
       const res = await apiFetch('/api/create-checkout', {
@@ -26,6 +28,4 @@ export const useUpgrade = () => {
       toast.error(`Couldn't start checkout: ${e.message}`)
     }
   }
-
-  return Object.assign(goToUpgrade, { checkout })
 }
