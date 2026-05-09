@@ -90,7 +90,7 @@ export default function LandingPage() {
           </p>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:16 }}>
             {[
-              { stat:'30%', label:'of support tickets', sub:'are caused by gaps or errors in the knowledge base — industry average' },
+              { stat:'30%', label:'of support tickets', sub:'could be prevented by a well-maintained knowledge base — customers find answers instead of calling' },
               { stat:'$15–25', label:'per support ticket', sub:'average handling cost, not including customer frustration and churn risk' },
               { stat:'2 mins', label:'to connect ArticleIQ', sub:'and get a full health report for your entire Zendesk® KB' },
             ].map(({ stat, label, sub }) => (
@@ -290,7 +290,7 @@ export default function LandingPage() {
           <p style={{ fontSize:15, color:'#6B6B68', textAlign:'center', marginBottom:40, maxWidth:520, margin:'0 auto 40px' }}>You could. But you'd do it one article at a time, manually, with no history, no scores, and no way to get the result back into Zendesk® without copy-pasting.</p>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
             {[
-              { title:'Scans your entire KB at once', desc:'1,200 articles in a single scan. Claude requires you to copy-paste each one individually.', icon:Scan },
+              { title:'Scans your entire KB at once', desc:'Hundreds or thousands of articles in a single scan. Claude requires you to copy-paste each one individually.', icon:Scan },
               { title:'Broken links & images', desc:'Claude can\'t check if links are dead or images are missing. We make HTTP requests to every URL.', icon:Link2 },
               { title:'Health trend over time', desc:'Track your KB health score across scans. See if you\'re improving. Claude has no memory between sessions.', icon:TrendingUp },
               { title:'Publishes back to Zendesk®', desc:'The improved article goes straight back to Zendesk®. No copying, formatting, or switching tabs.', icon:Globe },
