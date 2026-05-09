@@ -12,8 +12,8 @@ export default async function handler(req, res) {
     return res.status(e.status || 401).json({ error: e.message })
   }
 
-  const { action, content, title } = req.body
-  if (!action || (!content && !title)) return res.status(400).json({ error: 'Missing fields' })
+  const { action, content, title, readabilityScore, analysisContext } = req.body
+  if (!action) return res.status(400).json({ error: 'Missing action' })
 
   // Rate limit: 30 AI calls per minute per user (skip for free label suggestions)
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
@@ -70,7 +70,7 @@ OUTPUT
 - Return only the improved HTML
 - No markdown fences, no commentary, no preamble
 - Do not add information that wasn't in the original — only improve what's there`,
-      user: content || title,
+      user: `${analysisContext ? `ANALYSIS FEEDBACK TO ADDRESS IN THIS REWRITE:\n${analysisContext}\n\n` : ''}${content || title}`,
       maxTokens: 4096,
     },
     quality: {
@@ -131,6 +131,7 @@ ${content || title}`,
 
     if (!aiRes.ok) {
       const e = await aiRes.json().catch(() => ({}))
+      console.error('Anthropic API error:', aiRes.status, JSON.stringify(e))
       throw new Error(e.error?.message || `AI error ${aiRes.status}`)
     }
 

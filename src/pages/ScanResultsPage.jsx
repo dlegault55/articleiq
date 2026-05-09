@@ -59,10 +59,10 @@ const readLabel = (s) => {
 }
 
 // ─── AI via server-side endpoint ──────────────────────────────
-const callAI = async (action, { content, title, readabilityScore } = {}) => {
+const callAI = async (action, { content, title, readabilityScore, analysisContext } = {}) => {
   const res = await apiFetch('/api/ai-action', {
     method: 'POST',
-    body: JSON.stringify({ action, content, title, readabilityScore }),
+    body: JSON.stringify({ action, content, title, readabilityScore, analysisContext }),
   })
   if (!res.ok) {
     const e = await res.json().catch(() => ({}))
