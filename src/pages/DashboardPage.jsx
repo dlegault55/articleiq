@@ -314,7 +314,7 @@ export default function DashboardPage() {
               Connect Zendesk® in 2 minutes and we'll tell you exactly what's hurting your customer experience — and what to fix first.
             </p>
           </div>
-          <div className='stats-grid' className='onboard-grid' style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12, marginBottom:16 }}>
+          <div className='onboard-grid' style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12, marginBottom:16 }}>
             {[
               { step:1, icon:<Plug size={16} style={{ color:'var(--navy)' }} />, title:'Connect Zendesk®', desc:'Add your subdomain and API token. Read-only — we never touch your articles.', action:true },
               { step:2, icon:<Scan size={16} style={{ color:'var(--text-3)' }} />, title:'Run a scan', desc:'We analyze every article for readability, freshness, duplicates, and more.', action:false },
