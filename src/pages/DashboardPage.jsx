@@ -150,7 +150,7 @@ const pointsToHealthy = (s) => s >= 80 ? 0 : 80 - s
 const SCAN_CHECKS = [
   { key: 'outdated',    label: 'Outdated articles',  desc: 'Not updated in 180+ days' },
   { key: 'wordCount',   label: 'Thin content',        desc: 'Under 150 words' },
-  { key: 'readability', label: 'Readability score',   desc: 'Hard to read articles' },
+  // readability removed as standalone check — factored into Quality & SEO analysis
   { key: 'labels',      label: 'Missing labels',      desc: 'No tags assigned' },
   { key: 'duplicates',  label: 'Duplicate detection', desc: 'Similar article titles (85%+ match)' },
   { key: 'links',       label: 'Broken links',        desc: 'Dead hyperlinks' },
@@ -160,7 +160,7 @@ const AI_CHECKS = [
   { key: 'ai_quality',  label: 'Quality Score',   desc: 'Rate clarity and completeness' },
   { key: 'ai_labels',   label: 'Label Suggestions',desc: 'Suggest tags from content' },
 ]
-const DEFAULT_CHECKS = { outdated:true, wordCount:true, readability:true, labels:true, duplicates:true, links:true }
+const DEFAULT_CHECKS = { outdated:true, wordCount:true, readability:false, labels:true, duplicates:true, links:true }
 
 export default function DashboardPage() {
   const { userId, profile } = useAuth()

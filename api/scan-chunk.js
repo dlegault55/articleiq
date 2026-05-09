@@ -152,12 +152,8 @@ const analyzeArticle = (article, checks) => {
   if (checks.labels && (!article.label_names || article.label_names.length === 0))
     issues.push({ severity: 'warning', issue_type: 'missing_labels', description: 'No labels or tags assigned. Harder for customers to find this article.' })
 
-  if (checks.readability && readabilityScore !== null) {
-    if (readabilityScore < 30)
-      issues.push({ severity: 'warning', issue_type: 'low_readability', description: `Readability score is ${readabilityScore}/100 — difficult to read. Use Improve Article to simplify the language without changing the meaning.`, metadata: { readabilityScore } })
-    else if (readabilityScore < 50)
-      issues.push({ severity: 'warning', issue_type: 'low_readability', description: `Readability score is ${readabilityScore}/100 — below average. Shorter sentences and simpler words would help.`, metadata: { readabilityScore } })
-  }
+  // Readability score is stored on the article record but no longer shown as a standalone issue.
+  // It's factored into the Quality & SEO analysis instead.
 
   if (!article.section_id)
     issues.push({ severity: 'info', issue_type: 'missing_section', description: 'Not assigned to any section — may be hard to find.' })

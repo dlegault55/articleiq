@@ -60,10 +60,10 @@ const readLabel = (s) => {
 }
 
 // ─── AI via server-side endpoint ──────────────────────────────
-const callAI = async (action, { content, title } = {}) => {
+const callAI = async (action, { content, title, readabilityScore } = {}) => {
   const res = await apiFetch('/api/ai-action', {
     method: 'POST',
-    body: JSON.stringify({ action, content, title }),
+    body: JSON.stringify({ action, content, title, readabilityScore }),
   })
   if (!res.ok) {
     const e = await res.json().catch(() => ({}))
@@ -384,7 +384,7 @@ function AIDrawer({ article, connector, action, onClose }) {
         if (action === 'quality') {
           // Run quality AND SEO in parallel — both returned together
           const [qualityRaw, seoRaw] = await Promise.all([
-            callAI('quality', { title: article.title, content: rawHtml }),
+            callAI('quality', { title: article.title, content: rawHtml, readabilityScore: article.readability_score }),
             callAI('seo',     { title: article.title, content: rawHtml }),
           ])
           setResult(JSON.stringify({ quality: qualityRaw, seo: seoRaw }))

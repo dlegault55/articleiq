@@ -92,7 +92,7 @@ Return this exact JSON structure:
 }
 
 Suggestions must be specific — not "improve clarity" but "the third step is ambiguous — specify which button to click and where it appears in the UI".`,
-      user: `Article title: ${title}\n\nArticle content (HTML):\n${content || '(no content provided)'}`,
+      user: `Article title: ${title}${readabilityScore != null ? `\nFlesch-Kincaid readability score: ${readabilityScore}/100 (note: scores below 50 suggest difficult reading level)` : ''}\n\nArticle content (HTML):\n${content || '(no content provided)'}`,
       maxTokens: 600,
     },
     labels: {
