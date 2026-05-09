@@ -216,7 +216,16 @@ export default function LandingPage() {
                   </div>
                 ))}
               </div>
-              <Link to="/login" className="land-btn land-btn-navy" style={{ width:'100%', justifyContent:'center', marginBottom:8 }}>Start free trial</Link>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
+                <Link to="/login" className="land-btn land-btn-navy" style={{ justifyContent:'center', flexDirection:'column', gap:2, padding:'10px' }}>
+                  <span>$99/month</span>
+                  <span style={{ fontSize:10, opacity:0.75, fontWeight:500 }}>billed monthly</span>
+                </Link>
+                <Link to="/login" className="land-btn land-btn-navy" style={{ justifyContent:'center', flexDirection:'column', gap:2, padding:'10px', background:'#107C10' }}>
+                  <span>$790/year</span>
+                  <span style={{ fontSize:10, opacity:0.85, fontWeight:600 }}>save $398 ✓</span>
+                </Link>
+              </div>
               <p style={{ fontSize:11, color:'#9B9B98', textAlign:'center' }}>14-day free trial · No credit card required</p>
             </div>
 

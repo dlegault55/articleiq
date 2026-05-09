@@ -1253,9 +1253,14 @@ export default function ScanResultsPage() {
                   </p>
                 </div>
               </div>
-              <button onClick={upgrade} className="btn btn-sm" style={{ background: '#FFD93D', color: '#0A1A0A', fontWeight: 700, flexShrink: 0 }}>
-                <Zap size={13} /> Upgrade to Pro
-              </button>
+              <div style={{ display:'flex', gap:6, flexShrink:0 }}>
+                <button onClick={() => upgrade('monthly')} className="btn btn-sm" style={{ background:'#FFD93D', color:'#0A1A0A', fontWeight:700 }}>
+                  <Zap size={12} /> $99/mo
+                </button>
+                <button onClick={() => upgrade('yearly')} className="btn btn-sm" style={{ background:'var(--navy)', color:'white', fontWeight:700 }}>
+                  $790/yr — best value
+                </button>
+              </div>
             </div>
             <div style={{ padding: '10px 20px', background: 'white', display: 'flex', gap: 24 }}>
               {[

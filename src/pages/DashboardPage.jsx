@@ -487,9 +487,14 @@ export default function DashboardPage() {
               </p>
             )}
             {profile?.plan !== 'paid' && (
-              <button onClick={upgrade} style={{ marginTop:10, padding:'6px 14px', borderRadius:7, background:'#FFD93D', color:'#1A1A18', border:'none', cursor:'pointer', fontFamily:'inherit', fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:5 }}>
-                <Zap size={11} /> Upgrade to Pro — $99/mo
-              </button>
+              <div style={{ marginTop:10, display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+                <button onClick={() => upgrade('monthly')} style={{ padding:'6px 14px', borderRadius:7, background:'#FFD93D', color:'#1A1A18', border:'none', cursor:'pointer', fontFamily:'inherit', fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:5 }}>
+                  <Zap size={11} /> $99/mo
+                </button>
+                <button onClick={() => upgrade('yearly')} style={{ padding:'6px 14px', borderRadius:7, background:'rgba(255,255,255,0.15)', color:'white', border:'1px solid rgba(255,255,255,0.25)', cursor:'pointer', fontFamily:'inherit', fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:5 }}>
+                  $790/yr <span style={{ fontSize:10, opacity:0.8 }}>— save $398</span>
+                </button>
+              </div>
             )}
           </div>
 
