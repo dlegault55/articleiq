@@ -31,19 +31,42 @@ const countWords = (html) => {
 }
 
 
+// Domains we trust — skip checking images from these (CDN/auth-required)
+const TRUSTED_IMAGE_DOMAINS = [
+  'zen-marketing-documentation.s3.amazonaws.com',
+  'help.zendesk.com',
+  'support.zendesk.com',
+  'p16.zdusercontent.com',
+  'lh3.googleusercontent.com',
+  'googleapis.com',
+  'gravatar.com',
+  'amazonaws.com',
+  'cloudfront.net',
+  's3.amazonaws.com',
+]
+
+const isTrustedImageDomain = (url) => {
+  try {
+    const host = new URL(url).hostname
+    return TRUSTED_IMAGE_DOMAINS.some(d => host === d || host.endsWith('.' + d))
+  } catch { return false }
+}
+
 const checkBrokenLinks = async (html) => {
   if (!html) return []
   const linkMatches = [...html.matchAll(/href=["']([^"']+)["']/g)].map(m => ({ url: m[1], type: 'link' }))
   const imgMatches  = [...html.matchAll(/src=["']([^"']+)["']/g)].map(m => ({ url: m[1], type: 'image' }))
+
   const all = [...linkMatches, ...imgMatches]
-    .filter(({ url }) => url.startsWith('http'))
+    .filter(({ url }) => url.startsWith('http'))           // absolute URLs only
+    .filter(({ url }) => !url.startsWith('data:'))         // skip data URIs
+    .filter(({ url, type }) => !(type === 'image' && isTrustedImageDomain(url))) // skip trusted CDNs
     .filter(({ url }, i, arr) => arr.findIndex(a => a.url === url) === i) // dedupe
     .slice(0, 15)
 
   const broken = []
   await Promise.all(all.map(async ({ url, type }) => {
     try {
-      // Try HEAD first
       let res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(6000), redirect: 'follow' })
 
       // Some servers block HEAD — fall back to GET with small range
@@ -52,16 +75,16 @@ const checkBrokenLinks = async (html) => {
           headers: { Range: 'bytes=0-0' } })
       }
 
-      // Only flag definitive errors — 404, 410, 500, 503 etc
-      // Ignore 401/403 (auth required but exists), 405 (method not allowed but exists)
-      // Ignore 429 (rate limited but exists)
+      // For images: also skip 401/403 — likely auth-protected CDN, not broken
+      if (type === 'image' && (res.status === 401 || res.status === 403)) return
+
+      // Only flag definitive errors
       const definitelyBroken = [404, 410, 451, 500, 502, 503, 504]
       if (definitelyBroken.includes(res.status)) {
         broken.push({ url, type, status: res.status })
       }
     } catch (e) {
-      // Only flag as broken if it's a genuine DNS/connection error, not a timeout
-      // Timeouts could just be slow servers
+      // Only flag genuine DNS/connection errors, not timeouts
       if (e.name !== 'TimeoutError' && !e.message?.includes('timeout')) {
         broken.push({ url, type, status: 0 })
       }
