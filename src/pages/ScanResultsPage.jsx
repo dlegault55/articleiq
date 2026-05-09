@@ -33,6 +33,7 @@ const ISSUE_ICONS = {
   broken_image:      ImageOff,
   duplicate_content: CheckSquare,
   missing_title:     FileText,
+  empty_body:        FileText,
 }
 
 const calcHealth = (articles, issues) => {

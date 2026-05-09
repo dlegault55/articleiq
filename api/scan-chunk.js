@@ -80,6 +80,11 @@ const analyzeArticle = (article, checks) => {
   if (!article.title?.trim())
     issues.push({ severity: 'critical', issue_type: 'missing_title', description: 'Article has no title.' })
 
+  // Empty body — strip HTML and check if anything visible remains
+  const visibleText = (body || '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, '').trim()
+  if (!visibleText)
+    issues.push({ severity: 'critical', issue_type: 'empty_body', description: 'Article has no content — customers will see a blank page.' })
+
   if (checks.wordCount) {
     if (wordCount < 50)
       issues.push({ severity: 'warning', issue_type: 'low_word_count', description: `Very short article — only ${wordCount} words. May not have enough detail to help customers, but could be intentional (e.g. redirect or notice).`, metadata: { wordCount } })
