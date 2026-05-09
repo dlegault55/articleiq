@@ -16,57 +16,30 @@ export default async function handler(req, res) {
     .eq('id', connectorId).eq('user_id', auth.userId).single()
   if (!connector) return res.status(404).json({ error: 'No connector' })
 
-  const base = `https://${connector.subdomain}.zendesk.com`
+  const base    = `https://${connector.subdomain}.zendesk.com`
+  const headers = { Authorization: `Basic ${Buffer.from(connector.api_key_encrypted).toString('base64')}` }
 
-  // Test both auth header formats
-  const authV1 = `Basic ${Buffer.from(connector.api_key_encrypted).toString('base64')}`
+  // Check the permission group
+  const pgRes  = await fetch(`${base}/api/v2/guide/permission_groups/20663`, { headers })
+  const pgData = await pgRes.json().catch(() => ({}))
 
-  // Also try without /token suffix in case it's being double-applied
-  const credParts = connector.api_key_encrypted.split(':')
-  const apiKey    = credParts[credParts.length - 1]
-  const emailPart = credParts[0].replace('/token', '')
-  const authV2    = `Basic ${Buffer.from(`${emailPart}/token:${apiKey}`).toString('base64')}`
-  const authV3    = `Basic ${Buffer.from(`${emailPart}:${apiKey}`).toString('base64')}`
+  // Check the section
+  const secRes  = await fetch(`${base}/api/v2/help_center/sections/20332919484052`, { headers })
+  const secData = await secRes.json().catch(() => ({}))
 
-  const results = {}
+  // Check current user's Guide role
+  const userRes  = await fetch(`${base}/api/v2/users/me`, { headers: { ...headers, 'Content-Type': 'application/json' } })
+  const userData = await userRes.json().catch(() => ({}))
 
-  // Test GET with each auth format
-  for (const [name, header] of [['stored', authV1], ['rebuilt', authV2], ['no-token', authV3]]) {
-    const r = await fetch(`${base}/api/v2/help_center/articles/${articleId}`, {
-      headers: { Authorization: header }
-    })
-    results[`get_${name}`] = r.status
-  }
+  // Try updating a different article that might have a different permission group
+  // First find all sections
+  const sectionsRes  = await fetch(`${base}/api/v2/help_center/sections?per_page=5`, { headers })
+  const sectionsData = await sectionsRes.json().catch(() => ({}))
 
-  // Test PUT with stored auth — minimal body
-  const putR = await fetch(`${base}/api/v2/help_center/articles/${articleId}/translations/en-us`, {
-    method: 'PUT',
-    headers: { Authorization: authV1, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ translation: { body: '<p>test</p>' } }),
+  return res.status(200).json({
+    permission_group: { status: pgRes.status, data: pgData },
+    section:          { status: secRes.status, name: secData.section?.name, locale: secData.section?.locale },
+    current_user:     { status: userRes.status, role: userData.user?.role, name: userData.user?.name, email: userData.user?.email, restricted_agent: userData.user?.restricted_agent },
+    sections_sample:  sectionsData.sections?.slice(0,3).map(s => ({ id: s.id, name: s.name })),
   })
-  const putBody = await putR.text()
-  results.put_stored = { status: putR.status, body: putBody.slice(0, 500) }
-
-  // Test PUT with rebuilt auth
-  const putR2 = await fetch(`${base}/api/v2/help_center/articles/${articleId}/translations/en-us`, {
-    method: 'PUT',
-    headers: { Authorization: authV2, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ translation: { body: '<p>test</p>' } }),
-  })
-  const putBody2 = await putR2.text()
-  results.put_rebuilt = { status: putR2.status, body: putBody2.slice(0, 500) }
-
-  // Check if article is a draft — drafts can't be updated via API sometimes
-  const articleR = await fetch(`${base}/api/v2/help_center/articles/${articleId}`, {
-    headers: { Authorization: authV1 }
-  })
-  const articleData = await articleR.json().catch(() => ({}))
-  results.article_info = {
-    draft: articleData.article?.draft,
-    managed_by: articleData.article?.user_segment_id,
-    permission_group: articleData.article?.permission_group_id,
-    section_id: articleData.article?.section_id,
-  }
-
-  return res.status(200).json(results)
 }
