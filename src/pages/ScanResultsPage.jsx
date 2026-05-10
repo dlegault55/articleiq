@@ -978,40 +978,56 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
           )}
 
           {/* AI section */}
-          <div style={{ padding:'16px 20px' }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+          <div style={{ padding:'14px 16px', margin:'0 12px 12px', borderRadius:10,
+            background: !isPaid ? 'var(--navy)' : 'transparent',
+            border: !isPaid ? 'none' : 'none',
+          }}>
+            {!isPaid ? (
+              // Upsell state — navy card with clear CTA
               <div>
-                <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', margin:'0 0 2px' }}>Fix with ArticleIQ</p>
-                {!isPaid && <p style={{ fontSize:11, color:'var(--amber)', fontWeight:600, margin:0 }}>Pro feature — upgrade to unlock</p>}
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+                  <div>
+                    <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
+                      <Zap size={13} style={{ color:'#FFD93D' }} />
+                      <p style={{ fontSize:13, fontWeight:700, color:'white', margin:0 }}>Fix with ArticleIQ</p>
+                    </div>
+                    <p style={{ fontSize:11, color:'rgba(255,255,255,0.6)', margin:0 }}>
+                      AI rewrite, Quality Score, and SEO grade — all in one flow
+                    </p>
+                  </div>
+                  <button onClick={upgrade} className="btn btn-sm" style={{ background:'#FFD93D', color:'#1A1A18', fontWeight:700, flexShrink:0 }}>
+                    Upgrade →
+                  </button>
+                </div>
+                <div style={{ display:'flex', gap:8 }}>
+                  {AI_ACTIONS.map(({ icon: Icon, label }) => (
+                    <div key={label} style={{ flex:1, padding:'8px 10px', borderRadius:7, background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.12)', opacity:0.7 }}>
+                      <Icon size={12} style={{ color:'rgba(255,255,255,0.6)', marginBottom:3 }} />
+                      <p style={{ fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.7)', margin:0 }}>{label}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-              {!isPaid && (
-                <button className="btn btn-sm" style={{ background:'#FFD93D', color:'#0A1A0A', fontWeight:700, fontSize:12 }}>
-                  <Zap size={12} /> Upgrade to Pro
-                </button>
-              )}
-            </div>
-
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              {AI_ACTIONS.map(({ key, label, desc, icon: Icon, action }) => (
-                <div key={key} style={{ borderRadius:10, border:'1px solid var(--border)', background:'white', overflow:'hidden',
-                  opacity: !isPaid ? 0.6 : 1,
-                }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px' }}>
-                    <div style={{ width:34, height:34, borderRadius:8, background:'var(--green-light)', border:'1px solid var(--green-border)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                      <Icon size={16} style={{ color:'var(--green)' }} />
+            ) : (
+              // Paid state — clean action cards
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', margin:'0 0 4px' }}>Fix with ArticleIQ</p>
+                {AI_ACTIONS.map(({ key, label, desc, icon: Icon, action }) => (
+                  <div key={key} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', borderRadius:9, border:'1px solid var(--border-md)', background:'white' }}>
+                    <div style={{ width:30, height:30, borderRadius:7, background:'var(--navy-light)', border:'1px solid var(--navy-border)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                      <Icon size={14} style={{ color:'var(--navy)' }} />
                     </div>
                     <div style={{ flex:1, minWidth:0 }}>
-                      <p style={{ fontSize:13, fontWeight:700, color:'var(--text)', margin:'0 0 3px' }}>{label}</p>
-                      <p style={{ fontSize:12, color:'var(--text-2)', margin:0, lineHeight:1.6 }}>{desc}</p>
+                      <p style={{ fontSize:13, fontWeight:700, color:'var(--text)', margin:'0 0 2px' }}>{label}</p>
+                      <p style={{ fontSize:11, color:'var(--text-3)', margin:0, lineHeight:1.5 }}>{desc}</p>
                     </div>
-                    <button onClick={() => isPaid && onOpenDrawer(action)} disabled={!isPaid}
-                      className="btn btn-secondary btn-sm" style={{ flexShrink:0 }}>
-                      <Icon size={12} /> Open
+                    <button onClick={() => onOpenDrawer(action)} className="btn btn-secondary btn-xs" style={{ flexShrink:0 }}>
+                      Open
                     </button>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
