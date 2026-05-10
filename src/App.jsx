@@ -65,6 +65,7 @@ export default function App() {
         <Route path="/share/:id" element={<SharePage />} />
         <Route path="/terms"   element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/contact" element={<ContactPage />} />
         <Route path="/" element={<Guard><Layout /></Guard>}>
           <Route path="dashboard"           element={<DashboardPage />} />
           <Route path="scanner/results/:id" element={<ScanResultsPage />} />
@@ -72,7 +73,6 @@ export default function App() {
           <Route path="settings"            element={<SettingsPage />} />
           <Route path="help"               element={<HelpPage />} />
           <Route path="upgrade"            element={<UpgradePage />} />
-          <Route path="contact"            element={<ContactPage />} />
           <Route path="terms"              element={<TermsPage />} />
           <Route path="privacy"             element={<PrivacyPage />} />
         </Route>
