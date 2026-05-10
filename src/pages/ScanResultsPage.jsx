@@ -857,6 +857,7 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
   const [aiResult, setAiResult] = useState(null)
   const [aiLoading, setAiLoading] = useState(null)
 
+  if (issues.length > 0) console.log('ArticleRow', article.id, 'issues:', issues.map(i => ({ id:i.id, type:i.issue_type, article_id:i.article_id, resolved:resolvedIssues.has(i.id) })))
   const activeIssues = issues.filter(i => !resolvedIssues.has(i.id))
   const critical     = activeIssues.filter(i => i.severity === 'critical')
   const warning      = activeIssues.filter(i => i.severity === 'warning')
