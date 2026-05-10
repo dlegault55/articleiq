@@ -919,11 +919,11 @@ function AIDrawer({ article, connector, onClose, userId }) {
                             {isAddressed && <p style={{ fontSize:9, color:'var(--green)', margin:'2px 0 0' }}>Applied by AI in the rewrite</p>}
                           </div>
                           {!isAddressed && (
-                            <button onClick={() => dismissRec(`q-${i}`, s, 'quality')} title="Not helpful"
-                              style={{ flexShrink:0, background:'none', border:'none', cursor:'pointer', padding:'2px 4px', borderRadius:4, color:'var(--text-3)', fontSize:12, lineHeight:1 }}
-                              onMouseEnter={e => e.currentTarget.style.color='var(--red)'}
-                              onMouseLeave={e => e.currentTarget.style.color='var(--text-3)'}>
-                              ✕
+                            <button onClick={() => dismissRec(`q-${i}`, s, 'quality')} title="Dismiss — not relevant to this article"
+                              style={{ flexShrink:0, background:'none', border:'1px solid var(--border-md)', cursor:'pointer', padding:'2px 7px', borderRadius:4, color:'var(--text-3)', fontSize:10, lineHeight:1.4, fontFamily:'inherit', fontWeight:600 }}
+                              onMouseEnter={e => { e.currentTarget.style.color='var(--red)'; e.currentTarget.style.borderColor='var(--red-border)'; e.currentTarget.style.background='var(--red-light)' }}
+                              onMouseLeave={e => { e.currentTarget.style.color='var(--text-3)'; e.currentTarget.style.borderColor='var(--border-md)'; e.currentTarget.style.background='none' }}>
+                              Not relevant
                             </button>
                           )}
                         </div>

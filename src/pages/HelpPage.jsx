@@ -151,7 +151,7 @@ export default function HelpPage() {
             },
             {
               title: 'Dismissing recommendations',
-              desc: 'Click the ✕ on any recommendation to mark it as not applicable. Dismissed items are removed from the list, excluded from future rewrites, and remembered next time you open this article. The quality score adjusts upward to reflect only the relevant findings.',
+              desc: 'Click <strong>Not relevant</strong> on any recommendation to mark it as not applicable. Dismissed items are removed from the list, excluded from future rewrites, and remembered next time you open this article. The quality score adjusts upward to reflect only the relevant findings.',
             },
             {
               title: 'Changes tab (diff view)',
