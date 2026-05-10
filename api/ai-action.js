@@ -123,6 +123,7 @@ Suggestions must be specific — not "improve clarity" but "the third step is am
 
     const data = await aiRes.json()
     let result = data.content[0]?.text || ''
+    console.log('ai-action result preview:', action, result.slice(0, 200), '...stop_reason:', data.stop_reason)
 
     // Strip markdown code fences that Claude sometimes adds despite instructions
     result = result.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/, '').trim()
