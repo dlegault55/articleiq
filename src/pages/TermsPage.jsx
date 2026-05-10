@@ -40,7 +40,7 @@ export default function TermsPage() {
         },
         {
           title: '6. No refunds',
-          body: 'All purchases are final and non-refundable. This includes Scan Pack one-time purchases and Annual Pro subscription payments. We do not offer refunds, credits, or exchanges for any reason, including unused scan credits, partial subscription periods, or dissatisfaction with results. If you have a billing issue you believe is in error, contact us at support@articleiq.app within 7 days.',
+          body: 'All purchases are final and non-refundable. This includes Scan Pack one-time purchases and Annual Pro subscription payments. We do not offer refunds, credits, or exchanges for any reason, including unused scan credits, partial subscription periods, or dissatisfaction with results. If you have a billing issue you believe is in error, contact us via the <a href="/contact" style={{color:"var(--navy)"}}>contact form</a> within 7 days.',
         },
         {
           title: '7. Cancellation',
@@ -68,7 +68,7 @@ export default function TermsPage() {
         },
         {
           title: '13. Contact',
-          body: 'Questions about these terms? Contact us at support@articleiq.app.',
+          body: 'Questions about these terms? Use our <a href="/contact" style={{color:"var(--navy)"}}>contact form</a>.',
         },
       ].map(({ title, body }) => (
         <div key={title} style={{ marginBottom: 28 }}>

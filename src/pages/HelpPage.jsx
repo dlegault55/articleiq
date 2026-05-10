@@ -109,7 +109,7 @@ export default function HelpPage() {
 
       {/* AI features */}
       <div style={{ marginBottom: 40 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 16, letterSpacing: -0.3, paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>AI features (Pro)</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 16, letterSpacing: -0.3, paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>AI features (Scan Pack & Annual Pro)</h2>
         <div className="card" style={{ overflow: 'hidden', marginBottom: 12 }}>
           {[
             { title: 'Improve Article', desc: 'Fixes grammar, spelling, and punctuation while rewriting for clarity in a single pass. Images, links, and tables are preserved.' },

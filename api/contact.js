@@ -1,5 +1,5 @@
 const RESEND_KEY   = process.env.RESEND_API_KEY
-const CONTACT_TO   = process.env.CONTACT_EMAIL || 'support@articleiq.app'
+const CONTACT_TO   = process.env.CONTACT_EMAIL
 const RATE_WINDOW  = 60 * 60 * 1000 // 1 hour
 const RATE_LIMIT   = 3               // max 3 submissions per IP per hour
 

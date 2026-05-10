@@ -61,7 +61,7 @@ export default function PrivacyPage() {
         },
         {
           title: '8. Your rights',
-          body: 'You have the right to: access the personal data we hold about you; correct inaccurate data; request deletion of your account and data; export your scan history; and opt out of email notifications at any time from account settings. To exercise these rights, contact us at support@articleiq.app.',
+          body: 'You have the right to: access the personal data we hold about you; correct inaccurate data; request deletion of your account and data; export your scan history; and opt out of email notifications at any time from account settings. To exercise these rights, use our <a href="/contact" style={{color:"var(--navy)"}}>contact form</a>.',
         },
         {
           title: '9. Children\'s privacy',
@@ -73,7 +73,7 @@ export default function PrivacyPage() {
         },
         {
           title: '11. Contact',
-          body: 'Questions about this policy or your data? Contact us at support@articleiq.app.',
+          body: 'Questions about this policy or your data? Use our <a href="/contact" style={{color:"var(--navy)"}}>contact form</a>.',
         },
       ].map(({ title, body }) => (
         <div key={title} style={{ marginBottom: 28 }}>
