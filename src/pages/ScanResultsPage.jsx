@@ -822,7 +822,15 @@ function AIDrawer({ article, connector, onClose }) {
                 {analysis.quality?.suggestions?.length > 0 && (
                   <div style={{ marginBottom:14 }}>
                     <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:8 }}>Writing fixes</p>
-                    {analysis.quality.suggestions.map((s, i) => {
+                    {[...analysis.quality.suggestions.map((s, i) => ({ s, i }))]
+                      .sort((a, b) => {
+                        const aAddressed = addressedRecs.has(`q-${a.i}`)
+                        const bAddressed = addressedRecs.has(`q-${b.i}`)
+                        if (aAddressed && !bAddressed) return 1
+                        if (!aAddressed && bAddressed) return -1
+                        return 0
+                      })
+                      .map(({ s, i }) => {
                       const isAddressed = addressedRecs.has(`q-${i}`)
                       const showUnaddressed = improved && !isAddressed
                       return (
@@ -873,7 +881,17 @@ function AIDrawer({ article, connector, onClose }) {
                 {analysis.seo?.issues?.length > 0 && (
                   <div>
                     <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:8 }}>{improved ? 'SEO fixes — check what needs manual action' : 'SEO fixes'}</p>
-                    {analysis.seo.issues.map((item, i) => {
+                    {[...analysis.seo.issues.map((item, i) => ({ item, i }))]
+                      .sort((a, b) => {
+                        const aAddressed = addressedRecs.has(`s-${a.i}`)
+                        const bAddressed = addressedRecs.has(`s-${b.i}`)
+                        if (aAddressed && !bAddressed) return 1
+                        if (!aAddressed && bAddressed) return -1
+                        // Among unaddressed, high impact first
+                        const impactOrder = { high:0, medium:1, low:2 }
+                        return (impactOrder[a.item.impact]||2) - (impactOrder[b.item.impact]||2)
+                      })
+                      .map(({ item, i }) => {
                       const isAddressed = addressedRecs.has(`s-${i}`)
                       return (
                         <div key={i} style={{ marginBottom:7, padding:'6px 8px', borderRadius:6, transition:'all 0.3s',
