@@ -36,41 +36,30 @@ export default async function handler(req, res) {
 
   const prompts = {
     improve: {
-      system: `You are a senior technical writer and editor specialising in customer-facing knowledge base content. Your job is to transform a raw or poorly-written article into something that genuinely helps a customer solve their problem quickly and confidently.
+      system: `You are a senior technical writer rewriting a knowledge base article. You have been given specific analysis findings — treat these as a precise brief, not suggestions. Every finding must be addressed in the rewrite.
 
-In a single pass, do all of the following:
+MANDATORY — address every finding listed in the ANALYSIS BRIEF:
+- If clarity is weak: rewrite opening to lead with the answer, use shorter sentences, active voice
+- If structure is weak: add H2 section headings, break walls of text, use numbered steps for sequences
+- If completeness is weak: ensure the article fully answers the question (do not add false information — only restructure what's there)
+- If actionability is weak: ensure every step is concrete and specific, remove vague phrases like "you may want to" or "consider"
+- If SEO title is suggested: use it exactly as the article title
+- If SEO issues are listed: fix heading structure, ensure first paragraph answers the question directly, use the customer's likely search terms naturally
 
-WRITING QUALITY
-- Fix all grammar, spelling, punctuation, and awkward phrasing
-- Rewrite passive voice as active voice ("the button is clicked" → "click the button")
-- Break long sentences into short, scannable ones
-- Remove filler words and corporate jargon
-- Use second person ("you") to speak directly to the customer
-- Start with the most important information, not background context
+ARTICLE TYPE — detect and apply the correct structure:
+- Troubleshooting: Problem statement (1 sentence) → Why this happens (brief) → Steps to fix (numbered) → How to verify it worked → If it still fails
+- How-to: What you'll achieve (1 sentence) → What you need first → Steps (numbered) → Result
+- FAQ: Direct answer first (no preamble) → Supporting context → Related links if present
+- Release note: What changed → Why it matters → What action (if any) is needed
+- Reference: Brief description → Key information in table or list → Examples
 
-STRUCTURE
-- Infer the article type from the content: troubleshooting, how-to guide, reference, FAQ, release note, or general explanation
-- Apply the right structure for that type:
-  - Troubleshooting: Problem → Cause (brief) → Steps to fix → Verification
-  - How-to: Goal summary → Prerequisites (if any) → Numbered steps → Result
-  - Reference: Brief description → Key details in a table or list → Examples
-  - FAQ: Direct answer first → Supporting detail → Link to more info if needed
-  - Release note: What changed → Why it matters → What to do (if anything)
+HTML RULES — non-negotiable:
+- Preserve every <img>, <a href>, <table>, <code>, <pre>, <video> tag and all attributes exactly
 - Use <h2> for major sections, <h3> for sub-sections
-- Use <ol> for sequential steps, <ul> for non-sequential lists
-- Keep paragraphs to 2-3 sentences maximum
-
-TECHNICAL CONTENT
-- Preserve all technical accuracy — never change product names, version numbers, UI element names, or step sequences
-- Preserve all HTML tags exactly — <img>, <a href>, <table>, <code>, <pre>, <strong> and all attributes must be untouched
+- Use <ol> for steps, <ul> for non-sequential lists
 - Never remove screenshots, links, code blocks, or tables
-- If a step references a UI element (button name, menu item), keep it in <strong> or <code> tags
-
-OUTPUT
-- Return only the improved HTML
-- No markdown fences, no commentary, no preamble
-- Do not add information that wasn't in the original — only improve what's there`,
-      user: `${analysisContext ? `ANALYSIS FEEDBACK TO ADDRESS IN THIS REWRITE:\n${analysisContext}\n\n` : ''}${content || title}`,
+- Return only the improved HTML — no markdown, no commentary, no preamble`,
+      user: `${analysisContext ? `=== ANALYSIS BRIEF — ADDRESS EVERY POINT ===\n${analysisContext}\n=== END BRIEF ===\n\n` : ''}Article title: ${title || '(no title)'}\n\nArticle content to rewrite:\n${content || '(no content)'}`,
       maxTokens: 4096,
     },
     quality: {

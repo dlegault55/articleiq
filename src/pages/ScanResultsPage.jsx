@@ -403,15 +403,51 @@ function AIDrawer({ article, connector, onClose }) {
       const source = editedText || improved || bodyHtml
       const title  = editedTitle || article.title
       const nl = '\n'
-      const qualityCtx = analysis?.quality?.suggestions?.length
-        ? 'Quality improvements needed:' + nl + analysis.quality.suggestions.map(s => '- ' + s).join(nl)
-        : ''
-      const seoCtx = analysis?.seo?.issues?.filter(i => i.impact === 'high').length
-        ? 'High-impact SEO fixes:' + nl + analysis.seo.issues.filter(i => i.impact === 'high').map(i => '- ' + i.fix).join(nl)
-        : ''
+
+      // Build a precise, structured brief from the actual analysis findings
+      const lines = []
+
+      // Quality score and weak dimensions
+      if (analysis?.quality?.score != null) {
+        lines.push(`QUALITY SCORE: ${analysis.quality.score}/100`)
+      }
+      if (analysis?.quality?.dimensions) {
+        const weak = Object.entries(analysis.quality.dimensions).filter(([,v]) => v < 14)
+        if (weak.length) {
+          lines.push('WEAK DIMENSIONS (must improve):')
+          weak.forEach(([dim, val]) => lines.push(`  - ${dim}: ${val}/20`))
+        }
+      }
+      if (analysis?.quality?.suggestions?.length) {
+        lines.push('SPECIFIC QUALITY FIXES (address each one):')
+        analysis.quality.suggestions.forEach(s => lines.push('  - ' + s))
+      }
+
+      // SEO
+      if (analysis?.seo?.grade) {
+        lines.push(`SEO GRADE: ${analysis.seo.grade} — ${analysis.seo.verdict || ''}`)
+      }
+      if (analysis?.seo?.title_suggestion) {
+        lines.push(`SEO TITLE (use this exactly): "${analysis.seo.title_suggestion}"`)
+      }
+      if (analysis?.seo?.issues?.length) {
+        const high   = analysis.seo.issues.filter(i => i.impact === 'high')
+        const medium = analysis.seo.issues.filter(i => i.impact === 'medium')
+        if (high.length) {
+          lines.push('HIGH-IMPACT SEO FIXES (required):')
+          high.forEach(i => lines.push(`  - ${i.issue}: ${i.fix}`))
+        }
+        if (medium.length) {
+          lines.push('MEDIUM-IMPACT SEO FIXES (apply if possible):')
+          medium.forEach(i => lines.push(`  - ${i.issue}: ${i.fix}`))
+        }
+      }
+
+      const analysisContext = lines.length ? lines.join(nl) : ''
+
       const result = await callAI('improve', {
         content: source, title,
-        analysisContext: [qualityCtx, seoCtx].filter(Boolean).join('\n\n'),
+        analysisContext,
       })
       setImproved(result)
       setEditedText(result)
