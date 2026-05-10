@@ -49,39 +49,28 @@ function ROICalculator() {
   const net         = savings - cost
   const roi         = cost > 0 ? Math.round((net / cost) * 100) : 0
 
-  const Slider = ({ label, value, min, max, step = 1, onChange, format = v => v }) => {
-    const pct = ((value - min) / (max - min)) * 100
-    return (
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)' }}>{label}</span>
-          <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy)' }}>{format(value)}</span>
-        </div>
-        <div style={{ position: 'relative', height: 28, display: 'flex', alignItems: 'center' }}>
-          {/* Track background */}
-          <div style={{ position: 'absolute', left: 0, right: 0, height: 6, borderRadius: 100, background: 'var(--border-md)' }} />
-          {/* Track fill */}
-          <div style={{ position: 'absolute', left: 0, width: `${pct}%`, height: 6, borderRadius: 100, background: 'var(--navy)' }} />
-          {/* Native input — invisible but interactive */}
-          <input type="range" min={min} max={max} step={step} value={value}
-            onChange={e => onChange(Number(e.target.value))}
-            style={{ position: 'absolute', left: 0, right: 0, width: '100%', opacity: 0, height: 28, cursor: 'pointer', margin: 0, zIndex: 2 }} />
-          {/* Thumb */}
-          <div style={{ position: 'absolute', left: `calc(${pct}% - 11px)`, width: 22, height: 22, borderRadius: '50%', background: 'var(--navy)', border: '3px solid white', boxShadow: '0 1px 4px rgba(0,0,0,0.25)', pointerEvents: 'none', zIndex: 1 }} />
-        </div>
+  const Field = ({ label, value, min, max, step = 1, onChange, prefix = '', suffix = '' }) => (
+    <div style={{ marginBottom: 14 }}>
+      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 5 }}>{label}</label>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 0, border: '1px solid var(--border-md)', borderRadius: 8, overflow: 'hidden', background: 'white' }}>
+        {prefix && <span style={{ padding: '8px 10px', fontSize: 13, fontWeight: 600, color: 'var(--text-3)', background: 'var(--bg)', borderRight: '1px solid var(--border-md)' }}>{prefix}</span>}
+        <input type="number" min={min} max={max} step={step} value={value}
+          onChange={e => onChange(Math.min(max, Math.max(min, Number(e.target.value) || min)))}
+          style={{ flex: 1, padding: '8px 10px', fontSize: 14, fontWeight: 700, color: 'var(--text)', border: 'none', outline: 'none', fontFamily: 'inherit', background: 'white', width: 0 }} />
+        {suffix && <span style={{ padding: '8px 10px', fontSize: 13, fontWeight: 600, color: 'var(--text-3)', background: 'var(--bg)', borderLeft: '1px solid var(--border-md)' }}>{suffix}</span>}
       </div>
-    )
-  }
+    </div>
+  )
 
   return (
     <div className="card" style={{ overflow: 'hidden', marginBottom: 24 }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }} className="roi-grid">
         <div style={{ padding: '20px', borderRight: '1px solid var(--border)' }}>
           <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-3)', marginBottom: 16 }}>Your numbers</p>
-          <Slider label="Articles in your KB" value={articles} min={50} max={5000} step={50} onChange={setArticles} format={v => v.toLocaleString()} />
-          <Slider label="Support tickets per month" value={tickets} min={50} max={5000} step={50} onChange={setTickets} format={v => v.toLocaleString()} />
-          <Slider label="Tickets preventable by better KB" value={kbPct} min={5} max={60} step={5} onChange={setKbPct} format={v => `${v}%`} />
-          <Slider label="Cost per support ticket" value={costPer} min={5} max={50} step={1} onChange={setCostPer} format={v => `$${v}`} />
+          <Field label="Articles in your KB" value={articles} min={50} max={5000} step={50} onChange={setArticles} suffix="articles" />
+          <Field label="Support tickets / month" value={tickets} min={50} max={5000} step={50} onChange={setTickets} suffix="tickets" />
+          <Field label="Preventable by better KB" value={kbPct} min={1} max={60} step={1} onChange={setKbPct} suffix="%" />
+          <Field label="Cost per ticket" value={costPer} min={1} max={200} step={1} onChange={setCostPer} prefix="$" />
           <p style={{ fontSize: 10, color: 'var(--text-3)', lineHeight: 1.6, margin: 0 }}>Industry avg: 30% preventable · $15 per ticket · 25% deflection with healthy KB</p>
         </div>
         <div style={{ padding: '20px', background: net > 0 ? 'var(--navy)' : 'var(--bg)' }}>
