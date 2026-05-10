@@ -256,6 +256,7 @@ export default function DashboardPage() {
   const needed = lastH != null ? pointsToHealthy(lastH) : null
 
   const outOfScans = profile?.plan === 'pack' && (profile?.scans_remaining ?? 0) <= 0
+  const isPaid     = ['paid','pack','annual'].includes(profile?.plan)
 
   const startScan = async () => {
     if (outOfScans) { upgrade(); return }
@@ -540,19 +541,16 @@ export default function DashboardPage() {
             <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
               <Zap size={13} style={{ color:'#FFD93D' }} />
               <span style={{ fontSize:12, fontWeight:700, color:'white' }}>Fix with ArticleIQ</span>
-              <span style={{ fontSize:9, fontWeight:700, padding:'2px 7px', borderRadius:100, background:'#FFD93D', color:'#1A1A18' }}>Pro</span>
+              {!isPaid && <span style={{ fontSize:9, fontWeight:700, padding:'2px 7px', borderRadius:100, background:'#FFD93D', color:'#1A1A18' }}>Pro</span>}
             </div>
-            <p style={{ fontSize:11, color:'rgba(255,255,255,0.55)', marginBottom: ['paid','pack','annual'].includes(profile?.plan) ? 10 : 0 }}>
-              {['paid','pack','annual'].includes(profile?.plan) ? 'AI-powered grammar, rewrites, and quality scoring.' : 'Upgrade to unlock AI-powered article improvements.'}
+            <p style={{ fontSize:11, color:'rgba(255,255,255,0.55)', marginBottom: isPaid ? 6 : 0 }}>
+              {isPaid
+                ? 'AI Quality Score, SEO Score, Improve Article, and Label Suggestions — available on any article after scanning.'
+                : 'Upgrade to unlock AI-powered article improvements, quality scoring, and direct publishing to Zendesk®.'}
             </p>
-            {['paid','pack','annual'].includes(profile?.plan) && (
-              <p style={{ fontSize:11, color:'rgba(255,255,255,0.55)', margin:0 }}>
-                Improve Article, Quality Score, and Label Suggestions are available on any article after scanning.
-              </p>
-            )}
-            {profile?.plan !== 'paid' && (
+            {!isPaid && (
               <button onClick={upgrade} style={{ marginTop:10, padding:'6px 14px', borderRadius:7, background:'#FFD93D', color:'#1A1A18', border:'none', cursor:'pointer', fontFamily:'inherit', fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:5 }}>
-                <Zap size={11} /> Upgrade to Pro →
+                <Zap size={11} /> Upgrade →
               </button>
             )}
           </div>
