@@ -109,12 +109,66 @@ export default function HelpPage() {
 
       {/* AI features */}
       <div style={{ marginBottom: 40 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 16, letterSpacing: -0.3, paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>AI features (Scan Pack & Annual Pro)</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 8, letterSpacing: -0.3, paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>AI features (Scan Pack & Annual Pro)</h2>
+        <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.8, marginBottom: 16 }}>
+          Open any article and click <strong>Analyse & Improve</strong> to launch the three-pane editor. All AI features run in a single unified flow — analysis informs the rewrite, and recommendations update as you work.
+        </p>
+
+        {/* Three pane overview */}
+        <div className="card" style={{ overflow:'hidden', marginBottom:16 }}>
+          <div style={{ padding:'10px 18px', background:'var(--bg)', borderBottom:'1px solid var(--border)' }}>
+            <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', margin:0 }}>Three-pane editor layout</p>
+          </div>
+          {[
+            { pane:'Left', label:'Original Article', desc:'The untouched article from Zendesk® — always visible for reference while you work.' },
+            { pane:'Middle', label:'Recommendations', desc:'Quality Score and SEO Score run automatically when you open an article. Shows dimension bars, specific improvement suggestions, and SEO fixes with high/medium/low impact ratings.' },
+            { pane:'Right', label:'AI Rewrite', desc:'The AI rewrite appears here after you click Improve Article. Switch between Edit (editable) and Changes (word-level diff showing additions and removals) using the tabs in the panel header.' },
+          ].map(({ pane, label, desc }, i, arr) => (
+            <div key={pane} style={{ display:'flex', gap:12, padding:'12px 18px', borderBottom: i < arr.length-1 ? '1px solid var(--border)' : 'none' }}>
+              <div style={{ width:36, height:36, borderRadius:8, background:'var(--navy-light)', border:'1px solid var(--navy-border)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:10, fontWeight:800, color:'var(--navy)' }}>{pane}</div>
+              <div>
+                <p style={{ fontSize:13, fontWeight:700, color:'var(--text)', margin:'0 0 3px' }}>{label}</p>
+                <p style={{ fontSize:12, color:'var(--text-2)', margin:0, lineHeight:1.7 }}>{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Feature list */}
         <div className="card" style={{ overflow: 'hidden', marginBottom: 12 }}>
           {[
-            { title: 'Improve Article', desc: 'Fixes grammar, spelling, and punctuation while rewriting for clarity in a single pass. Images, links, and tables are preserved.' },
-            { title: 'Quality Score',   desc: 'Scores the article 0–100 on clarity, completeness, structure, and tone with specific improvement suggestions.' },
-            { title: 'Label Suggestions', desc: 'Suggests 3–5 relevant tags based on article content. Available to all users.' },
+            {
+              title: 'Quality Score',
+              desc: 'Scores 0–100 across five dimensions: Clarity, Completeness, Structure, Accuracy, and Actionability. Each dimension is scored out of 20. Runs automatically when you open the drawer.',
+            },
+            {
+              title: 'SEO Score',
+              desc: 'Grades A–F based on title length and keyword clarity, heading structure, content depth, and first paragraph strength. Suggests an improved title if the current one underperforms. Runs automatically alongside Quality Score.',
+            },
+            {
+              title: 'Improve Article',
+              desc: 'Generates a targeted rewrite informed by the specific quality and SEO findings — not a generic grammar pass. Detects the article type (troubleshooting, how-to, FAQ, release note) and applies the correct structure. All images, links, code blocks, and tables are preserved exactly.',
+            },
+            {
+              title: 'Dismissing recommendations',
+              desc: 'Click the ✕ on any recommendation to mark it as not applicable. Dismissed items are removed from the list, excluded from future rewrites, and remembered next time you open this article. The quality score adjusts upward to reflect only the relevant findings.',
+            },
+            {
+              title: 'Changes tab (diff view)',
+              desc: 'After improving, switch to the Changes tab in the right panel to see a word-level diff — additions highlighted in green, removals in red strikethrough. A summary bar shows how many words were added and removed.',
+            },
+            {
+              title: 'Re-analyse',
+              desc: 'After editing the rewrite, click Re-analyse in the footer to run fresh Quality and SEO scores on your edited version. The recommendations update to reflect what still needs attention.',
+            },
+            {
+              title: 'Publish to Zendesk®',
+              desc: 'Publishes the rewrite directly to Zendesk® with one click. Requires a Guide Admin API token — see the FAQ below if publishing returns a 403 error.',
+            },
+            {
+              title: 'Label suggestions',
+              desc: 'Suggests 3–5 relevant labels based on article content. Click any label to publish it directly to Zendesk® — existing labels are preserved. Available to all users.',
+            },
           ].map(({ title, desc }, i, arr) => (
             <div key={title} style={{ padding: '14px 18px', borderBottom: i < arr.length-1 ? '1px solid var(--border)' : 'none' }}>
               <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{title}</p>
@@ -122,9 +176,10 @@ export default function HelpPage() {
             </div>
           ))}
         </div>
+
         <div style={{ padding: '12px 14px', borderRadius: 8, background: 'var(--amber-light)', border: '1px solid var(--amber-border)' }}>
           <p style={{ fontSize: 12, color: 'var(--text-2)', margin: 0, lineHeight: 1.7 }}>
-            <strong style={{ color: 'var(--amber)' }}>Important:</strong> Always review the full AI output before using it. Pay attention to technical steps, product names, and version numbers. ArticleIQ is not responsible for content published using AI features.
+            <strong style={{ color: 'var(--amber)' }}>Always review before publishing.</strong> AI rewrites can introduce errors, change technical meaning, or miss context specific to your product. Verify technical steps, product names, version numbers, and links before clicking Publish.
           </p>
         </div>
       </div>
@@ -161,7 +216,7 @@ export default function HelpPage() {
           a={<span>Publishing requires your API token to belong to a user with <strong>Guide Admin</strong> role in Zendesk® — not just any admin. Go to <strong>Connectors</strong>, remove your current connector, and reconnect using the email and API token of a Guide Admin user. You can check in Zendesk® under Admin Center → People → find a user with Guide Admin role. After reconnecting, use the <strong>Test connection</strong> button — it will confirm whether Guide Admin is detected.</span>} />
 
         <FAQ q="What's the difference between Quality Score and SEO Score?"
-          a={<span><strong>Quality Score</strong> measures whether the article genuinely helps the reader — scored across Clarity, Completeness, Structure, Accuracy, and Actionability. <strong>SEO Score</strong> measures how likely the article is to rank in Google — title, headings, content depth, keyword signals. Use <strong>Improve Article</strong> to fix the writing, then apply the SEO recommendations manually in the editor. Re-analyse after edits to see updated scores.</span>} />
+          a={<span><strong>Quality Score</strong> measures whether the article genuinely helps the reader — scored across Clarity, Completeness, Structure, Accuracy, and Actionability. <strong>SEO Score</strong> measures how likely the article is to rank in Google — title, headings, content depth, and keyword signals. Both run automatically when you open the AI drawer. Click <strong>Improve Article</strong> to generate a rewrite informed by both scores. Dismiss any recommendation that isn't relevant — the score adjusts automatically to reflect only applicable findings. Re-analyse after editing to see updated scores.</span>} />
         <FAQ q="How do I get an API token from Zendesk®?"
           a={<span>Admin Center → Apps & Integrations → APIs → Zendesk® API → API Tokens → Add API token. <a href="https://support.zendesk.com/hc/en-us/articles/4408889192858" target="_blank" rel="noreferrer" style={{ color: 'var(--navy)', fontWeight: 600 }}>View Zendesk® guide →</a></span>} />
         <FAQ q="What does ArticleIQ do with my article content?"
