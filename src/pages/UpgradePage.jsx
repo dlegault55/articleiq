@@ -49,17 +49,29 @@ function ROICalculator() {
   const net         = savings - cost
   const roi         = cost > 0 ? Math.round((net / cost) * 100) : 0
 
-  const Slider = ({ label, value, min, max, step = 1, onChange, format = v => v }) => (
-    <div style={{ marginBottom: 16 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)' }}>{label}</span>
-        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--navy)' }}>{format(value)}</span>
+  const Slider = ({ label, value, min, max, step = 1, onChange, format = v => v }) => {
+    const pct = ((value - min) / (max - min)) * 100
+    return (
+      <div style={{ marginBottom: 18 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)' }}>{label}</span>
+          <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy)' }}>{format(value)}</span>
+        </div>
+        <div style={{ position: 'relative', height: 28, display: 'flex', alignItems: 'center' }}>
+          {/* Track background */}
+          <div style={{ position: 'absolute', left: 0, right: 0, height: 6, borderRadius: 100, background: 'var(--border-md)' }} />
+          {/* Track fill */}
+          <div style={{ position: 'absolute', left: 0, width: `${pct}%`, height: 6, borderRadius: 100, background: 'var(--navy)' }} />
+          {/* Native input — invisible but interactive */}
+          <input type="range" min={min} max={max} step={step} value={value}
+            onChange={e => onChange(Number(e.target.value))}
+            style={{ position: 'absolute', left: 0, right: 0, width: '100%', opacity: 0, height: 28, cursor: 'pointer', margin: 0, zIndex: 2 }} />
+          {/* Thumb */}
+          <div style={{ position: 'absolute', left: `calc(${pct}% - 11px)`, width: 22, height: 22, borderRadius: '50%', background: 'var(--navy)', border: '3px solid white', boxShadow: '0 1px 4px rgba(0,0,0,0.25)', pointerEvents: 'none', zIndex: 1 }} />
+        </div>
       </div>
-      <input type="range" min={min} max={max} step={step} value={value}
-        onChange={e => onChange(Number(e.target.value))}
-        style={{ width: '100%', accentColor: 'var(--navy)', cursor: 'pointer' }} />
-    </div>
-  )
+    )
+  }
 
   return (
     <div className="card" style={{ overflow: 'hidden', marginBottom: 24 }}>
