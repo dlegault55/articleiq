@@ -853,7 +853,7 @@ const AI_ACTIONS = [
   },
 ]
 
-function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolvedIssues, onResolveIssue }) {
+function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolvedIssues, onResolveIssue, onUpgrade }) {
   const [open, setOpen] = useState(false)
   const [aiResult, setAiResult] = useState(null)
   const [aiLoading, setAiLoading] = useState(null)
@@ -995,7 +995,7 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
                       AI rewrite, Quality Score, and SEO grade — all in one flow
                     </p>
                   </div>
-                  <button onClick={upgrade} className="btn btn-sm" style={{ background:'#FFD93D', color:'#1A1A18', fontWeight:700, flexShrink:0 }}>
+                  <button onClick={onUpgrade} className="btn btn-sm" style={{ background:'#FFD93D', color:'#1A1A18', fontWeight:700, flexShrink:0 }}>
                     Upgrade →
                   </button>
                 </div>
@@ -1440,6 +1440,7 @@ export default function ScanResultsPage() {
             onOpenDrawer={(action) => setDrawer({ article: a, action })}
             resolvedIssues={resolvedIssues}
             onResolveIssue={resolveIssue}
+            onUpgrade={upgrade}
           />
         ))}
       </div>
