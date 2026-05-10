@@ -405,6 +405,8 @@ export default function DashboardPage() {
           </div>
         )}
 
+      {/* ── Health score hero ── */}
+      {!activeScan && hasConn && lastScan && (
         <div style={{ background:'var(--navy)', borderRadius:'var(--radius-xl)', padding:'22px 26px', marginBottom:16, position:'relative', overflow:'hidden' }} className="animate-in">
           <div style={{ position:'absolute', top:-50, right:-50, width:200, height:200, borderRadius:'50%', background:'rgba(255,255,255,0.04)' }} />
           <div style={{ position:'absolute', bottom:-60, right:80, width:140, height:140, borderRadius:'50%', background:'rgba(255,255,255,0.03)' }} />
