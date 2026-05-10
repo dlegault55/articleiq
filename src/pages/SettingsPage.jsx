@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/useToast'
 import { supabase, signOut } from '@/lib/supabase'
 import { Loader, AlertOctagon, Trash2, CheckCircle } from 'lucide-react'
 
-const DEFAULT_SCAN = { outdated:true, wordCount:true, readability:true, labels:true, duplicates:false, links:false }
+const DEFAULT_SCAN = { outdated:true, wordCount:true, readability:false, labels:true, duplicates:true, links:true }
 const SCAN_CHECKS  = [
   { key:'outdated',    label:'Outdated articles',   desc:'Not updated in 180+ days' },
   { key:'wordCount',   label:'Thin content',         desc:'Under 150 words' },
