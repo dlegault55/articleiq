@@ -462,7 +462,8 @@ function AIDrawer({ article, connector, onClose }) {
   const [published,   setPublished]   = useState(false)
   const [confirmPub,  setConfirmPub]  = useState(false)
   const [reanalysing, setReanalysing] = useState(false)
-  const [rewriteTab,  setRewriteTab]  = useState('edit')  // 'edit' | 'changes'
+  const [rewriteTab,   setRewriteTab]   = useState('edit')  // 'edit' | 'changes'
+  const [addressedRecs, setAddressedRecs] = useState(new Set())
   const [error,       setError]       = useState(null)
 
   // Fetch article + run analysis on open
@@ -555,6 +556,56 @@ function AIDrawer({ article, connector, onClose }) {
       setEditedText(result)
       setEditedTitle(analysis?.seo?.title_suggestion || title)
       setRewriteTab('edit')
+
+      // Detect which recommendations were addressed in the rewrite
+      const addressed = new Set()
+      const revText = result.replace(/<[^>]+>/g, ' ').toLowerCase()
+      const origText = (source || '').replace(/<[^>]+>/g, ' ').toLowerCase()
+
+      // Check quality suggestions
+      analysis?.quality?.suggestions?.forEach((s, i) => {
+        const key = `q-${i}`
+        const sl = s.toLowerCase()
+        // H2 headings added
+        if ((sl.includes('heading') || sl.includes('section') || sl.includes('h2')) && result.includes('<h2')) addressed.add(key)
+        // Numbered steps added
+        else if ((sl.includes('numbered') || sl.includes('step') || sl.includes('list')) && result.includes('<ol')) addressed.add(key)
+        // Opening improved (first 200 chars changed significantly)
+        else if (sl.includes('opening') || sl.includes('lead') || sl.includes('first')) {
+          const origStart = origText.slice(0, 200)
+          const revStart  = revText.slice(0, 200)
+          if (origStart !== revStart) addressed.add(key)
+        }
+        // Passive voice — check if word count of "is" reduced
+        else if (sl.includes('passive') || sl.includes('active voice')) {
+          const origPassive = (origText.match(/\bis\b|\bwas\b|\bwere\b|\bbe\b/g) || []).length
+          const revPassive  = (revText.match(/\bis\b|\bwas\b|\bwere\b|\bbe\b/g) || []).length
+          if (revPassive < origPassive * 0.8) addressed.add(key)
+        }
+        // Generic — if content changed substantially (>20% words different)
+        else if (revText.length > 0 && Math.abs(revText.length - origText.length) / origText.length > 0.15) {
+          addressed.add(key)
+        }
+      })
+
+      // Check SEO fixes
+      analysis?.seo?.issues?.forEach((item, i) => {
+        const key = `s-${i}`
+        const il = item.issue.toLowerCase()
+        // Title changed
+        if (il.includes('title') && (analysis.seo.title_suggestion && title !== article.title)) addressed.add(key)
+        // Headings added
+        else if (il.includes('heading') && result.includes('<h2')) addressed.add(key)
+        // First paragraph improved
+        else if (il.includes('first paragraph') || il.includes('opening')) {
+          if (origText.slice(0,200) !== revText.slice(0,200)) addressed.add(key)
+        }
+      })
+
+      // Title suggestion applied
+      if (analysis?.seo?.title_suggestion) addressed.add('title')
+
+      setAddressedRecs(addressed)
     } catch (e) { setError(e.message) }
     finally { setImproving(false) }
   }
@@ -563,7 +614,7 @@ function AIDrawer({ article, connector, onClose }) {
     const source = editedText || improved
     const title  = editedTitle || article.title
     if (!source) return
-    setReanalysing(true); setError(null)
+    setReanalysing(true); setError(null); setAddressedRecs(new Set())
     try { await runAnalysis(source, title) }
     catch (e) { setError(e.message) }
     finally { setReanalysing(false) }
@@ -742,12 +793,22 @@ function AIDrawer({ article, connector, onClose }) {
                 {analysis.quality?.suggestions?.length > 0 && (
                   <div style={{ marginBottom:14 }}>
                     <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:8 }}>Writing fixes</p>
-                    {analysis.quality.suggestions.map((s, i) => (
-                      <div key={i} style={{ display:'flex', gap:6, marginBottom:5, padding:'6px 8px', background:'white', borderRadius:6, border:'1px solid var(--border-md)' }}>
-                        <span style={{ color:'var(--navy)', flexShrink:0, fontWeight:700, fontSize:12 }}>→</span>
-                        <span style={{ fontSize:11, color:'var(--text-2)', lineHeight:1.5 }}>{s}</span>
-                      </div>
-                    ))}
+                    {analysis.quality.suggestions.map((s, i) => {
+                      const isAddressed = addressedRecs.has(`q-${i}`)
+                      return (
+                        <div key={i} style={{ display:'flex', gap:6, marginBottom:5, padding:'6px 8px', borderRadius:6, transition:'all 0.3s',
+                          background: isAddressed ? 'var(--green-light)' : 'white',
+                          border: `1px solid ${isAddressed ? 'var(--green-border)' : 'var(--border-md)'}`,
+                          opacity: isAddressed ? 0.75 : 1,
+                        }}>
+                          {isAddressed
+                            ? <CheckCircle size={11} style={{ color:'var(--green)', flexShrink:0, marginTop:1 }} />
+                            : <span style={{ color:'var(--navy)', flexShrink:0, fontWeight:700, fontSize:12 }}>→</span>
+                          }
+                          <span style={{ fontSize:11, color: isAddressed ? 'var(--green)' : 'var(--text-2)', lineHeight:1.5, textDecoration: isAddressed ? 'line-through' : 'none' }}>{s}</span>
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
 
@@ -757,9 +818,18 @@ function AIDrawer({ article, connector, onClose }) {
                 {analysis.seo?.title_suggestion && (
                   <div style={{ marginBottom:12 }}>
                     <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:6 }}>Suggested SEO title</p>
-                    <div style={{ padding:'7px 9px', borderRadius:6, background:'var(--navy-light)', border:'1px solid var(--navy-border)' }}>
-                      <p style={{ fontSize:11, color:'var(--navy)', fontWeight:600, margin:'0 0 3px', lineHeight:1.4 }}>{analysis.seo.title_suggestion}</p>
-                      <p style={{ fontSize:9, color:'var(--navy)', opacity:0.55, margin:0 }}>Copy into title field →</p>
+                    <div style={{ padding:'7px 9px', borderRadius:6,
+                      background: addressedRecs.has('title') ? 'var(--green-light)' : 'var(--navy-light)',
+                      border: `1px solid ${addressedRecs.has('title') ? 'var(--green-border)' : 'var(--navy-border)'}`,
+                    }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:5, marginBottom:2 }}>
+                        {addressedRecs.has('title') && <CheckCircle size={10} style={{ color:'var(--green)' }} />}
+                        <p style={{ fontSize:11, fontWeight:600, margin:0, lineHeight:1.4,
+                          color: addressedRecs.has('title') ? 'var(--green)' : 'var(--navy)',
+                          textDecoration: addressedRecs.has('title') ? 'line-through' : 'none',
+                        }}>{analysis.seo.title_suggestion}</p>
+                      </div>
+                      {!addressedRecs.has('title') && <p style={{ fontSize:9, color:'var(--navy)', opacity:0.55, margin:0 }}>Applied automatically after rewrite →</p>}
                     </div>
                   </div>
                 )}
@@ -768,18 +838,31 @@ function AIDrawer({ article, connector, onClose }) {
                 {analysis.seo?.issues?.length > 0 && (
                   <div>
                     <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:8 }}>SEO fixes — apply manually</p>
-                    {analysis.seo.issues.map((item, i) => (
-                      <div key={i} style={{ marginBottom:7, padding:'6px 8px', background:'white', borderRadius:6, border:'1px solid var(--border-md)' }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:5, marginBottom:3 }}>
-                          <span style={{ fontSize:8, fontWeight:700, padding:'1px 5px', borderRadius:3, textTransform:'uppercase',
-                            background: item.impact==='high' ? 'var(--red-light)' : item.impact==='medium' ? 'var(--amber-light)' : 'var(--blue-light)',
-                            color: item.impact==='high' ? 'var(--red)' : item.impact==='medium' ? 'var(--amber)' : 'var(--blue)',
-                          }}>{item.impact}</span>
-                          <span style={{ fontSize:11, fontWeight:600, color:'var(--text)' }}>{item.issue}</span>
+                    {analysis.seo.issues.map((item, i) => {
+                      const isAddressed = addressedRecs.has(`s-${i}`)
+                      return (
+                        <div key={i} style={{ marginBottom:7, padding:'6px 8px', borderRadius:6, transition:'all 0.3s',
+                          background: isAddressed ? 'var(--green-light)' : 'white',
+                          border: `1px solid ${isAddressed ? 'var(--green-border)' : 'var(--border-md)'}`,
+                          opacity: isAddressed ? 0.75 : 1,
+                        }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:5, marginBottom: isAddressed ? 0 : 3 }}>
+                            {isAddressed
+                              ? <CheckCircle size={10} style={{ color:'var(--green)' }} />
+                              : <span style={{ fontSize:8, fontWeight:700, padding:'1px 5px', borderRadius:3, textTransform:'uppercase',
+                                  background: item.impact==='high' ? 'var(--red-light)' : item.impact==='medium' ? 'var(--amber-light)' : 'var(--blue-light)',
+                                  color: item.impact==='high' ? 'var(--red)' : item.impact==='medium' ? 'var(--amber)' : 'var(--blue)',
+                                }}>{item.impact}</span>
+                            }
+                            <span style={{ fontSize:11, fontWeight:600,
+                              color: isAddressed ? 'var(--green)' : 'var(--text)',
+                              textDecoration: isAddressed ? 'line-through' : 'none',
+                            }}>{item.issue}</span>
+                          </div>
+                          {!isAddressed && <p style={{ fontSize:10, color:'var(--text-3)', margin:0, lineHeight:1.5 }}>{item.fix}</p>}
                         </div>
-                        <p style={{ fontSize:10, color:'var(--text-3)', margin:0, lineHeight:1.5 }}>{item.fix}</p>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
 
