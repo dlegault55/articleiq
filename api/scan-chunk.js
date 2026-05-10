@@ -186,7 +186,7 @@ export default async function handler(req, res) {
 
   // Check plan and enforce article limit for free users
   const { data: profile } = await supabase.from('profiles').select('plan').eq('id', userId).single()
-  const isPaid = profile?.plan === 'paid'
+  const isPaid = ['paid', 'pack', 'annual'].includes(profile?.plan)
   const FREE_LIMIT = 300
 
   try {
