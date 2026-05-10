@@ -429,6 +429,11 @@ export default function LandingPage() {
             <span style={{ fontWeight:800, fontSize:14, color:'white' }}>Article<span style={{ color:'#4ade80' }}>IQ</span></span>
           </div>
           <p style={{ fontSize:12, color:'#4A4A48' }}>© 2026 ArticleIQ. All rights reserved.</p>
+          <div style={{ display:'flex', gap:16 }}>
+            <Link to="/terms"   style={{ fontSize:12, color:'#4A4A48', textDecoration:'none' }}>Terms</Link>
+            <Link to="/privacy" style={{ fontSize:12, color:'#4A4A48', textDecoration:'none' }}>Privacy</Link>
+            <Link to="/contact" style={{ fontSize:12, color:'#4A4A48', textDecoration:'none' }}>Contact</Link>
+          </div>
           <Link to="/login" style={{ fontSize:13, color:'#4ade80', fontWeight:600, textDecoration:'none' }}>Sign in →</Link>
         </div>
         <div style={{ borderTop:'1px solid #2A2A28', paddingTop:14, textAlign:'center' }}>

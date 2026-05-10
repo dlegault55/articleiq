@@ -13,6 +13,8 @@ import HelpPage from '@/pages/HelpPage'
 import SharePage from '@/pages/SharePage'
 import UpgradePage from '@/pages/UpgradePage'
 import ContactPage from '@/pages/ContactPage'
+import TermsPage   from '@/pages/TermsPage'
+import PrivacyPage from '@/pages/PrivacyPage'
 
 // Error boundary
 class ErrorBoundary extends Component {
@@ -69,6 +71,8 @@ export default function App() {
           <Route path="help"               element={<HelpPage />} />
           <Route path="upgrade"            element={<UpgradePage />} />
           <Route path="contact"            element={<ContactPage />} />
+          <Route path="terms"              element={<TermsPage />} />
+          <Route path="privacy"             element={<PrivacyPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
