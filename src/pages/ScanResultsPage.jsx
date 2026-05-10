@@ -793,7 +793,7 @@ function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve }) 
           {issue.issue_type === 'missing_labels' && !resolved && (
             <div style={{ marginTop:10 }}>
               {!labels && (
-                <button onClick={suggestLabels} disabled={suggesting}
+                <button onClick={e => { e.stopPropagation(); suggestLabels() }} disabled={suggesting}
                   style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'5px 10px', borderRadius:6, border:'1px solid var(--border-md)', background:'var(--bg)', cursor:'pointer', fontSize:11, fontWeight:600, color:'var(--text-2)', fontFamily:'inherit' }}>
                   {suggesting ? <><Loader size={10} style={{ animation:'spin 0.7s linear infinite' }} /> Suggesting...</> : <><Tag size={10} /> Suggest labels</>}
                 </button>
@@ -808,7 +808,7 @@ function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve }) 
                       const isPublished = published.has(label)
                       const isLoading   = publishing === label
                       return (
-                        <button key={label} onClick={() => publishLabel(label)} disabled={isLoading || isPublished}
+                        <button key={label} onClick={e => { e.stopPropagation(); publishLabel(label) }} disabled={isLoading || isPublished}
                           style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 10px', borderRadius:100, fontSize:11, fontWeight:600, cursor: isPublished ? 'default' : 'pointer', fontFamily:'inherit', transition:'all 0.15s',
                             background: isPublished ? 'var(--green-light)' : 'var(--navy-light)',
                             border: `1px solid ${isPublished ? 'var(--green-border)' : 'var(--navy-border)'}`,
@@ -832,7 +832,7 @@ function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve }) 
             </div>
           )}
         </div>
-        <button onClick={onResolve} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 10px', borderRadius:6, border:'1px solid var(--border-md)', cursor:'pointer', fontSize:11, fontWeight:600, flexShrink:0, whiteSpace:'nowrap', fontFamily:'inherit',
+        <button onClick={e => { e.stopPropagation(); onResolve() }} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 10px', borderRadius:6, border:'1px solid var(--border-md)', cursor:'pointer', fontSize:11, fontWeight:600, flexShrink:0, whiteSpace:'nowrap', fontFamily:'inherit',
           background: resolved ? 'var(--green-light)' : 'white',
           color: resolved ? 'var(--green)' : 'var(--text-3)',
         }}>
