@@ -157,6 +157,9 @@ export default function HelpPage() {
           a="No. ArticleIQ is fully read-only. We never write to Zendesk® unless you explicitly copy an AI-improved article and paste it yourself." />
         <FAQ q="Why does the scan need the tab to stay open?"
           a="Scans run in your browser rather than on a server. Keep the tab active while scanning — you'll get an email when it's done." />
+        <FAQ q="Publish is failing with a 403 or permission error — what do I do?"
+          a={<span>Publishing requires your API token to belong to a user with <strong>Guide Admin</strong> role in Zendesk® — not just any admin. Go to <strong>Connectors</strong>, remove your current connector, and reconnect using the email and API token of a Guide Admin user. You can check in Zendesk® under Admin Center → People → find a user with Guide Admin role. After reconnecting, use the <strong>Test connection</strong> button — it will confirm whether Guide Admin is detected.</span>} />
+
         <FAQ q="What's the difference between Quality Score and SEO Score?"
           a={<span><strong>Quality Score</strong> measures whether the article genuinely helps the reader — scored across Clarity, Completeness, Structure, Accuracy, and Actionability. <strong>SEO Score</strong> measures how likely the article is to rank in Google — title, headings, content depth, keyword signals. Use <strong>Improve Article</strong> to fix the writing, then apply the SEO recommendations manually in the editor. Re-analyse after edits to see updated scores.</span>} />
         <FAQ q="How do I get an API token from Zendesk®?"

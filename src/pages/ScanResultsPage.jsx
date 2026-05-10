@@ -451,7 +451,10 @@ function AIDrawer({ article, connector, onClose }) {
       const d = await res.json()
       if (!res.ok) throw new Error(JSON.stringify(d))
       setPublished(true); setTimeout(() => setPublished(false), 4000)
-    } catch (e) { setError(`Publish failed: ${e.message}`) }
+    } catch (e) { const msg = e.message?.includes('403') || e.message?.includes('rejected')
+        ? 'Publishing requires a Guide Admin token. Go to Connectors, remove and reconnect using a Guide Admin email and token.'
+        : `Publish failed: ${e.message}`
+      setError(msg) }
     finally { setPublishing(false) }
   }
 
