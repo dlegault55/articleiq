@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { plan = 'monthly' } = req.body
+    const { plan = 'pack' } = req.body
 
     const { data: profile } = await supabase
       .from('profiles').select('stripe_customer_id, plan').eq('id', auth.userId).single()
@@ -37,9 +37,11 @@ export default async function handler(req, res) {
       await supabase.from('profiles').update({ stripe_customer_id: customerId }).eq('id', auth.userId)
     }
 
-    const priceId = plan === 'yearly'
-      ? process.env.STRIPE_PRICE_ID_YEARLY
-      : process.env.STRIPE_PRICE_ID_MONTHLY || process.env.STRIPE_PRICE_ID
+    const priceId = plan === 'annual'
+      ? process.env.STRIPE_PRICE_ID_ANNUAL
+      : plan === 'pack'
+        ? process.env.STRIPE_PRICE_ID_PACK
+        : process.env.STRIPE_PRICE_ID_PACK // default to pack
 
     if (!priceId) {
       console.error('Missing STRIPE_PRICE_ID env var')
@@ -47,9 +49,10 @@ export default async function handler(req, res) {
     }
 
     const baseUrl = (process.env.APP_URL || 'https://articleiq.app').replace(/\/$/, '')
+    const mode = plan === 'annual' ? 'subscription' : 'payment'
     const session = await stripe.checkout.sessions.create({
       customer:   customerId,
-      mode:       'subscription',
+      mode,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${baseUrl}/dashboard?upgraded=true`,
       cancel_url:  `${baseUrl}/dashboard`,

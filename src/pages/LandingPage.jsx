@@ -317,74 +317,87 @@ export default function LandingPage() {
           <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9B9B98', textAlign:'center', marginBottom:12 }}>Pricing</p>
           <h2 style={{ fontSize:32, fontWeight:800, textAlign:'center', letterSpacing:-0.8, marginBottom:8, color:'#1A1A18' }}>Simple, honest pricing</h2>
           <p style={{ fontSize:15, color:'#6B6B68', textAlign:'center', marginBottom:40 }}>Start free. Upgrade when you're ready to fix what you find.</p>
-          <div className='landing-pricing' style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:16 }} className='landing-pricing'>
 
             {/* Free */}
             <div style={{ borderRadius:14, padding:'24px', border:'1px solid #E8E8E6', background:'#FAFAF8' }}>
-              <p style={{ fontSize:13, fontWeight:700, color:'#6B6B68', marginBottom:6 }}>Free</p>
-              <div style={{ fontSize:40, fontWeight:800, color:'#1A1A18', letterSpacing:-1.5, lineHeight:1, marginBottom:6 }}>$0</div>
-              <p style={{ fontSize:13, color:'#6B6B68', marginBottom:20, lineHeight:1.6 }}>Scan your first 300 articles. No credit card required. See exactly what's broken before you decide to fix it.</p>
-              <div style={{ marginBottom:24 }}>
+              <p style={{ fontSize:12, fontWeight:700, color:'#9B9B98', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' }}>Free</p>
+              <div style={{ fontSize:36, fontWeight:800, color:'#1A1A18', letterSpacing:-1.5, lineHeight:1, marginBottom:4 }}>$0</div>
+              <p style={{ fontSize:12, color:'#9B9B98', marginBottom:16, lineHeight:1.6 }}>See what's broken before you commit.</p>
+              <div style={{ marginBottom:20 }}>
                 {[
-                  { text:'Up to 300 articles per scan', on:true },
-                  { text:'All 6 quality checks', on:true },
-                  { text:'Broken links & image detection', on:true },
-                  { text:'Duplicate detection', on:true },
-                  { text:'Health score + shareable report', on:true },
-                  { text:'SEO Score (free)', on:true },
-                  { text:'AI Improve Article', on:false },
-                  { text:'AI Quality Score', on:false },
-                  { text:'Publish to Zendesk®', on:false },
+                  { text:'300 articles per scan', on:true },
+                  { text:'All quality checks', on:true },
+                  { text:'Broken links & images', on:true },
+                  { text:'SEO Score', on:true },
+                  { text:'Unlimited scans', on:true },
+                  { text:'Shareable reports', on:false },
+                  { text:'AI features', on:false },
+                  { text:'Label suggestions', on:false },
                 ].map(({ text, on }) => (
-                  <div key={text} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:7, opacity: on ? 1 : 0.4 }}>
-                    <CheckCircle size={13} style={{ color: on ? '#107C10' : '#9B9B98', flexShrink:0 }} />
-                    <span style={{ fontSize:13, color:'#1A1A18' }}>{text}</span>
+                  <div key={text} style={{ display:'flex', alignItems:'center', gap:7, marginBottom:6, opacity: on ? 1 : 0.35 }}>
+                    <CheckCircle size={12} style={{ color: on ? '#107C10' : '#9B9B98', flexShrink:0 }} />
+                    <span style={{ fontSize:12, color:'#1A1A18' }}>{text}</span>
                   </div>
                 ))}
               </div>
-              <Link to="/login" className="land-btn land-btn-outline" style={{ width:'100%', justifyContent:'center' }}>Get started free</Link>
+              <Link to="/login" className="land-btn land-btn-outline" style={{ width:'100%', justifyContent:'center', fontSize:12 }}>Get started free</Link>
             </div>
 
-            {/* Pro */}
+            {/* Scan Pack */}
             <div style={{ borderRadius:14, padding:'24px', border:'2px solid #1B2D5B', background:'white', position:'relative' }}>
               <div style={{ position:'absolute', top:-12, left:'50%', transform:'translateX(-50%)', background:'#1B2D5B', color:'white', fontSize:10, fontWeight:700, padding:'3px 14px', borderRadius:100, whiteSpace:'nowrap' }}>Most popular</div>
-              <p style={{ fontSize:13, fontWeight:700, color:'#6B6B68', marginBottom:6 }}>Pro</p>
-              <div style={{ display:'flex', alignItems:'baseline', gap:4, marginBottom:6 }}>
-                <span style={{ fontSize:40, fontWeight:800, color:'#1A1A18', letterSpacing:-1.5, lineHeight:1 }}>$99</span>
-                <span style={{ fontSize:14, color:'#9B9B98' }}>/month</span>
+              <p style={{ fontSize:12, fontWeight:700, color:'#9B9B98', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' }}>Scan Pack</p>
+              <div style={{ display:'flex', alignItems:'baseline', gap:3, marginBottom:4 }}>
+                <span style={{ fontSize:36, fontWeight:800, color:'#1A1A18', letterSpacing:-1.5, lineHeight:1 }}>$79</span>
               </div>
-              <div style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'4px 10px', background:'#F0F3FA', border:'1px solid #C8D4F0', borderRadius:7, marginBottom:14 }}>
-                <span style={{ fontSize:12, fontWeight:800, color:'#1B2D5B' }}>$790/year</span>
-                <span style={{ fontSize:11, color:'#4A4A48' }}>— 2 months free, save $398</span>
-              </div>
-              <p style={{ fontSize:13, color:'#6B6B68', marginBottom:20, lineHeight:1.6 }}>Unlimited articles, AI that actually fixes the problems it finds, and direct publishing back to Zendesk®.</p>
-              <div style={{ marginBottom:24 }}>
+              <p style={{ fontSize:12, color:'#9B9B98', marginBottom:16, lineHeight:1.6 }}>5 full scans, never expire. Perfect for quarterly audits.</p>
+              <div style={{ marginBottom:20 }}>
                 {[
-                  'Everything in Free',
                   'Unlimited articles per scan',
-                  'AI Improve Article — context-aware rewrite',
-                  'AI Quality Score — 5 dimensions',
+                  '5 scans — use whenever you need',
+                  'Everything in Free',
+                  'AI Improve Article',
+                  'AI Quality Score',
                   'Publish directly to Zendesk®',
-                  'AI label suggestions + one-click publish',
-                  'Email notifications on scan complete',
+                  'Label suggestions + publish',
+                  'Shareable reports',
+                  'Email notifications',
                 ].map(f => (
-                  <div key={f} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:7 }}>
-                    <CheckCircle size={13} style={{ color:'#107C10', flexShrink:0 }} />
-                    <span style={{ fontSize:13, color:'#1A1A18' }}>{f}</span>
+                  <div key={f} style={{ display:'flex', alignItems:'center', gap:7, marginBottom:6 }}>
+                    <CheckCircle size={12} style={{ color:'#107C10', flexShrink:0 }} />
+                    <span style={{ fontSize:12, color:'#1A1A18' }}>{f}</span>
                   </div>
                 ))}
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
-                <Link to="/login" className="land-btn land-btn-navy" style={{ justifyContent:'center', flexDirection:'column', gap:2, padding:'10px' }}>
-                  <span>$99/month</span>
-                  <span style={{ fontSize:10, opacity:0.75, fontWeight:500 }}>billed monthly</span>
-                </Link>
-                <Link to="/login" className="land-btn land-btn-navy" style={{ justifyContent:'center', flexDirection:'column', gap:2, padding:'10px', background:'#107C10' }}>
-                  <span>$790/year</span>
-                  <span style={{ fontSize:10, opacity:0.85, fontWeight:600 }}>save $398 ✓</span>
-                </Link>
+              <Link to="/upgrade" className="land-btn land-btn-navy" style={{ width:'100%', justifyContent:'center', marginBottom:8 }}>Buy Scan Pack — $79</Link>
+              <p style={{ fontSize:11, color:'#9B9B98', textAlign:'center' }}>One-time payment · No subscription</p>
+            </div>
+
+            {/* Annual Pro */}
+            <div style={{ borderRadius:14, padding:'24px', border:'1px solid #E8E8E6', background:'#FAFAF8', position:'relative' }}>
+              <p style={{ fontSize:12, fontWeight:700, color:'#9B9B98', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' }}>Annual Pro</p>
+              <div style={{ display:'flex', alignItems:'baseline', gap:3, marginBottom:4 }}>
+                <span style={{ fontSize:36, fontWeight:800, color:'#1A1A18', letterSpacing:-1.5, lineHeight:1 }}>$490</span>
+                <span style={{ fontSize:13, color:'#9B9B98' }}>/year</span>
               </div>
-              <p style={{ fontSize:11, color:'#9B9B98', textAlign:'center' }}>Cancel anytime</p>
+              <p style={{ fontSize:12, color:'#9B9B98', marginBottom:16, lineHeight:1.6 }}>Unlimited scans + ongoing health monitoring.</p>
+              <div style={{ marginBottom:20 }}>
+                {[
+                  'Everything in Scan Pack',
+                  'Unlimited scans',
+                  'KB health trend — full history',
+                  'Scheduled monthly scans (coming soon)',
+                  'Priority support',
+                ].map((f, i) => (
+                  <div key={f} style={{ display:'flex', alignItems:'center', gap:7, marginBottom:6, opacity: f.includes('coming soon') ? 0.6 : 1 }}>
+                    <CheckCircle size={12} style={{ color: f.includes('coming soon') ? '#9B9B98' : '#107C10', flexShrink:0 }} />
+                    <span style={{ fontSize:12, color:'#1A1A18' }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+              <Link to="/upgrade" className="land-btn land-btn-navy" style={{ width:'100%', justifyContent:'center', marginBottom:8, background:'#107C10' }}>Go Annual — $490/year</Link>
+              <p style={{ fontSize:11, color:'#9B9B98', textAlign:'center' }}>~$41/month · Cancel anytime</p>
             </div>
           </div>
         </div>
