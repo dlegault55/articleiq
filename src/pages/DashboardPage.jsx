@@ -224,7 +224,7 @@ export default function DashboardPage() {
       if (wins) setQuickWins(wins)
     })
     // Backfill stale scans in background
-    completed.filter(s => s.id !== lastScan.id && s.critical_count === 0 && s.warning_count === 0 && (s.scanned_articles||0) > 0).slice(0, 5)
+    completed.filter(s => s.id !== lastScan?.id && s.critical_count === 0 && s.warning_count === 0 && (s.scanned_articles||0) > 0).slice(0, 5)
       .forEach(async (scan) => {
         const { data } = await supabase.from('article_issues').select('severity').eq('scan_job_id', scan.id)
         if (!data?.length) return
