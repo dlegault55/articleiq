@@ -430,19 +430,9 @@ function DiffView({ original, revised, originalTitle, revisedTitle }) {
         </div>
       )}
 
-      {/* Word diff */}
-      <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:10 }}>Content changes</p>
-      <div style={{ fontSize:13, lineHeight:2, color:'var(--text-2)' }}>
-        {tokens.map((token, i) => (
-          token.type === 'same' ? (
-            <span key={i}>{token.word} </span>
-          ) : token.type === 'add' ? (
-            <span key={i} style={{ background:'#DCFCE7', color:'#166534', borderRadius:3, padding:'0 2px' }}>{token.word} </span>
-          ) : (
-            <span key={i} style={{ background:'#FEE2E2', color:'#991B1B', textDecoration:'line-through', borderRadius:3, padding:'0 2px' }}>{token.word} </span>
-          )
-        ))}
-      </div>
+      {/* Revised article rendered with formatting */}
+      <div className="article-html" style={{ fontSize:13, color:'var(--text-2)' }}
+        dangerouslySetInnerHTML={{ __html: revised }} />
     </div>
   )
 }

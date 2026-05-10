@@ -125,7 +125,12 @@ ${content || title}`,
     }
 
     const data = await aiRes.json()
-    return res.status(200).json({ result: data.content[0]?.text || '' })
+    let result = data.content[0]?.text || ''
+
+    // Strip markdown code fences that Claude sometimes adds despite instructions
+    result = result.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/, '').trim()
+
+    return res.status(200).json({ result })
   } catch (err) {
     return res.status(500).json({ error: err.message })
   }
