@@ -857,7 +857,6 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
   const [aiResult, setAiResult] = useState(null)
   const [aiLoading, setAiLoading] = useState(null)
 
-  if (issues.length > 0) console.log('ArticleRow', article.id, 'issues:', issues.map(i => ({ id:i.id, type:i.issue_type, article_id:i.article_id, resolved:resolvedIssues.has(i.id) })))
   const activeIssues = issues.filter(i => !resolvedIssues.has(i.id))
   const critical     = activeIssues.filter(i => i.severity === 'critical')
   const warning      = activeIssues.filter(i => i.severity === 'warning')
@@ -1131,7 +1130,6 @@ export default function ScanResultsPage() {
       .update({ resolved, resolved_at: resolved ? new Date().toISOString() : null })
       .eq('id', issueId)
       .select()
-    console.log('resolveIssue:', { issueId, resolved, updated: data?.length, error: error?.message })
     if (error) {
       console.error('resolveIssue error:', error)
       setResolvedIssues(prev => { const n = new Set(prev); resolved ? n.delete(issueId) : n.add(issueId); return n })
