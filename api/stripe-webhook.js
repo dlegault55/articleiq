@@ -4,6 +4,13 @@ import Stripe from 'stripe'
 const stripe   = new Stripe(process.env.STRIPE_SECRET_KEY)
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
+// Critical — tell Vercel not to parse the body so we get the raw bytes for signature verification
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+}
+
 // Get raw body for Stripe signature verification
 async function getRawBody(req) {
   return new Promise((resolve, reject) => {
