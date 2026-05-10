@@ -971,10 +971,12 @@ function AIDrawer({ article, connector, onClose, userId }) {
                       .map(({ item, i }) => {
                       const isAddressed    = addressedRecs.has(`s-${i}`) && !overrideRecs.has(`s-${i}`)
                       const showUnaddressed = improved && !isAddressed
+                      const impactBg     = item.impact==='high' ? '#FEF2F2' : item.impact==='medium' ? '#FFFBEB' : '#EFF6FF'
+                      const impactBorder = item.impact==='high' ? '#FECACA' : item.impact==='medium' ? '#FDE68A' : '#BFDBFE'
                       return (
-                        <div key={i} style={{ marginBottom:7, padding:'6px 8px', borderRadius:6, transition:'all 0.3s',
-                          background: isAddressed ? 'var(--green-light)' : showUnaddressed ? 'var(--amber-light)' : 'white',
-                          border: `1px solid ${isAddressed ? 'var(--green-border)' : showUnaddressed ? 'var(--amber-border)' : 'var(--border-md)'}`,
+                        <div key={i} style={{ marginBottom:7, padding:'8px 10px', borderRadius:6, transition:'all 0.3s',
+                          background: isAddressed ? 'var(--green-light)' : showUnaddressed ? impactBg : 'white',
+                          border: `1px solid ${isAddressed ? 'var(--green-border)' : showUnaddressed ? impactBorder : 'var(--border-md)'}`,
                         }}>
                           {/* Badge row */}
                           <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
@@ -995,7 +997,10 @@ function AIDrawer({ article, connector, onClose, userId }) {
                           }}>{item.issue}</p>
                           {isAddressed
                             ? <p style={{ fontSize:9, color:'var(--green)', margin:'0 0 6px' }}>Applied by AI in the rewrite</p>
-                            : <p style={{ fontSize:11, color: showUnaddressed ? 'var(--amber)' : 'var(--text-3)', margin:'0 0 6px', lineHeight:1.5, fontWeight: showUnaddressed ? 600 : 400 }}>{item.fix}</p>
+                            : <p style={{ fontSize:11, color: showUnaddressed
+                                ? item.impact==='high' ? '#B91C1C' : item.impact==='medium' ? '#92400E' : '#1E40AF'
+                                : 'var(--text-3)',
+                              margin:'0 0 6px', lineHeight:1.5 }}>{item.fix}</p>
                           }
                           {/* Not relevant / override — always at bottom */}
                           <div style={{ display:'flex', gap:6 }}>
