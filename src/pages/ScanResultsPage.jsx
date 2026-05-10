@@ -1,5 +1,5 @@
 import { usePageTitle } from '@/hooks/usePageTitle'
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useUpgrade } from '@/hooks/useUpgrade'
