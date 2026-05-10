@@ -700,7 +700,7 @@ function AIDrawer({ article, connector, onClose, userId }) {
   )
 
   return (
-    <div className="ai-drawer" style={{ position:'fixed', top:0, right:0, bottom:0, width:'min(1100px,96vw)', background:'white', zIndex:201, display:'flex', flexDirection:'column', boxShadow:'-8px 0 40px rgba(0,0,0,0.12)', animation:'slide-in 0.22s ease' }}>
+    <div className="ai-drawer" style={{ position:'fixed', top:0, right:0, bottom:0, width:'min(1265px,96vw)', background:'white', zIndex:201, display:'flex', flexDirection:'column', boxShadow:'-8px 0 40px rgba(0,0,0,0.12)', animation:'slide-in 0.22s ease' }}>
       <style>{`
         @keyframes slide-in { from{transform:translateX(100%)} to{transform:translateX(0)} }
         .article-html h1{font-size:18px;font-weight:800;margin:16px 0 8px}
@@ -756,7 +756,7 @@ function AIDrawer({ article, connector, onClose, userId }) {
       </div>
 
       {/* ── Three panes ── */}
-      <div style={{ flex:1, display:'grid', gridTemplateColumns:'1fr 280px 1fr', overflow:'hidden' }}>
+      <div style={{ flex:1, display:'grid', gridTemplateColumns:'1fr 320px 1fr', overflow:'hidden' }}>
 
         {/* Pane 1 — Original article */}
         <div style={{ display:'flex', flexDirection:'column', borderRight:'1px solid var(--border-md)', overflow:'hidden' }}>
