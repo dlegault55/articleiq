@@ -467,6 +467,26 @@ function AIDrawer({ article, connector, onClose, userId }) {
   const [dismissedRecs,  setDismissedRecs]  = useState(new Set())
   const [error,       setError]       = useState(null)
 
+  // Load previous dismissals for this article
+  useEffect(() => {
+    if (!article || !userId) return
+    supabase.from('recommendation_feedback')
+      .select('rec_text, rec_type')
+      .eq('user_id', userId)
+      .eq('article_id', article.zendesk_article_id)
+      .eq('vote', 'down')
+      .then(({ data }) => {
+        if (data?.length) {
+          const keys = new Set()
+          data.forEach(({ rec_text, rec_type }) => {
+            // Match against current recs by text
+            keys.add(`dismissed:${rec_type}:${rec_text}`)
+          })
+          setDismissedRecs(keys)
+        }
+      })
+  }, [article?.id, userId])
+
   // Fetch article + run analysis on open
   useEffect(() => {
     if (!article || !connector) return
@@ -547,6 +567,15 @@ function AIDrawer({ article, connector, onClose, userId }) {
         }
       }
 
+      // Add dismissed recs so AI doesn't try to apply irrelevant ones
+      const dismissedTexts = [...dismissedRecs]
+        .filter(k => k.startsWith('dismissed:'))
+        .map(k => k.split(':').slice(2).join(':'))
+      if (dismissedTexts.length) {
+        lines.push('DO NOT apply these — user marked them as irrelevant for this article:')
+        dismissedTexts.forEach(t => lines.push('  - ' + t))
+      }
+
       const analysisContext = lines.length ? lines.join(nl) : ''
 
       const result = await callAI('improve', {
@@ -622,8 +651,8 @@ function AIDrawer({ article, connector, onClose, userId }) {
   }
 
   const dismissRec = async (key, text, type) => {
-    setDismissedRecs(prev => new Set([...prev, key]))
-    // Log to DB for future prompt improvement
+    const persistKey = `dismissed:${type}:${text}`
+    setDismissedRecs(prev => new Set([...prev, key, persistKey]))
     try {
       await supabase.from('recommendation_feedback').insert({
         user_id:    userId,
@@ -764,6 +793,27 @@ function AIDrawer({ article, connector, onClose, userId }) {
             {fetchErr && <p style={{ fontSize:12, color:'var(--red)', lineHeight:1.6 }}>{fetchErr}</p>}
             {!analysing && analysis && (
               <>
+                {/* Effective score adjustment based on dismissals */}
+                {dismissedRecs.size > 0 && analysis?.quality?.score != null && (() => {
+                  const totalRecs    = (analysis.quality?.suggestions?.length || 0) + (analysis.seo?.issues?.length || 0)
+                  const dismissed    = [...dismissedRecs].filter(k => k.startsWith('dismissed:')).length
+                  const pctDismissed = totalRecs > 0 ? dismissed / totalRecs : 0
+                  const scoreBoost   = Math.round(pctDismissed * (100 - analysis.quality.score) * 0.5)
+                  if (scoreBoost < 2) return null
+                  return (
+                    <div style={{ padding:'8px 10px', borderRadius:7, background:'var(--navy-light)', border:'1px solid var(--navy-border)', marginBottom:10, display:'flex', alignItems:'center', gap:8 }}>
+                      <div>
+                        <p style={{ fontSize:11, fontWeight:700, color:'var(--navy)', margin:'0 0 1px' }}>
+                          Adjusted quality score: {analysis.quality.score + scoreBoost}/100
+                        </p>
+                        <p style={{ fontSize:10, color:'var(--text-3)', margin:0 }}>
+                          {dismissed} irrelevant suggestion{dismissed !== 1 ? 's' : ''} dismissed — adjusted score reflects relevant findings only
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })()}
+
                 {/* Rewrite summary — only shows after improve runs */}
                 {improved && addressedRecs.size > 0 && (() => {
                   const totalRecs = (analysis.quality?.suggestions?.length || 0) + (analysis.seo?.issues?.length || 0) + (analysis.seo?.title_suggestion ? 1 : 0) - dismissedRecs.size
@@ -838,7 +888,7 @@ function AIDrawer({ article, connector, onClose, userId }) {
                   <div style={{ marginBottom:14 }}>
                     <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:8 }}>Writing fixes</p>
                     {[...analysis.quality.suggestions.map((s, i) => ({ s, i }))]
-                      .filter(({ i }) => !dismissedRecs.has(`q-${i}`))
+                      .filter(({ s, i }) => !dismissedRecs.has(`q-${i}`) && !dismissedRecs.has(`dismissed:quality:${s}`))
                       .sort((a, b) => {
                         const aAddressed = addressedRecs.has(`q-${a.i}`)
                         const bAddressed = addressedRecs.has(`q-${b.i}`)
@@ -906,7 +956,7 @@ function AIDrawer({ article, connector, onClose, userId }) {
                   <div>
                     <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:8 }}>{improved ? 'SEO fixes — check what needs manual action' : 'SEO fixes'}</p>
                     {[...analysis.seo.issues.map((item, i) => ({ item, i }))]
-                      .filter(({ i }) => !dismissedRecs.has(`s-${i}`))
+                      .filter(({ item, i }) => !dismissedRecs.has(`s-${i}`) && !dismissedRecs.has(`dismissed:seo:${item.issue}`))
                       .sort((a, b) => {
                         const aAddressed = addressedRecs.has(`s-${a.i}`)
                         const bAddressed = addressedRecs.has(`s-${b.i}`)
