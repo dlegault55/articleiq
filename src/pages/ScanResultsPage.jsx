@@ -725,8 +725,8 @@ function AIDrawer({ article, connector, onClose, userId }) {
         <div style={{ display:'flex', alignItems:'center', gap:10, minWidth:0 }}>
           <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ color:'var(--text-3)', flexShrink:0 }}><X size={15} /></button>
           <div style={{ minWidth:0 }}>
-            <p style={{ fontSize:13, fontWeight:700, color:'var(--text)', margin:'0 0 1px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:500 }}>{article.title}</p>
-            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <p style={{ fontSize:13, fontWeight:700, color:'var(--text)', margin:'0 0 1px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:560 }}>{article.title}</p>
+            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
               {analysis?.quality?.score != null && (
                 <span style={{ fontSize:10, fontWeight:700, padding:'1px 6px', borderRadius:3, background: scoreBg(analysis.quality.score), color: scoreColor(analysis.quality.score) }}>
                   Quality {analysis.quality.score}
@@ -746,14 +746,11 @@ function AIDrawer({ article, connector, onClose, userId }) {
             </div>
           </div>
         </div>
-        <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
-          {article.url && (
-            <a href={article.url} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
-              <ExternalLink size={11} /> Open in Zendesk®
-            </a>
-          )}
-          <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ color:'var(--text-3)' }}>Close</button>
-        </div>
+        {article.url && (
+          <a href={article.url} target="_blank" rel="noreferrer" style={{ fontSize:11, color:'var(--text-3)', textDecoration:'none', display:'flex', alignItems:'center', gap:4, flexShrink:0 }}>
+            <ExternalLink size={11} /> Zendesk®
+          </a>
+        )}
       </div>
 
       {/* ── Three panes ── */}
@@ -1023,29 +1020,21 @@ function AIDrawer({ article, connector, onClose, userId }) {
         <div style={{ display:'flex', flexDirection:'column', overflow:'hidden' }}>
 
           {/* Header with tabs */}
-          <div style={{ background:'var(--navy)', borderBottom:'1px solid rgba(255,255,255,0.1)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 14px', height:38 }}>
-            <div style={{ display:'flex', alignItems:'center', gap:0 }}>
-              <Wand2 size={12} style={{ color:'rgba(255,255,255,0.6)', marginRight:7 }} />
-              {(improved || editedText) ? [
-                { id:'edit',    label:'Edit' },
-                { id:'changes', label:'Changes' },
-              ].map(({ id, label }) => (
-                <button key={id} onClick={() => setRewriteTab(id)}
-                  style={{ padding:'0 12px', height:38, fontSize:11, fontWeight: rewriteTab===id ? 700 : 500,
-                    color: rewriteTab===id ? 'white' : 'rgba(255,255,255,0.45)',
-                    background:'none', border:'none', borderBottom: rewriteTab===id ? '2px solid white' : '2px solid transparent',
-                    cursor:'pointer', fontFamily:'inherit', marginBottom:-1 }}>
-                  {label}
-                </button>
-              )) : (
-                <span style={{ fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.6)' }}>AI Rewrite</span>
-              )}
-            </div>
-            {!improving && !analysing && (
-              <button onClick={runImprove} disabled={improving || analysing} className="btn btn-sm"
-                style={{ background:'rgba(255,255,255,0.15)', color:'white', border:'1px solid rgba(255,255,255,0.25)', fontSize:11, padding:'4px 10px' }}>
-                {improved ? <><RefreshCcw size={10} /> Re-improve</> : <><Wand2 size={10} /> Improve Article</>}
+          <div style={{ background:'var(--navy)', borderBottom:'1px solid rgba(255,255,255,0.1)', flexShrink:0, display:'flex', alignItems:'center', padding:'0 14px', height:38, gap:0 }}>
+            <Wand2 size={12} style={{ color:'rgba(255,255,255,0.5)', marginRight:8, flexShrink:0 }} />
+            {(improved || editedText) ? [
+              { id:'edit',    label:'Edit' },
+              { id:'changes', label:'Changes' },
+            ].map(({ id, label }) => (
+              <button key={id} onClick={() => setRewriteTab(id)}
+                style={{ padding:'0 12px', height:38, fontSize:11, fontWeight: rewriteTab===id ? 700 : 500,
+                  color: rewriteTab===id ? 'white' : 'rgba(255,255,255,0.45)',
+                  background:'none', border:'none', borderBottom: rewriteTab===id ? '2px solid white' : '2px solid transparent',
+                  cursor:'pointer', fontFamily:'inherit', marginBottom:-1 }}>
+                {label}
               </button>
+            )) : (
+              <span style={{ fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.6)' }}>AI Rewrite</span>
             )}
           </div>
 
@@ -1108,13 +1097,17 @@ function AIDrawer({ article, connector, onClose, userId }) {
         )}
         {error && <p style={{ fontSize:11, color:'var(--red)', marginBottom:8 }}>{error}</p>}
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <button onClick={reanalyse} disabled={reanalysing || analysing || (!improved && !editedText)} className="btn btn-sm"
-            style={{ background:'var(--navy-light)', color:'var(--navy)', border:'1px solid var(--navy-border)', fontWeight:700 }}>
+          {/* Left — secondary actions */}
+          <button onClick={reanalyse} disabled={reanalysing || analysing || (!improved && !editedText)} className="btn btn-secondary btn-sm">
             {reanalysing ? <><Loader size={11} style={{ animation:'spin 0.7s linear infinite' }} /> Re-analysing...</> : <><BarChart2 size={11} /> Re-analyse</>}
           </button>
+          <button onClick={runImprove} disabled={improving || analysing} className="btn btn-secondary btn-sm">
+            {improving ? <><Loader size={11} style={{ animation:'spin 0.7s linear infinite' }} /> Improving...</> : <><RefreshCcw size={11} /> Re-improve</>}
+          </button>
           <div style={{ flex:1 }} />
+          {/* Right — publish actions */}
           <button onClick={copy} disabled={!improved && !editedText} className="btn btn-secondary btn-sm">
-            {copying ? <><Check size={11} /> Copied!</> : <><CheckSquare size={11} /> Copy text</>}
+            {copying ? <><Check size={11} /> Copied</> : <><CheckSquare size={11} /> Copy</>}
           </button>
           <button onClick={publish} disabled={publishing || (!improved && !editedText)} className="btn btn-primary btn-sm"
             style={{ background: confirmPub ? 'var(--amber)' : 'var(--navy)' }}>
