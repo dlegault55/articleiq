@@ -1166,11 +1166,28 @@ export default function ScanResultsPage() {
       if (filter==='resolved') return issues.filter(i=>i.article_id===a.id).some(i=>resolvedIssues.has(i.id))
       if (filter==='all')      return true
       if (filter==='issues')   return unrec.length > 0
-      if (filter==='critical') return ai.some(i=>i.severity==='critical') // show even if all resolved — user can see what they fixed
+      if (filter==='critical') return ai.some(i=>i.severity==='critical')
       if (filter==='clean')    return ai.length === 0
       return true
     })
 
+  // Stable sort — only recalculates when filter/sort changes, not when resolved state changes
+  // This prevents rows from reordering mid-session when issues are marked resolved
+  const sortedFiltered = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      const ai = issues.filter(i=>i.article_id===a.id)
+      const bi = issues.filter(i=>i.article_id===b.id)
+      const aCrit = ai.some(i=>i.severity==='critical')
+      const bCrit = bi.some(i=>i.severity==='critical')
+      if (aCrit && !bCrit) return -1
+      if (!aCrit && bCrit) return 1
+      if (sort==='words') return (a.word_count||0) - (b.word_count||0)
+      return bi.length - ai.length
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtered.map(a=>a.id).join(','), filter, sort])
+
+  const paginated  = sortedFiltered.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE)
   const totalPages = Math.ceil(sortedFiltered.length / PAGE_SIZE)
 
   if (loading) return (
