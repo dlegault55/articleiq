@@ -957,14 +957,14 @@ function AIDrawer({ article, connector, onClose, userId }) {
                         return (impactOrder[a.item.impact]||2) - (impactOrder[b.item.impact]||2)
                       })
                       .map(({ item, i }) => {
-                      const isAddressed = addressedRecs.has(`s-${i}`)
+                      const isAddressed    = addressedRecs.has(`s-${i}`)
+                      const showUnaddressed = improved && !isAddressed
                       return (
                         <div key={i} style={{ marginBottom:7, padding:'6px 8px', borderRadius:6, transition:'all 0.3s',
-                          background: isAddressed ? 'var(--green-light)' : 'white',
-                          border: `1px solid ${isAddressed ? 'var(--green-border)' : 'var(--border-md)'}`,
-                          opacity: isAddressed ? 0.75 : 1,
+                          background: isAddressed ? 'var(--green-light)' : showUnaddressed ? 'var(--amber-light)' : 'white',
+                          border: `1px solid ${isAddressed ? 'var(--green-border)' : showUnaddressed ? 'var(--amber-border)' : 'var(--border-md)'}`,
                         }}>
-                          <div style={{ display:'flex', alignItems:'center', gap:5, marginBottom: isAddressed ? 0 : 3 }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:5, marginBottom:3 }}>
                             {isAddressed
                               ? <CheckCircle size={10} style={{ color:'var(--green)' }} />
                               : <span style={{ fontSize:8, fontWeight:700, padding:'1px 5px', borderRadius:3, textTransform:'uppercase',
@@ -972,12 +972,21 @@ function AIDrawer({ article, connector, onClose, userId }) {
                                   color: item.impact==='high' ? 'var(--red)' : item.impact==='medium' ? 'var(--amber)' : 'var(--blue)',
                                 }}>{item.impact}</span>
                             }
-                            <span style={{ fontSize:11, fontWeight:600,
-                              color: isAddressed ? 'var(--green)' : 'var(--text)',
+                            <span style={{ fontSize:11, fontWeight:600, flex:1,
+                              color: isAddressed ? 'var(--green)' : showUnaddressed ? 'var(--amber)' : 'var(--text)',
                               textDecoration: isAddressed ? 'line-through' : 'none',
                             }}>{item.issue}</span>
+                            <button onClick={() => dismissRec(`s-${i}`, item.issue, 'seo')} title="Dismiss — not relevant to this article"
+                              style={{ flexShrink:0, background:'none', border:'1px solid var(--border-md)', cursor:'pointer', padding:'2px 7px', borderRadius:4, color:'var(--text-3)', fontSize:10, lineHeight:1.4, fontFamily:'inherit', fontWeight:600 }}
+                              onMouseEnter={e => { e.currentTarget.style.color='var(--red)'; e.currentTarget.style.borderColor='var(--red-border)'; e.currentTarget.style.background='var(--red-light)' }}
+                              onMouseLeave={e => { e.currentTarget.style.color='var(--text-3)'; e.currentTarget.style.borderColor='var(--border-md)'; e.currentTarget.style.background='none' }}>
+                              Not relevant
+                            </button>
                           </div>
-                          {!isAddressed && <p style={{ fontSize:10, color:'var(--text-3)', margin:0, lineHeight:1.5 }}>{item.fix}</p>}
+                          {isAddressed
+                            ? <p style={{ fontSize:9, color:'var(--green)', margin:0 }}>Applied by AI in the rewrite</p>
+                            : <p style={{ fontSize:10, color: showUnaddressed ? 'var(--amber)' : 'var(--text-3)', margin:0, lineHeight:1.5, fontWeight: showUnaddressed ? 600 : 400 }}>{item.fix}</p>
+                          }
                         </div>
                       )
                     })}
