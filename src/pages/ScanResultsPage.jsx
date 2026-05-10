@@ -795,17 +795,23 @@ function AIDrawer({ article, connector, onClose }) {
                     <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:8 }}>Writing fixes</p>
                     {analysis.quality.suggestions.map((s, i) => {
                       const isAddressed = addressedRecs.has(`q-${i}`)
+                      const showUnaddressed = improved && !isAddressed
                       return (
                         <div key={i} style={{ display:'flex', gap:6, marginBottom:5, padding:'6px 8px', borderRadius:6, transition:'all 0.3s',
-                          background: isAddressed ? 'var(--green-light)' : 'white',
-                          border: `1px solid ${isAddressed ? 'var(--green-border)' : 'var(--border-md)'}`,
-                          opacity: isAddressed ? 0.75 : 1,
+                          background: isAddressed ? 'var(--green-light)' : showUnaddressed ? 'var(--amber-light)' : 'white',
+                          border: `1px solid ${isAddressed ? 'var(--green-border)' : showUnaddressed ? 'var(--amber-border)' : 'var(--border-md)'}`,
                         }}>
                           {isAddressed
                             ? <CheckCircle size={11} style={{ color:'var(--green)', flexShrink:0, marginTop:1 }} />
-                            : <span style={{ color:'var(--navy)', flexShrink:0, fontWeight:700, fontSize:12 }}>→</span>
+                            : showUnaddressed
+                              ? <span style={{ fontSize:10, flexShrink:0, marginTop:1 }}>✋</span>
+                              : <span style={{ color:'var(--navy)', flexShrink:0, fontWeight:700, fontSize:12 }}>→</span>
                           }
-                          <span style={{ fontSize:11, color: isAddressed ? 'var(--green)' : 'var(--text-2)', lineHeight:1.5, textDecoration: isAddressed ? 'line-through' : 'none' }}>{s}</span>
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <span style={{ fontSize:11, color: isAddressed ? 'var(--green)' : showUnaddressed ? 'var(--amber)' : 'var(--text-2)', lineHeight:1.5, textDecoration: isAddressed ? 'line-through' : 'none' }}>{s}</span>
+                            {showUnaddressed && <p style={{ fontSize:9, color:'var(--amber)', margin:'2px 0 0', fontWeight:700 }}>Apply this manually in the editor</p>}
+                            {isAddressed && <p style={{ fontSize:9, color:'var(--green)', margin:'2px 0 0' }}>Applied by AI in the rewrite</p>}
+                          </div>
                         </div>
                       )
                     })}
@@ -837,7 +843,7 @@ function AIDrawer({ article, connector, onClose }) {
                 {/* SEO issues */}
                 {analysis.seo?.issues?.length > 0 && (
                   <div>
-                    <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:8 }}>SEO fixes — apply manually</p>
+                    <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:8 }}>{improved ? 'SEO fixes — check what needs manual action' : 'SEO fixes'}</p>
                     {analysis.seo.issues.map((item, i) => {
                       const isAddressed = addressedRecs.has(`s-${i}`)
                       return (
