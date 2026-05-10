@@ -14,7 +14,7 @@ async function getRawBody(req) {
   })
 }
 
-async function findAndUpdateUser(email, customerId, plan, status) {
+async function findAndUpdateUser(email, customerId, plan, status, scansRemaining = null) {
   if (!email) {
     console.error('No email provided to findAndUpdateUser')
     return false
@@ -29,7 +29,7 @@ async function findAndUpdateUser(email, customerId, plan, status) {
       .single()
 
     if (existing) {
-      await supabase.from('profiles').update({ plan, subscription_status: status, stripe_customer_id: customerId }).eq('id', existing.id)
+      await supabase.from('profiles').update({ plan, subscription_status: status, stripe_customer_id: customerId, ...(scansRemaining !== null && { scans_remaining: scansRemaining }) }).eq('id', existing.id)
       console.log(`Updated profile by customer ID: ${existing.id} → plan=${plan}`)
       return true
     }
@@ -46,6 +46,7 @@ async function findAndUpdateUser(email, customerId, plan, status) {
     plan,
     subscription_status: status,
     stripe_customer_id: customerId,
+    ...(scansRemaining !== null && { scans_remaining: scansRemaining }),
   }).eq('id', match.id)
 
   console.log(`Updated profile by email: ${match.id} → plan=${plan}`)
@@ -79,8 +80,8 @@ export default async function handler(req, res) {
         const mode       = obj.mode // 'payment' or 'subscription'
 
         if (mode === 'payment') {
-          // Scan Pack — one-time purchase, grant pack plan
-          await findAndUpdateUser(email, customerId, 'pack', 'active')
+          // Scan Pack — one-time purchase, grant pack plan + 5 scans
+          await findAndUpdateUser(email, customerId, 'pack', 'active', 5)
         } else if (mode === 'subscription') {
           // Annual Pro — subscription started
           await findAndUpdateUser(email, customerId, 'annual', 'active')

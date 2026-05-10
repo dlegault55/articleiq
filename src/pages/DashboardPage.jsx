@@ -259,6 +259,10 @@ export default function DashboardPage() {
         .insert({ user_id: userId, connector_id: connector.id, status: 'pending', preset: Object.entries(checks || DEFAULT_CHECKS).filter(([,v])=>v).map(([k])=>k).join(',') })
         .select().single()
       if (jobErr) throw new Error(jobErr.message)
+      // Deduct scan credit for pack users
+      if (profile?.plan === 'pack' && profile?.scans_remaining > 0) {
+        await supabase.from('profiles').update({ scans_remaining: profile.scans_remaining - 1 }).eq('id', userId)
+      }
       reloadScans()
       navigate(`/scanner/results/${job.id}`)
     } catch (e) { setError(e.message); setStarting(false) }
@@ -346,8 +350,60 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── Health score hero ── */}
-      {!activeScan && hasConn && lastScan && (
+      {/* Welcome banner after upgrade */}
+      {justUpgraded && (
+          <div style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 18px', borderRadius:10, marginBottom:14, background:'var(--green-light)', border:'1px solid var(--green-border)' }}>
+            <CheckCircle size={22} style={{ color:'var(--green)', flexShrink:0 }} />
+            <div>
+              <p style={{ fontSize:14, fontWeight:700, color:'var(--text)', margin:'0 0 2px' }}>
+                {profile?.plan === 'annual' ? 'Welcome to Annual Pro!' : 'Welcome to Scan Pack!'}
+              </p>
+              <p style={{ fontSize:12, color:'var(--text-2)', margin:0 }}>
+                {profile?.plan === 'annual'
+                  ? 'Unlimited scans, full AI features, and KB health trend tracking are all unlocked. Run your first scan below.'
+                  : `You have 5 scans ready to use — they never expire. AI features, unlimited articles, and direct publishing to Zendesk® are all unlocked. Run your first scan below.`
+                }
+              </p>
+            </div>
+          </div>
+        )}
+
+      )}
+
+      {/* Scan Pack credits banner */}
+      {profile?.plan === 'pack' && (
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px', borderRadius:10, marginBottom:14,
+            background: profile.scans_remaining === 0 ? 'var(--red-light)' : 'var(--navy-light)',
+            border: `1px solid ${profile.scans_remaining === 0 ? 'var(--red-border)' : 'var(--navy-border)'}`,
+          }}>
+            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+              <div style={{ width:34, height:34, borderRadius:8, background: profile.scans_remaining === 0 ? 'var(--red-light)' : 'var(--navy)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <Zap size={16} style={{ color: profile.scans_remaining === 0 ? 'var(--red)' : 'white' }} />
+              </div>
+              <div>
+                <p style={{ fontSize:13, fontWeight:700, color:'var(--text)', margin:'0 0 1px' }}>
+                  {profile.scans_remaining === 0
+                    ? 'No scans remaining'
+                    : `${profile.scans_remaining} scan${profile.scans_remaining !== 1 ? 's' : ''} remaining`}
+                </p>
+                <p style={{ fontSize:11, color:'var(--text-3)', margin:0 }}>
+                  {profile.scans_remaining === 0
+                    ? 'Buy another Scan Pack or upgrade to Annual for unlimited scans'
+                    : 'Scan Pack · credits never expire'}
+                </p>
+              </div>
+            </div>
+            <div style={{ display:'flex', gap:8 }}>
+              {profile.scans_remaining === 0 && (
+                <button onClick={upgrade} className="btn btn-primary btn-sm">Buy more scans</button>
+              )}
+              {profile.scans_remaining > 0 && profile.scans_remaining <= 2 && (
+                <button onClick={upgrade} className="btn btn-secondary btn-sm">Upgrade to Annual</button>
+              )}
+            </div>
+          </div>
+        )}
+
         <div style={{ background:'var(--navy)', borderRadius:'var(--radius-xl)', padding:'22px 26px', marginBottom:16, position:'relative', overflow:'hidden' }} className="animate-in">
           <div style={{ position:'absolute', top:-50, right:-50, width:200, height:200, borderRadius:'50%', background:'rgba(255,255,255,0.04)' }} />
           <div style={{ position:'absolute', bottom:-60, right:80, width:140, height:140, borderRadius:'50%', background:'rgba(255,255,255,0.03)' }} />
