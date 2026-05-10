@@ -348,66 +348,126 @@ function WYSIWYGEditor({ html, onChange }) {
 // ─── AI Drawer ─────────────────────────────────────────────────
 // ─── Diff View ────────────────────────────────────────────────
 function DiffView({ original, revised, originalTitle, revisedTitle }) {
-  // Strip HTML to plain text for diffing
   const strip = html => {
     const d = document.createElement('div')
     d.innerHTML = html || ''
     return (d.textContent || d.innerText || '').replace(/\s+/g, ' ').trim()
   }
 
-  // Simple word-level LCS diff
+  // LCS word-level diff
   const diffWords = (a, b) => {
-    const wa = a.split(/\s+/).filter(Boolean)
-    const wb = b.split(/\s+/).filter(Boolean)
-    const m = wa.length, n = wb.length
+    const wa = a.split(/(\s+)/).filter(Boolean)
+    const wb = b.split(/(\s+)/).filter(Boolean)
+    const wordsA = wa.filter(w => w.trim())
+    const wordsB = wb.filter(w => w.trim())
+    const m = wordsA.length, n = wordsB.length
 
-    // LCS table
     const dp = Array.from({ length: m+1 }, () => new Array(n+1).fill(0))
     for (let i = m-1; i >= 0; i--)
       for (let j = n-1; j >= 0; j--)
-        dp[i][j] = wa[i] === wb[j] ? dp[i+1][j+1]+1 : Math.max(dp[i+1][j], dp[i][j+1])
+        dp[i][j] = wordsA[i] === wordsB[j] ? dp[i+1][j+1]+1 : Math.max(dp[i+1][j], dp[i][j+1])
 
-    // Trace back
     const tokens = []
     let i = 0, j = 0
     while (i < m || j < n) {
-      if (i < m && j < n && wa[i] === wb[j]) {
-        tokens.push({ type:'same', word:wa[i] }); i++; j++
+      if (i < m && j < n && wordsA[i] === wordsB[j]) {
+        tokens.push({ type:'same', word:wordsA[i] }); i++; j++
       } else if (j < n && (i >= m || dp[i][j+1] >= (i < m ? dp[i+1][j] : 0))) {
-        tokens.push({ type:'add', word:wb[j] }); j++
+        tokens.push({ type:'add', word:wordsB[j] }); j++
       } else {
-        tokens.push({ type:'remove', word:wa[i] }); i++
+        tokens.push({ type:'remove', word:wordsA[i] }); i++
       }
     }
     return tokens
   }
 
-  const origText = strip(original)
-  const revText  = strip(revised)
-  const tokens   = diffWords(origText, revText)
+  // Build highlighted HTML by injecting marks into the revised HTML
+  const buildHighlightedHtml = () => {
+    const origText = strip(original)
+    const revText  = strip(revised)
+    const tokens   = diffWords(origText, revText)
 
-  const added   = tokens.filter(t => t.type==='add').length
-  const removed = tokens.filter(t => t.type==='remove').length
+    // Build a highlighted plain-text version first
+    let plainHighlighted = ''
+    for (const token of tokens) {
+      if (token.type === 'same')   plainHighlighted += token.word + ' '
+      else if (token.type === 'add')    plainHighlighted += `<mark class="diff-add">${token.word}</mark> `
+      else if (token.type === 'remove') plainHighlighted += `<mark class="diff-remove">${token.word}</mark> `
+    }
+
+    // Now inject into the revised HTML — replace plain text nodes with highlighted versions
+    // Parse revised HTML, walk text nodes, replace matching words
+    const parser = new DOMParser()
+    const doc    = parser.parseFromString(revised || '', 'text/html')
+
+    const addedWords   = new Set(tokens.filter(t=>t.type==='add').map(t=>t.word.toLowerCase()))
+    const removedWords = new Set(tokens.filter(t=>t.type==='remove').map(t=>t.word.toLowerCase()))
+
+    const walk = node => {
+      if (node.nodeType === 3) { // text node
+        const text = node.textContent
+        if (!text.trim()) return
+        const parts = text.split(/(\s+)/)
+        const hasChanges = parts.some(p => p.trim() && (addedWords.has(p.toLowerCase()) || removedWords.has(p.toLowerCase())))
+        if (!hasChanges) return
+        const span = document.createElement('span')
+        parts.forEach(part => {
+          if (!part.trim()) { span.appendChild(document.createTextNode(part)); return }
+          const lower = part.toLowerCase()
+          if (addedWords.has(lower)) {
+            const m = document.createElement('mark')
+            m.className = 'diff-add'
+            m.textContent = part
+            span.appendChild(m)
+          } else if (removedWords.has(lower)) {
+            const m = document.createElement('mark')
+            m.className = 'diff-remove'
+            m.textContent = part
+            span.appendChild(m)
+          } else {
+            span.appendChild(document.createTextNode(part))
+          }
+        })
+        node.parentNode.replaceChild(span, node)
+      } else if (node.nodeType === 1 && !['SCRIPT','STYLE'].includes(node.tagName)) {
+        Array.from(node.childNodes).forEach(walk)
+      }
+    }
+    Array.from(doc.body.childNodes).forEach(walk)
+    return doc.body.innerHTML
+  }
+
+  const origText     = strip(original)
+  const revText      = strip(revised)
+  const tokens       = diffWords(origText, revText)
+  const added        = tokens.filter(t => t.type==='add').length
+  const removed      = tokens.filter(t => t.type==='remove').length
   const titleChanged = originalTitle && revisedTitle && originalTitle !== revisedTitle
+  const highlighted  = buildHighlightedHtml()
 
   return (
     <div style={{ flex:1, overflowY:'auto', padding:'16px' }}>
+      <style>{`
+        mark.diff-add    { background:#DCFCE7; color:#166534; border-radius:2px; padding:0 2px; font-weight:600; text-decoration:none; }
+        mark.diff-remove { background:#FEE2E2; color:#991B1B; border-radius:2px; padding:0 2px; text-decoration:line-through; }
+      `}</style>
+
       {/* Summary bar */}
-      <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 12px', borderRadius:8, background:'var(--bg)', border:'1px solid var(--border-md)', marginBottom:14, flexWrap:'wrap', gap:8 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:12, padding:'8px 12px', borderRadius:8, background:'var(--bg)', border:'1px solid var(--border-md)', marginBottom:14, flexWrap:'wrap' }}>
         {added > 0 && (
-          <span style={{ fontSize:11, fontWeight:700, color:'var(--green)', display:'flex', alignItems:'center', gap:4 }}>
+          <span style={{ fontSize:11, fontWeight:700, color:'var(--green)', display:'flex', alignItems:'center', gap:5 }}>
             <span style={{ width:8, height:8, borderRadius:'50%', background:'var(--green)', display:'inline-block' }} />
             +{added} words added
           </span>
         )}
         {removed > 0 && (
-          <span style={{ fontSize:11, fontWeight:700, color:'var(--red)', display:'flex', alignItems:'center', gap:4 }}>
+          <span style={{ fontSize:11, fontWeight:700, color:'var(--red)', display:'flex', alignItems:'center', gap:5 }}>
             <span style={{ width:8, height:8, borderRadius:'50%', background:'var(--red)', display:'inline-block' }} />
             -{removed} words removed
           </span>
         )}
         {titleChanged && (
-          <span style={{ fontSize:11, fontWeight:700, color:'var(--navy)', display:'flex', alignItems:'center', gap:4 }}>
+          <span style={{ fontSize:11, fontWeight:700, color:'var(--navy)', display:'flex', alignItems:'center', gap:5 }}>
             <span style={{ width:8, height:8, borderRadius:'50%', background:'var(--navy)', display:'inline-block' }} />
             Title changed
           </span>
@@ -415,6 +475,10 @@ function DiffView({ original, revised, originalTitle, revisedTitle }) {
         {added === 0 && removed === 0 && !titleChanged && (
           <span style={{ fontSize:11, color:'var(--text-3)' }}>No changes detected</span>
         )}
+        <span style={{ fontSize:11, color:'var(--text-3)', marginLeft:'auto' }}>
+          <span style={{ background:'#DCFCE7', color:'#166534', padding:'1px 6px', borderRadius:3, marginRight:6, fontSize:10 }}>green = added</span>
+          <span style={{ background:'#FEE2E2', color:'#991B1B', padding:'1px 6px', borderRadius:3, fontSize:10, textDecoration:'line-through' }}>red = removed</span>
+        </span>
       </div>
 
       {/* Title diff */}
@@ -430,9 +494,9 @@ function DiffView({ original, revised, originalTitle, revisedTitle }) {
         </div>
       )}
 
-      {/* Revised article rendered with formatting */}
+      {/* Highlighted revised HTML */}
       <div className="article-html" style={{ fontSize:13, color:'var(--text-2)' }}
-        dangerouslySetInnerHTML={{ __html: revised }} />
+        dangerouslySetInnerHTML={{ __html: highlighted }} />
     </div>
   )
 }
