@@ -111,15 +111,35 @@ export default function SettingsPage() {
         <Row label="Email" desc="Used for scan notifications" border>
           <span style={{ fontSize:13, fontWeight:600, color:'var(--text)' }}>{user?.email || '—'}</span>
         </Row>
-        <Row label="Plan" border={false}>
-          <span style={{ fontSize:11, fontWeight:700, padding:'3px 10px', borderRadius:100,
-            background: profile?.plan==='paid' ? 'var(--navy-light)' : 'var(--bg)',
-            color: profile?.plan==='paid' ? 'var(--navy)' : 'var(--text-3)',
-            border: `1px solid ${profile?.plan==='paid' ? 'var(--navy-border)' : 'var(--border-md)'}`,
-          }}>
-            {profile?.plan==='paid' ? '★ Pro' : 'Free plan'}
-          </span>
+        <Row label="Plan" border>
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <span style={{ fontSize:11, fontWeight:700, padding:'3px 10px', borderRadius:100,
+              background: ['pack','annual','paid'].includes(profile?.plan) ? 'var(--navy-light)' : 'var(--bg)',
+              color: ['pack','annual','paid'].includes(profile?.plan) ? 'var(--navy)' : 'var(--text-3)',
+              border: `1px solid ${['pack','annual','paid'].includes(profile?.plan) ? 'var(--navy-border)' : 'var(--border-md)'}`,
+            }}>
+              {profile?.plan === 'annual' ? '★ Annual Pro'
+                : profile?.plan === 'pack' ? '★ Scan Pack'
+                : ['paid'].includes(profile?.plan) ? '★ Pro'
+                : 'Free plan'}
+            </span>
+            {!['pack','annual','paid'].includes(profile?.plan) && (
+              <a href="/upgrade" style={{ fontSize:11, color:'var(--navy)', fontWeight:600 }}>Upgrade →</a>
+            )}
+          </div>
         </Row>
+        {profile?.plan === 'pack' && (
+          <Row label="Scans remaining" border={false} desc="Credits never expire">
+            <span style={{ fontSize:13, fontWeight:700, color: profile?.scans_remaining === 0 ? 'var(--red)' : 'var(--navy)' }}>
+              {profile?.scans_remaining ?? '—'} of 5
+            </span>
+          </Row>
+        )}
+        {profile?.plan === 'annual' && (
+          <Row label="Scans" border={false} desc="Resets with your annual renewal">
+            <span style={{ fontSize:13, fontWeight:700, color:'var(--navy)' }}>Unlimited</span>
+          </Row>
+        )}
       </Section>
 
       <Section title="Notifications" desc="Control when ArticleIQ contacts you">
