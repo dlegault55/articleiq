@@ -532,10 +532,21 @@ function AIDrawer({ article, connector, onClose }) {
 
         {/* Left panel — changes based on step */}
         <div className="ai-drawer-before" style={{ display:'flex', flexDirection:'column', borderRight:'1px solid var(--border-md)', overflow:'hidden' }}>
-          <div style={{ padding:'8px 16px', background:'var(--bg)', borderBottom:'1px solid var(--border)', flexShrink:0 }}>
-            <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)' }}>
-              {step === 'improve' ? 'Recommendations' : 'Original article'}
-            </span>
+          <div style={{ padding:'8px 16px', borderBottom:'1px solid var(--border)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between',
+            background: step === 'improve' ? 'var(--navy-light)' : 'var(--bg)',
+          }}>
+            <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+              {step === 'improve'
+                ? <BarChart2 size={12} style={{ color:'var(--navy)' }} />
+                : <BookOpen size={12} style={{ color:'var(--text-3)' }} />
+              }
+              <span style={{ fontSize:11, fontWeight:700, color: step === 'improve' ? 'var(--navy)' : 'var(--text-3)' }}>
+                {step === 'improve' ? 'Quality & SEO Recommendations' : 'Original Article'}
+              </span>
+            </div>
+            {step === 'improve' && (
+              <span style={{ fontSize:10, color:'var(--navy)', opacity:0.6 }}>apply manually →</span>
+            )}
           </div>
 
           {step === 'improve' && analysis ? (
@@ -618,7 +629,10 @@ function AIDrawer({ article, connector, onClose }) {
           {!analysing && !fetchErr && step === 'review' && analysis && (
             <>
               <div style={{ padding:'8px 16px', background:'var(--navy-light)', borderBottom:'1px solid var(--navy-border)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--navy)' }}>Quality & SEO Analysis</span>
+                <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+                  <BarChart2 size={12} style={{ color:'var(--navy)' }} />
+                  <span style={{ fontSize:11, fontWeight:700, color:'var(--navy)' }}>Quality & SEO Analysis</span>
+                </div>
                 <button onClick={runImprove} disabled={improving} className="btn btn-primary btn-sm">
                   {improving ? <><Loader size={11} style={{ animation:'spin 0.7s linear infinite' }} /> Improving...</> : <><Wand2 size={11} /> Improve Article</>}
                 </button>
@@ -714,10 +728,12 @@ function AIDrawer({ article, connector, onClose }) {
           {/* Improve / edit */}
           {step === 'improve' && (
             <>
-              <div style={{ padding:'8px 16px', background:'var(--navy-light)', borderBottom:'1px solid var(--navy-border)', flexShrink:0 }}>
-                <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--navy)' }}>
-                  ArticleIQ Rewrite — edit freely, apply SEO recommendations from the left panel
-                </span>
+              <div style={{ padding:'8px 16px', background:'var(--navy)', borderBottom:'1px solid var(--navy-border)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+                  <Wand2 size={12} style={{ color:'white' }} />
+                  <span style={{ fontSize:11, fontWeight:700, color:'white' }}>AI Rewrite — edit before publishing</span>
+                </div>
+                <span style={{ fontSize:10, color:'rgba(255,255,255,0.5)' }}>← recommendations on left</span>
               </div>
               <div style={{ padding:'10px 16px', borderBottom:'1px solid var(--border)', flexShrink:0, background:'white' }}>
                 <p style={{ fontSize:10, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 3px' }}>Title</p>
