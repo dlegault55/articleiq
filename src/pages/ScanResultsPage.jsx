@@ -1163,10 +1163,9 @@ export default function ScanResultsPage() {
       const unrec   = ai.filter(i => !resolvedIssues.has(i.id))
       const allRes  = ai.length > 0 && ai.every(i => resolvedIssues.has(i.id))
       if (filter==='resolved') return issues.filter(i=>i.article_id===a.id).some(i=>resolvedIssues.has(i.id))
-      if (allRes && filter !== 'resolved') return false
       if (filter==='all')      return true
       if (filter==='issues')   return unrec.length > 0
-      if (filter==='critical') return unrec.some(i=>i.severity==='critical')
+      if (filter==='critical') return ai.some(i=>i.severity==='critical') // show even if all resolved — user can see what they fixed
       if (filter==='clean')    return ai.length === 0
       return true
     })
