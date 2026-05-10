@@ -976,7 +976,7 @@ function AIDrawer({ article, connector, onClose, userId }) {
                           background: isAddressed ? 'var(--green-light)' : showUnaddressed ? 'var(--amber-light)' : 'white',
                           border: `1px solid ${isAddressed ? 'var(--green-border)' : showUnaddressed ? 'var(--amber-border)' : 'var(--border-md)'}`,
                         }}>
-                          {/* SEO issue header row */}
+                          {/* Badge row */}
                           <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
                             {isAddressed
                               ? <CheckCircle size={11} style={{ color:'var(--green)', flexShrink:0 }} />
@@ -986,30 +986,34 @@ function AIDrawer({ article, connector, onClose, userId }) {
                                   border: `1px solid ${item.impact==='high' ? '#FECACA' : item.impact==='medium' ? '#FDE68A' : 'var(--blue-light)'}`,
                                 }}>{item.impact}</span>
                             }
-                            <span style={{ fontSize:12, fontWeight:700, flex:1,
-                              color: isAddressed ? 'var(--green)' : showUnaddressed ? 'var(--amber)' : 'var(--text)',
-                              textDecoration: isAddressed ? 'line-through' : 'none',
-                              lineHeight: 1.4,
-                            }}>{item.issue}</span>
-                            <button onClick={() => dismissRec(`s-${i}`, item.issue, 'seo')} title="Not relevant"
-                              style={{ flexShrink:0, background:'none', border:'1px solid var(--border-md)', cursor:'pointer', padding:'2px 7px', borderRadius:4, color:'var(--text-3)', fontSize:10, lineHeight:1.4, fontFamily:'inherit', fontWeight:600 }}
+                          </div>
+                          {/* Title */}
+                          <p style={{ fontSize:12, fontWeight:700, margin:'0 0 4px',
+                            color: isAddressed ? 'var(--green)' : showUnaddressed ? 'var(--amber)' : 'var(--text)',
+                            textDecoration: isAddressed ? 'line-through' : 'none',
+                            lineHeight: 1.4,
+                          }}>{item.issue}</p>
+                          {isAddressed
+                            ? <p style={{ fontSize:9, color:'var(--green)', margin:'0 0 6px' }}>Applied by AI in the rewrite</p>
+                            : <p style={{ fontSize:11, color: showUnaddressed ? 'var(--amber)' : 'var(--text-3)', margin:'0 0 6px', lineHeight:1.5, fontWeight: showUnaddressed ? 600 : 400 }}>{item.fix}</p>
+                          }
+                          {/* Not relevant / override — always at bottom */}
+                          <div style={{ display:'flex', gap:6 }}>
+                            <button onClick={() => dismissRec(`s-${i}`, item.issue, 'seo')}
+                              style={{ fontSize:10, color:'var(--text-3)', background:'none', border:'1px solid var(--border-md)', cursor:'pointer', padding:'2px 8px', borderRadius:4, fontFamily:'inherit', fontWeight:600 }}
                               onMouseEnter={e => { e.currentTarget.style.color='var(--red)'; e.currentTarget.style.borderColor='var(--red-border)'; e.currentTarget.style.background='var(--red-light)' }}
                               onMouseLeave={e => { e.currentTarget.style.color='var(--text-3)'; e.currentTarget.style.borderColor='var(--border-md)'; e.currentTarget.style.background='none' }}>
                               Not relevant
                             </button>
+                            {isAddressed && (
+                              <button onClick={() => setOverrideRecs(prev => new Set([...prev, `s-${i}`]))}
+                                style={{ fontSize:10, color:'var(--text-3)', background:'none', border:'1px solid var(--border-md)', cursor:'pointer', padding:'2px 8px', borderRadius:4, fontFamily:'inherit', fontWeight:600 }}
+                                onMouseEnter={e => { e.currentTarget.style.color='var(--amber)'; e.currentTarget.style.borderColor='var(--amber-border)'; e.currentTarget.style.background='var(--amber-light)' }}
+                                onMouseLeave={e => { e.currentTarget.style.color='var(--text-3)'; e.currentTarget.style.borderColor='var(--border-md)'; e.currentTarget.style.background='none' }}>
+                                Not fixed
+                              </button>
+                            )}
                           </div>
-                          {isAddressed
-                            ? <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:2 }}>
-                                <p style={{ fontSize:9, color:'var(--green)', margin:0 }}>Applied by AI in the rewrite</p>
-                                <button onClick={() => setOverrideRecs(prev => new Set([...prev, `s-${i}`]))}
-                                  style={{ fontSize:9, color:'var(--text-3)', background:'none', border:'1px solid var(--border-md)', cursor:'pointer', padding:'1px 6px', borderRadius:3, fontFamily:'inherit', fontWeight:600 }}
-                                  onMouseEnter={e => { e.currentTarget.style.color='var(--red)'; e.currentTarget.style.borderColor='var(--red-border)'; e.currentTarget.style.background='var(--red-light)' }}
-                                  onMouseLeave={e => { e.currentTarget.style.color='var(--text-3)'; e.currentTarget.style.borderColor='var(--border-md)'; e.currentTarget.style.background='none' }}>
-                                  Not relevant
-                                </button>
-                              </div>
-                            : <p style={{ fontSize:10, color: showUnaddressed ? 'var(--amber)' : 'var(--text-3)', margin:0, lineHeight:1.5, fontWeight: showUnaddressed ? 600 : 400 }}>{item.fix}</p>
-                          }
                         </div>
                       )
                     })}
