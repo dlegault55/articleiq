@@ -42,11 +42,11 @@ function AvatarMenu({ name, email, plan, initials }) {
             <p style={{ fontSize:13, fontWeight:700, color:'var(--text)', marginBottom:2 }}>{name}</p>
             <p style={{ fontSize:12, color:'var(--text-3)', marginBottom:8 }}>{email}</p>
             <span style={{ fontSize:10, fontWeight:700, padding:'2px 9px', borderRadius:100,
-              background: plan==='paid' ? 'var(--navy-light)' : 'var(--bg)',
-              color: plan==='paid' ? 'var(--navy)' : 'var(--text-3)',
-              border: `1px solid ${plan==='paid' ? 'var(--navy-border)' : 'var(--border-md)'}`,
+              background: ['paid','pack','annual'].includes(plan) ? 'var(--navy-light)' : 'var(--bg)',
+              color: ['paid','pack','annual'].includes(plan) ? 'var(--navy)' : 'var(--text-3)',
+              border: `1px solid ${['paid','pack','annual'].includes(plan) ? 'var(--navy-border)' : 'var(--border-md)'}`,
             }}>
-              {plan==='paid' ? '★ Pro' : 'Free plan'}
+              {plan === 'annual' ? '★ Annual Pro' : plan === 'pack' ? '★ Scan Pack' : ['paid'].includes(plan) ? '★ Pro' : 'Free plan'}
             </span>
           </div>
 
