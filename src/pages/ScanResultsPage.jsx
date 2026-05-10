@@ -836,7 +836,7 @@ function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve }) 
           background: resolved ? 'var(--green-light)' : 'white',
           color: resolved ? 'var(--green)' : 'var(--text-3)',
         }}>
-          {resolved ? <><CheckCircle size={11}/> Reviewed</> : <><Square size={11}/> Mark reviewed</>}
+          {resolved ? <><CheckCircle size={11}/> Reviewed</> : <><Square size={11}/> Mark resolved</>}
         </button>
       </div>
     </div>
@@ -1151,10 +1151,10 @@ export default function ScanResultsPage() {
 
   const filterOpts = [
     { key:'all',      label:'All',         count: articles.length },
-    { key:'issues',   label:'Needs review', count: articles.filter(a => issues.some(i=>i.article_id===a.id && !resolvedIssues.has(i.id))).length },
+    { key:'issues',   label:'Needs attention', count: articles.filter(a => issues.some(i=>i.article_id===a.id && !resolvedIssues.has(i.id))).length },
     { key:'critical', label:'Critical',    count: articles.filter(a => issues.some(i=>i.article_id===a.id && i.severity==='critical' && !resolvedIssues.has(i.id))).length },
     { key:'clean',    label:'Clean',       count: articles.filter(a => !issues.some(i=>i.article_id===a.id)).length },
-    { key:'reviewed', label:'Reviewed',    count: articles.filter(a => { const ai = issues.filter(i=>i.article_id===a.id); return ai.length > 0 && ai.every(i=>resolvedIssues.has(i.id)) }).length },
+    { key:'resolved', label:'Resolved',    count: articles.filter(a => { const ai = issues.filter(i=>i.article_id===a.id); return ai.length > 0 && ai.every(i=>resolvedIssues.has(i.id)) }).length },
   ]
 
   const filtered = articles
@@ -1162,8 +1162,8 @@ export default function ScanResultsPage() {
       const ai      = issues.filter(i => i.article_id===a.id)
       const unrec   = ai.filter(i => !resolvedIssues.has(i.id))
       const allRes  = ai.length > 0 && ai.every(i => resolvedIssues.has(i.id))
-      if (filter==='reviewed') return issues.filter(i=>i.article_id===a.id).some(i=>resolvedIssues.has(i.id))
-      if (allRes && filter !== 'reviewed') return false
+      if (filter==='resolved') return issues.filter(i=>i.article_id===a.id).some(i=>resolvedIssues.has(i.id))
+      if (allRes && filter !== 'resolved') return false
       if (filter==='all')      return true
       if (filter==='issues')   return unrec.length > 0
       if (filter==='critical') return unrec.some(i=>i.severity==='critical')
