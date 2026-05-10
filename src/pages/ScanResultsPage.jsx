@@ -1075,7 +1075,8 @@ export default function ScanResultsPage() {
   const [page,     setPage]     = useState(1)
   const [exporting,setExporting]= useState(false)
   const [shared,   setShared]   = useState(false)
-  const [openRows, setOpenRows] = useState(new Set())
+  const [openRows,    setOpenRows]    = useState(new Set())
+  const [stableOrder, setStableOrder] = useState(null)
   const toggleRow = (id) => setOpenRows(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
   const [resolvedIssues,   setResolvedIssues]   = useState(new Set())
   const [drawer,           setDrawer]           = useState(null) // { article, action }
@@ -1101,7 +1102,7 @@ export default function ScanResultsPage() {
       supabase.from('article_issues').select('*').eq('scan_job_id', scanId),
     ])
     if (s) setScan(s)
-    if (a) setArticles(a)
+    if (a) { setArticles(a); setStableOrder(null) }  // reset order on new scan load
     if (i) { setIssues(i); setResolvedIssues(new Set(i.filter(x=>x.resolved).map(x=>x.id))) }
     return s?.status === 'running' || s?.status === 'pending'
   }, [scanId])
@@ -1169,24 +1170,8 @@ export default function ScanResultsPage() {
       if (filter==='clean')    return ai.length === 0
       return true
     })
-    .sort((a, b) => {
-      const ai = issues.filter(i=>i.article_id===a.id && !resolvedIssues.has(i.id))
-      const bi = issues.filter(i=>i.article_id===b.id && !resolvedIssues.has(i.id))
-      // Critical always first regardless of sort
-      const aCrit = ai.some(i=>i.severity==='critical')
-      const bCrit = bi.some(i=>i.severity==='critical')
-      if (aCrit && !bCrit) return -1
-      if (!aCrit && bCrit) return 1
-      if (sort==='severity') {
-        const sev = x => x.some(i=>i.severity==='critical') ? 0 : x.some(i=>i.severity==='warning') ? 1 : x.length ? 2 : 3
-        return sev(ai) - sev(bi)
-      }
-      if (sort==='words') return (a.word_count||0) - (b.word_count||0)
-      return 0
-    })
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
-  const paginated  = filtered.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE)
+  const totalPages = Math.ceil(sortedFiltered.length / PAGE_SIZE)
 
   if (loading) return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:400 }}>
