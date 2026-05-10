@@ -37,80 +37,66 @@ const COMPARE = [
 ]
 
 function ROICalculator() {
-  const [articles,  setArticles]  = useState(500)
-  const [tickets,   setTickets]   = useState(200)
-  const [kbPct,     setKbPct]     = useState(30)
-  const [costPer,   setCostPer]   = useState(15)
+  // Industry standard assumptions — fixed, not user-editable
+  const tickets      = 500    // avg monthly tickets for a mid-size support team
+  const kbPct        = 0.30   // 30% of tickets preventable with good KB (Forrester/Gartner)
+  const costPer      = 15     // $15 avg cost per ticket (industry avg)
+  const deflectable  = 0.25   // 25% deflection rate with healthy KB (conservative)
 
-  const kbTickets   = Math.round(tickets * (kbPct / 100))
-  const deflectable = Math.round(kbTickets * 0.25)
-  const savings     = deflectable * costPer
-  const cost        = 79
-  const net         = savings - cost
-  const roi         = cost > 0 ? Math.round((net / cost) * 100) : 0
+  const preventable  = Math.round(tickets * kbPct)
+  const deflected    = Math.round(preventable * deflectable)
+  const savings      = deflected * costPer
+  const packCost     = 79
+  const annualCost   = Math.round(490 / 12)
+  const packNet      = savings - packCost
+  const annualNet    = savings - annualCost
 
-  const Field = ({ label, value, min, max, onChange, prefix = '', suffix = '' }) => {
-    const [raw, setRaw] = useState(String(value))
-    return (
-      <div style={{ marginBottom: 14 }}>
-        <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 5 }}>{label}</label>
-        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border-md)', borderRadius: 8, overflow: 'hidden', background: 'white' }}>
-          {prefix && <span style={{ padding: '8px 10px', fontSize: 13, fontWeight: 600, color: 'var(--text-3)', background: 'var(--bg)', borderRight: '1px solid var(--border-md)' }}>{prefix}</span>}
-          <input
-            type="text"
-            inputMode="numeric"
-            value={raw}
-            onChange={e => {
-              setRaw(e.target.value)
-              const n = parseInt(e.target.value.replace(/[^0-9]/g, ''), 10)
-              if (!isNaN(n)) onChange(Math.min(max, Math.max(min, n)))
-            }}
-            onBlur={() => setRaw(String(value))}
-            style={{ flex: 1, padding: '8px 10px', fontSize: 14, fontWeight: 700, color: 'var(--text)', border: 'none', outline: 'none', fontFamily: 'inherit', background: 'white', minWidth: 0 }}
-          />
-          {suffix && <span style={{ padding: '8px 10px', fontSize: 13, fontWeight: 600, color: 'var(--text-3)', background: 'var(--bg)', borderLeft: '1px solid var(--border-md)' }}>{suffix}</span>}
-        </div>
-      </div>
-    )
-  }
+  const Stat = ({ label, value, sub, highlight }) => (
+    <div style={{ padding: '14px 16px', borderRadius: 10, background: highlight ? 'var(--navy)' : 'white', border: `1px solid ${highlight ? 'var(--navy)' : 'var(--border-md)'}` }}>
+      <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -1, color: highlight ? '#4ade80' : 'var(--navy)', lineHeight: 1, marginBottom: 3 }}>{value}</div>
+      <div style={{ fontSize: 12, fontWeight: 600, color: highlight ? 'white' : 'var(--text)', marginBottom: 2 }}>{label}</div>
+      {sub && <div style={{ fontSize: 11, color: highlight ? 'rgba(255,255,255,0.5)' : 'var(--text-3)' }}>{sub}</div>}
+    </div>
+  )
 
   return (
-    <div className="card" style={{ overflow: 'hidden', marginBottom: 24 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }} className="roi-grid">
-        <div style={{ padding: '20px', borderRight: '1px solid var(--border)' }}>
-          <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-3)', marginBottom: 16 }}>Your numbers</p>
-          <Field label="Articles in your KB" value={articles} min={50} max={5000} step={50} onChange={setArticles} suffix="articles" />
-          <Field label="Support tickets / month" value={tickets} min={50} max={5000} step={50} onChange={setTickets} suffix="tickets" />
-          <Field label="Preventable by better KB" value={kbPct} min={1} max={60} step={1} onChange={setKbPct} suffix="%" />
-          <Field label="Cost per ticket" value={costPer} min={1} max={200} step={1} onChange={setCostPer} prefix="$" />
-          <p style={{ fontSize: 10, color: 'var(--text-3)', lineHeight: 1.6, margin: 0 }}>Industry avg: 30% preventable · $15 per ticket · 25% deflection with healthy KB</p>
-        </div>
-        <div style={{ padding: '20px', background: net > 0 ? 'var(--navy)' : 'var(--bg)' }}>
-          <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: net > 0 ? 'rgba(255,255,255,0.5)' : 'var(--text-3)', marginBottom: 16 }}>Estimated monthly impact</p>
-          {[
-            { label: 'KB-preventable tickets/mo', value: kbTickets.toLocaleString(), sub: `${kbPct}% of ${tickets.toLocaleString()}` },
-            { label: 'Deflectable with good KB', value: deflectable.toLocaleString(), sub: '25% conservative' },
-            { label: 'Cost of those tickets', value: `$${(kbTickets * costPer).toLocaleString()}`, sub: `at $${costPer}/ticket` },
-          ].map(({ label, value, sub }) => (
-            <div key={label} style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 11, color: net > 0 ? 'rgba(255,255,255,0.5)' : 'var(--text-3)', marginBottom: 2 }}>{label}</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: net > 0 ? 'white' : 'var(--text)', letterSpacing: -0.5 }}>{value}</div>
-              <div style={{ fontSize: 10, color: net > 0 ? 'rgba(255,255,255,0.35)' : 'var(--text-3)' }}>{sub}</div>
-            </div>
-          ))}
-          <div style={{ height: 1, background: net > 0 ? 'rgba(255,255,255,0.15)' : 'var(--border)', margin: '14px 0' }} />
-          <div style={{ fontSize: 11, color: net > 0 ? 'rgba(255,255,255,0.5)' : 'var(--text-3)', marginBottom: 4 }}>
-            Savings − Scan Pack ($79 one-time)
+    <div style={{ borderRadius: 12, border: '1px solid var(--border-md)', overflow: 'hidden', marginBottom: 24 }}>
+      <div style={{ padding: '14px 18px', background: 'var(--bg)', borderBottom: '1px solid var(--border-md)' }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: '0 0 2px' }}>Estimated monthly savings</p>
+        <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0 }}>
+          Based on industry averages: 500 tickets/mo · 30% KB-preventable · $15 avg cost · 25% deflection rate
+        </p>
+      </div>
+      <div style={{ padding: '16px 18px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10 }}>
+        <Stat label="KB-preventable tickets" value={preventable} sub="30% of 500/mo" />
+        <Stat label="Deflectable with good KB" value={deflected} sub="25% conservative" />
+        <Stat label="Monthly ticket cost" value={`$${(preventable * costPer).toLocaleString()}`} sub="at $15 per ticket" />
+        <Stat label="Est. monthly savings" value={`+$${savings.toLocaleString()}`} sub="after ArticleIQ" highlight />
+      </div>
+      <div style={{ padding: '12px 18px', borderTop: '1px solid var(--border-md)', background: 'var(--bg)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 8, background: 'white', border: '1px solid var(--navy-border)' }}>
+          <div>
+            <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', margin: '0 0 1px' }}>Scan Pack — $79 one-time</p>
+            <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0 }}>Pays for itself in {packNet > 0 ? 'month 1' : 'a few months'}</p>
           </div>
-          <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: -1, color: net > 0 ? '#4ade80' : 'var(--text-3)' }}>
-            {net >= 0 ? '+' : ''}${net.toLocaleString()}<span style={{ fontSize: 14, fontWeight: 500 }}>/mo</span>
+          <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy)' }}>
+            {packNet >= 0 ? `+$${packNet}` : `-$${Math.abs(packNet)}`}<span style={{ fontSize: 10, fontWeight: 500 }}>/mo est.</span>
           </div>
-          {net > 0 && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 100, background: 'rgba(255,255,255,0.12)', marginTop: 8 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'white' }}>{roi}% ROI on your $79</span>
-            </div>
-          )}
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 8, background: 'white', border: '1px solid var(--green-border)' }}>
+          <div>
+            <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', margin: '0 0 1px' }}>Annual Pro — ~$41/month</p>
+            <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0 }}>Unlimited scans, ongoing monitoring</p>
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--green)' }}>
+            +${annualNet}<span style={{ fontSize: 10, fontWeight: 500 }}>/mo est.</span>
+          </div>
+        </div>
+      </div>
+      <div style={{ padding: '10px 18px', borderTop: '1px solid var(--border-md)', background: 'var(--bg)' }}>
+        <p style={{ fontSize: 10, color: 'var(--text-3)', margin: 0, lineHeight: 1.6 }}>
+          Estimates based on Forrester/Gartner research. Actual savings vary by KB quality, team size, and customer self-service behaviour. Conservative deflection rate used.
+        </p>
       </div>
     </div>
   )
