@@ -797,19 +797,22 @@ function AIDrawer({ article, connector, onClose, userId }) {
                 {dismissedRecs.size > 0 && analysis?.quality?.score != null && (() => {
                   const totalRecs    = (analysis.quality?.suggestions?.length || 0) + (analysis.seo?.issues?.length || 0)
                   const dismissed    = [...dismissedRecs].filter(k => k.startsWith('dismissed:')).length
-                  const pctDismissed = totalRecs > 0 ? dismissed / totalRecs : 0
-                  const scoreBoost   = Math.round(pctDismissed * (100 - analysis.quality.score) * 0.5)
+                  // Each dismissed rec restores its proportional share of the lost points
+                  const pointsPerRec = totalRecs > 0 ? (100 - analysis.quality.score) / totalRecs : 0
+                  const scoreBoost   = Math.round(pointsPerRec * dismissed)
+                  const adjScore     = Math.min(100, analysis.quality.score + scoreBoost)
                   if (scoreBoost < 2) return null
                   return (
-                    <div style={{ padding:'8px 10px', borderRadius:7, background:'var(--navy-light)', border:'1px solid var(--navy-border)', marginBottom:10, display:'flex', alignItems:'center', gap:8 }}>
-                      <div>
-                        <p style={{ fontSize:11, fontWeight:700, color:'var(--navy)', margin:'0 0 1px' }}>
-                          Adjusted quality score: {analysis.quality.score + scoreBoost}/100
+                    <div style={{ padding:'8px 10px', borderRadius:7, background:'var(--green-light)', border:'1px solid var(--green-border)', marginBottom:10 }}>
+                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:2 }}>
+                        <p style={{ fontSize:11, fontWeight:700, color:'var(--green)', margin:0 }}>
+                          Adjusted score: {adjScore}/100
                         </p>
-                        <p style={{ fontSize:10, color:'var(--text-3)', margin:0 }}>
-                          {dismissed} irrelevant suggestion{dismissed !== 1 ? 's' : ''} dismissed — adjusted score reflects relevant findings only
-                        </p>
+                        <span style={{ fontSize:10, color:'var(--text-3)' }}>was {analysis.quality.score}/100</span>
                       </div>
+                      <p style={{ fontSize:10, color:'var(--text-3)', margin:0 }}>
+                        {dismissed} suggestion{dismissed !== 1 ? 's' : ''} marked as not applicable — score adjusted to reflect only relevant findings
+                      </p>
                     </div>
                   )
                 })()}
@@ -993,6 +996,30 @@ function AIDrawer({ article, connector, onClose, userId }) {
                     })}
                   </div>
                 )}
+
+                {/* All done state */}
+                {analysis && (() => {
+                  const qualityRecs = analysis.quality?.suggestions?.length || 0
+                  const seoRecs     = analysis.seo?.issues?.length || 0
+                  const totalRecs   = qualityRecs + seoRecs
+                  const doneRecs    = [...addressedRecs].filter(k => !k.startsWith('dismissed:')).length
+                  const dismissed   = [...dismissedRecs].filter(k => k.startsWith('dismissed:')).length
+                  const allDone     = totalRecs > 0 && (doneRecs + dismissed) >= totalRecs
+                  if (!allDone) return null
+                  return (
+                    <div style={{ textAlign:'center', padding:'20px 12px', borderRadius:10, background:'var(--green-light)', border:'1px solid var(--green-border)', marginTop:8 }}>
+                      <CheckCircle size={28} style={{ color:'var(--green)', marginBottom:8 }} />
+                      <p style={{ fontSize:13, fontWeight:700, color:'var(--green)', margin:'0 0 4px' }}>This article is in great shape</p>
+                      <p style={{ fontSize:11, color:'var(--text-3)', margin:'0 0 12px', lineHeight:1.6 }}>
+                        All recommendations have been addressed or marked as not applicable. Review the rewrite and publish when you're happy with it.
+                      </p>
+                      <button onClick={reanalyse} disabled={reanalysing || !improved} className="btn btn-sm"
+                        style={{ background:'var(--green)', color:'white', border:'none' }}>
+                        {reanalysing ? <><Loader size={11} style={{ animation:'spin 0.7s linear infinite' }} /> Re-analysing...</> : <><BarChart2 size={11} /> Confirm with re-analyse</>}
+                      </button>
+                    </div>
+                  )
+                })()}
 
                 {!analysis.quality?.score && !analysis.seo?.grade && (
                   <p style={{ fontSize:12, color:'var(--red)', textAlign:'center', marginTop:20 }}>Analysis incomplete — try again</p>
