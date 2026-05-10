@@ -454,40 +454,53 @@ export default function DashboardPage() {
 
       {/* ── Stats row ── */}
       {!activeScan && lastScan && (
-        <div className='stats-grid animate-in' style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:16 }}>
-          {[
-            { label:'Articles scanned', value: (lastScan.scanned_articles||0).toLocaleString(), sub:'last scan' },
-            { label:'Issues found',     value: total.toLocaleString(),                          sub:'across all checks' },
-            { label:'Scans this month', value: recentScans.filter(s => new Date(s.created_at) > new Date(Date.now() - 30*24*60*60*1000)).length, sub:'last 30 days' },
-          ].map(({ label, value, sub }) => (
-            <div key={label} className="card" style={{ padding:'14px 18px' }}>
-              <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', marginBottom:6 }}>{label}</p>
-              <p style={{ fontSize:24, fontWeight:800, color:'var(--text)', lineHeight:1, marginBottom:2 }}>{value}</p>
-              <p style={{ fontSize:11, color:'var(--text-3)', margin:0 }}>{sub}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ── Quick wins ── */}
-      {!activeScan && lastScan && quickWins.length > 0 && (
         <div className="card animate-in" style={{ marginBottom:16, overflow:'hidden' }}>
-          <div style={{ padding:'12px 18px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-            <p style={{ fontSize:13, fontWeight:700, color:'var(--text)' }}>Fix these first</p>
-            <Link to={`/scanner/results/${lastScan.id}`} className="btn btn-ghost btn-xs" style={{ color:'var(--text-3)' }}>See all <ChevronRight size={12} /></Link>
-          </div>
-          {quickWins.map((issue, i) => (
-            <div key={issue.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 18px', borderBottom: i < quickWins.length - 1 ? '1px solid var(--border)' : 'none' }}>
-              <div style={{ width:6, height:6, borderRadius:'50%', flexShrink:0, background: issue.severity==='critical' ? 'var(--red)' : 'var(--amber)' }} />
-              <div style={{ flex:1, minWidth:0 }}>
-                <p style={{ fontSize:12, fontWeight:600, color:'var(--text)', marginBottom:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                  {issue.scanned_articles?.title || 'Untitled'}
-                </p>
-                <p style={{ fontSize:11, color:'var(--text-3)', margin:0 }}>{issue.description}</p>
+          <div className='stats-grid' style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr 1fr', borderBottom:'1px solid var(--border)' }}>
+            {[
+              {
+                label: 'Articles scanned',
+                value: (lastScan.scanned_articles||0).toLocaleString(),
+                sub: 'last scan',
+              },
+              {
+                label: 'Critical issues',
+                value: counts.critical.toLocaleString(),
+                sub: 'needs immediate attention',
+                color: counts.critical > 0 ? 'var(--red)' : 'var(--green)',
+              },
+              {
+                label: 'Warnings',
+                value: counts.warning.toLocaleString(),
+                sub: 'worth reviewing',
+                color: counts.warning > 0 ? 'var(--amber)' : 'var(--green)',
+              },
+              {
+                label: 'Health trend',
+                value: trend != null ? `${trend > 0 ? '+' : ''}${trend}` : '—',
+                sub: trend != null ? (trend > 0 ? 'improving ↑' : trend < 0 ? 'declining ↓' : 'no change') : 'run 2+ scans',
+                color: trend != null ? (trend > 0 ? 'var(--green)' : trend < 0 ? 'var(--red)' : 'var(--text-3)') : 'var(--text-3)',
+              },
+              {
+                label: 'Scans this month',
+                value: recentScans.filter(s => new Date(s.created_at) > new Date(Date.now() - 30*24*60*60*1000)).length,
+                sub: 'last 30 days',
+              },
+            ].map(({ label, value, sub, color }, i, arr) => (
+              <div key={label} style={{ padding:'14px 18px', borderRight: i < arr.length-1 ? '1px solid var(--border)' : 'none' }}>
+                <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', marginBottom:6 }}>{label}</p>
+                <p style={{ fontSize:24, fontWeight:800, color: color || 'var(--text)', lineHeight:1, marginBottom:2 }}>{value}</p>
+                <p style={{ fontSize:11, color:'var(--text-3)', margin:0 }}>{sub}</p>
               </div>
-              <span className={`badge badge-${issue.severity==='critical' ? 'critical' : 'warning'}`}>{issue.severity}</span>
-            </div>
-          ))}
+            ))}
+          </div>
+          <div style={{ padding:'10px 18px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <p style={{ fontSize:11, color:'var(--text-3)', margin:0 }}>
+              Last scanned {lastScan.created_at ? formatDistanceToNow(new Date(lastScan.created_at), { addSuffix:true }) : ''}
+            </p>
+            <Link to={`/scanner/results/${lastScan.id}`} className="btn btn-ghost btn-xs" style={{ color:'var(--navy)' }}>
+              View full report <ChevronRight size={12} />
+            </Link>
+          </div>
         </div>
       )}
 
