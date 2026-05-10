@@ -1126,12 +1126,13 @@ export default function ScanResultsPage() {
   const resolveIssue = async (issueId, resolved) => {
     // Optimistic update first
     setResolvedIssues(prev => { const n = new Set(prev); resolved ? n.add(issueId) : n.delete(issueId); return n })
-    const { error } = await supabase.from('article_issues')
+    const { error, data } = await supabase.from('article_issues')
       .update({ resolved, resolved_at: resolved ? new Date().toISOString() : null })
       .eq('id', issueId)
+      .select()
+    console.log('resolveIssue:', { issueId, resolved, updated: data?.length, error: error?.message })
     if (error) {
       console.error('resolveIssue error:', error)
-      // Revert optimistic update on failure
       setResolvedIssues(prev => { const n = new Set(prev); resolved ? n.delete(issueId) : n.add(issueId); return n })
     }
   }
