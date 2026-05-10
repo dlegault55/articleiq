@@ -255,7 +255,10 @@ export default function DashboardPage() {
   const trend  = lastH != null && prevH != null ? lastH - prevH : null
   const needed = lastH != null ? pointsToHealthy(lastH) : null
 
+  const outOfScans = profile?.plan === 'pack' && (profile?.scans_remaining ?? 0) <= 0
+
   const startScan = async () => {
+    if (outOfScans) { upgrade(); return }
     if (!userId || !connector) return
     setStarting(true); setError(null)
     try {
@@ -263,9 +266,10 @@ export default function DashboardPage() {
         .insert({ user_id: userId, connector_id: connector.id, status: 'pending', preset: Object.entries(checks || DEFAULT_CHECKS).filter(([,v])=>v).map(([k])=>k).join(',') })
         .select().single()
       if (jobErr) throw new Error(jobErr.message)
-      // Deduct scan credit for pack users
-      if (profile?.plan === 'pack' && profile?.scans_remaining > 0) {
-        await supabase.from('profiles').update({ scans_remaining: profile.scans_remaining - 1 }).eq('id', userId)
+      // Deduct scan credit for pack users using DB decrement (atomic, avoids stale state)
+      if (profile?.plan === 'pack') {
+        await supabase.rpc('decrement_scans_remaining', { user_id_input: userId })
+        refreshProfile()
       }
       reloadScans()
       navigate(`/scanner/results/${job.id}`)
