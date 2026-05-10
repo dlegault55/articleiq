@@ -448,7 +448,7 @@ function DiffView({ original, revised, originalTitle, revisedTitle }) {
 }
 
 // Single unified flow — 3 fixed panes: Original | Recommendations | Rewrite
-function AIDrawer({ article, connector, onClose }) {
+function AIDrawer({ article, connector, onClose, userId }) {
   const [bodyHtml,    setBodyHtml]    = useState('')
   const [fetchErr,    setFetchErr]    = useState(null)
   const [analysing,   setAnalysing]   = useState(true)
@@ -463,7 +463,8 @@ function AIDrawer({ article, connector, onClose }) {
   const [confirmPub,  setConfirmPub]  = useState(false)
   const [reanalysing, setReanalysing] = useState(false)
   const [rewriteTab,   setRewriteTab]   = useState('edit')  // 'edit' | 'changes'
-  const [addressedRecs, setAddressedRecs] = useState(new Set())
+  const [addressedRecs,  setAddressedRecs]  = useState(new Set())
+  const [dismissedRecs,  setDismissedRecs]  = useState(new Set())
   const [error,       setError]       = useState(null)
 
   // Fetch article + run analysis on open
@@ -620,6 +621,20 @@ function AIDrawer({ article, connector, onClose }) {
     finally { setReanalysing(false) }
   }
 
+  const dismissRec = async (key, text, type) => {
+    setDismissedRecs(prev => new Set([...prev, key]))
+    // Log to DB for future prompt improvement
+    try {
+      await supabase.from('recommendation_feedback').insert({
+        user_id:    userId,
+        article_id: article.zendesk_article_id,
+        rec_type:   type,
+        rec_text:   text,
+        vote:       'down',
+      })
+    } catch (e) { console.error('feedback log failed:', e.message) }
+  }
+
   const copy = async () => {
     await navigator.clipboard.writeText((editedText || improved).replace(/<[^>]+>/g, ''))
     setCopying(true); setTimeout(() => setCopying(false), 2000)
@@ -751,7 +766,7 @@ function AIDrawer({ article, connector, onClose }) {
               <>
                 {/* Rewrite summary — only shows after improve runs */}
                 {improved && addressedRecs.size > 0 && (() => {
-                  const totalRecs = (analysis.quality?.suggestions?.length || 0) + (analysis.seo?.issues?.length || 0) + (analysis.seo?.title_suggestion ? 1 : 0)
+                  const totalRecs = (analysis.quality?.suggestions?.length || 0) + (analysis.seo?.issues?.length || 0) + (analysis.seo?.title_suggestion ? 1 : 0) - dismissedRecs.size
                   const applied   = addressedRecs.size
                   const manual    = totalRecs - applied
                   return (
@@ -823,6 +838,7 @@ function AIDrawer({ article, connector, onClose }) {
                   <div style={{ marginBottom:14 }}>
                     <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:8 }}>Writing fixes</p>
                     {[...analysis.quality.suggestions.map((s, i) => ({ s, i }))]
+                      .filter(({ i }) => !dismissedRecs.has(`q-${i}`))
                       .sort((a, b) => {
                         const aAddressed = addressedRecs.has(`q-${a.i}`)
                         const bAddressed = addressedRecs.has(`q-${b.i}`)
@@ -849,6 +865,14 @@ function AIDrawer({ article, connector, onClose }) {
                             {showUnaddressed && <p style={{ fontSize:9, color:'var(--amber)', margin:'2px 0 0', fontWeight:700 }}>Apply this manually in the editor</p>}
                             {isAddressed && <p style={{ fontSize:9, color:'var(--green)', margin:'2px 0 0' }}>Applied by AI in the rewrite</p>}
                           </div>
+                          {!isAddressed && (
+                            <button onClick={() => dismissRec(`q-${i}`, s, 'quality')} title="Not helpful"
+                              style={{ flexShrink:0, background:'none', border:'none', cursor:'pointer', padding:'2px 4px', borderRadius:4, color:'var(--text-3)', fontSize:12, lineHeight:1 }}
+                              onMouseEnter={e => e.currentTarget.style.color='var(--red)'}
+                              onMouseLeave={e => e.currentTarget.style.color='var(--text-3)'}>
+                              ✕
+                            </button>
+                          )}
                         </div>
                       )
                     })}
@@ -882,6 +906,7 @@ function AIDrawer({ article, connector, onClose }) {
                   <div>
                     <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:8 }}>{improved ? 'SEO fixes — check what needs manual action' : 'SEO fixes'}</p>
                     {[...analysis.seo.issues.map((item, i) => ({ item, i }))]
+                      .filter(({ i }) => !dismissedRecs.has(`s-${i}`))
                       .sort((a, b) => {
                         const aAddressed = addressedRecs.has(`s-${a.i}`)
                         const bAddressed = addressedRecs.has(`s-${b.i}`)
@@ -1356,7 +1381,7 @@ function Pagination({ page, totalPages, onChange }) {
 // ─── Main page ─────────────────────────────────────────────────
 export default function ScanResultsPage() {
   const { id: scanId } = useParams()
-  const { profile, refreshProfile } = useAuth()
+  const { profile, refreshProfile, userId } = useAuth()
 
   // Refresh profile on mount to pick up plan changes from webhooks
   useEffect(() => { refreshProfile?.() }, [])
@@ -1754,6 +1779,7 @@ export default function ScanResultsPage() {
           article={drawer.article}
           connector={connector}
           onClose={() => setDrawer(null)}
+          userId={userId}
         />
       )}
     </div>
