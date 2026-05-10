@@ -909,10 +909,10 @@ function AIDrawer({ article, connector, onClose, userId }) {
                               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:2 }}>
                                 <p style={{ fontSize:9, color:'var(--green)', margin:0 }}>Applied by AI in the rewrite</p>
                                 <button onClick={() => setOverrideRecs(prev => new Set([...prev, `q-${i}`]))}
-                                  style={{ fontSize:9, color:'var(--text-3)', background:'none', border:'none', cursor:'pointer', padding:0, fontFamily:'inherit' }}
-                                  onMouseEnter={e => e.currentTarget.style.color='var(--amber)'}
-                                  onMouseLeave={e => e.currentTarget.style.color='var(--text-3)'}>
-                                  Not actually fixed →
+                                  style={{ fontSize:9, color:'var(--text-3)', background:'none', border:'1px solid var(--border-md)', cursor:'pointer', padding:'1px 6px', borderRadius:3, fontFamily:'inherit', fontWeight:600 }}
+                                  onMouseEnter={e => { e.currentTarget.style.color='var(--red)'; e.currentTarget.style.borderColor='var(--red-border)'; e.currentTarget.style.background='var(--red-light)' }}
+                                  onMouseLeave={e => { e.currentTarget.style.color='var(--text-3)'; e.currentTarget.style.borderColor='var(--border-md)'; e.currentTarget.style.background='none' }}>
+                                  Not relevant
                                 </button>
                               </div>
                             )}
@@ -976,19 +976,22 @@ function AIDrawer({ article, connector, onClose, userId }) {
                           background: isAddressed ? 'var(--green-light)' : showUnaddressed ? 'var(--amber-light)' : 'white',
                           border: `1px solid ${isAddressed ? 'var(--green-border)' : showUnaddressed ? 'var(--amber-border)' : 'var(--border-md)'}`,
                         }}>
-                          <div style={{ display:'flex', alignItems:'center', gap:5, marginBottom:3 }}>
+                          {/* SEO issue header row */}
+                          <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
                             {isAddressed
-                              ? <CheckCircle size={10} style={{ color:'var(--green)' }} />
-                              : <span style={{ fontSize:8, fontWeight:700, padding:'1px 5px', borderRadius:3, textTransform:'uppercase',
-                                  background: item.impact==='high' ? 'var(--red-light)' : item.impact==='medium' ? 'var(--amber-light)' : 'var(--blue-light)',
-                                  color: item.impact==='high' ? 'var(--red)' : item.impact==='medium' ? 'var(--amber)' : 'var(--blue)',
+                              ? <CheckCircle size={11} style={{ color:'var(--green)', flexShrink:0 }} />
+                              : <span style={{ fontSize:9, fontWeight:700, padding:'2px 6px', borderRadius:4, textTransform:'uppercase', flexShrink:0,
+                                  background: item.impact==='high' ? '#FEE2E2' : item.impact==='medium' ? '#FEF3C7' : 'var(--blue-light)',
+                                  color: item.impact==='high' ? '#B91C1C' : item.impact==='medium' ? '#92400E' : 'var(--blue)',
+                                  border: `1px solid ${item.impact==='high' ? '#FECACA' : item.impact==='medium' ? '#FDE68A' : 'var(--blue-light)'}`,
                                 }}>{item.impact}</span>
                             }
-                            <span style={{ fontSize:11, fontWeight:600, flex:1,
+                            <span style={{ fontSize:12, fontWeight:700, flex:1,
                               color: isAddressed ? 'var(--green)' : showUnaddressed ? 'var(--amber)' : 'var(--text)',
                               textDecoration: isAddressed ? 'line-through' : 'none',
+                              lineHeight: 1.4,
                             }}>{item.issue}</span>
-                            <button onClick={() => dismissRec(`s-${i}`, item.issue, 'seo')} title="Dismiss — not relevant to this article"
+                            <button onClick={() => dismissRec(`s-${i}`, item.issue, 'seo')} title="Not relevant"
                               style={{ flexShrink:0, background:'none', border:'1px solid var(--border-md)', cursor:'pointer', padding:'2px 7px', borderRadius:4, color:'var(--text-3)', fontSize:10, lineHeight:1.4, fontFamily:'inherit', fontWeight:600 }}
                               onMouseEnter={e => { e.currentTarget.style.color='var(--red)'; e.currentTarget.style.borderColor='var(--red-border)'; e.currentTarget.style.background='var(--red-light)' }}
                               onMouseLeave={e => { e.currentTarget.style.color='var(--text-3)'; e.currentTarget.style.borderColor='var(--border-md)'; e.currentTarget.style.background='none' }}>
@@ -999,10 +1002,10 @@ function AIDrawer({ article, connector, onClose, userId }) {
                             ? <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:2 }}>
                                 <p style={{ fontSize:9, color:'var(--green)', margin:0 }}>Applied by AI in the rewrite</p>
                                 <button onClick={() => setOverrideRecs(prev => new Set([...prev, `s-${i}`]))}
-                                  style={{ fontSize:9, color:'var(--text-3)', background:'none', border:'none', cursor:'pointer', padding:0, fontFamily:'inherit' }}
-                                  onMouseEnter={e => e.currentTarget.style.color='var(--amber)'}
-                                  onMouseLeave={e => e.currentTarget.style.color='var(--text-3)'}>
-                                  Not actually fixed →
+                                  style={{ fontSize:9, color:'var(--text-3)', background:'none', border:'1px solid var(--border-md)', cursor:'pointer', padding:'1px 6px', borderRadius:3, fontFamily:'inherit', fontWeight:600 }}
+                                  onMouseEnter={e => { e.currentTarget.style.color='var(--red)'; e.currentTarget.style.borderColor='var(--red-border)'; e.currentTarget.style.background='var(--red-light)' }}
+                                  onMouseLeave={e => { e.currentTarget.style.color='var(--text-3)'; e.currentTarget.style.borderColor='var(--border-md)'; e.currentTarget.style.background='none' }}>
+                                  Not relevant
                                 </button>
                               </div>
                             : <p style={{ fontSize:10, color: showUnaddressed ? 'var(--amber)' : 'var(--text-3)', margin:0, lineHeight:1.5, fontWeight: showUnaddressed ? 600 : 400 }}>{item.fix}</p>
