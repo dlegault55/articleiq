@@ -793,7 +793,7 @@ function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve }) 
           {issue.issue_type === 'missing_labels' && !resolved && (
             <div style={{ marginTop:10 }}>
               {!labels && (
-                <button onClick={e => { e.stopPropagation(); suggestLabels() }} disabled={suggesting}
+                <button onClick={suggestLabels} disabled={suggesting}
                   style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'5px 10px', borderRadius:6, border:'1px solid var(--border-md)', background:'var(--bg)', cursor:'pointer', fontSize:11, fontWeight:600, color:'var(--text-2)', fontFamily:'inherit' }}>
                   {suggesting ? <><Loader size={10} style={{ animation:'spin 0.7s linear infinite' }} /> Suggesting...</> : <><Tag size={10} /> Suggest labels</>}
                 </button>
@@ -808,7 +808,7 @@ function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve }) 
                       const isPublished = published.has(label)
                       const isLoading   = publishing === label
                       return (
-                        <button key={label} onClick={e => { e.stopPropagation(); publishLabel(label) }} disabled={isLoading || isPublished}
+                        <button key={label} onClick={() => publishLabel(label)} disabled={isLoading || isPublished}
                           style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 10px', borderRadius:100, fontSize:11, fontWeight:600, cursor: isPublished ? 'default' : 'pointer', fontFamily:'inherit', transition:'all 0.15s',
                             background: isPublished ? 'var(--green-light)' : 'var(--navy-light)',
                             border: `1px solid ${isPublished ? 'var(--green-border)' : 'var(--navy-border)'}`,
@@ -832,7 +832,7 @@ function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve }) 
             </div>
           )}
         </div>
-        <button onClick={e => { e.stopPropagation(); onResolve() }} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 10px', borderRadius:6, border:'1px solid var(--border-md)', cursor:'pointer', fontSize:11, fontWeight:600, flexShrink:0, whiteSpace:'nowrap', fontFamily:'inherit',
+        <button onClick={onResolve} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 10px', borderRadius:6, border:'1px solid var(--border-md)', cursor:'pointer', fontSize:11, fontWeight:600, flexShrink:0, whiteSpace:'nowrap', fontFamily:'inherit',
           background: resolved ? 'var(--green-light)' : 'white',
           color: resolved ? 'var(--green)' : 'var(--text-3)',
         }}>
@@ -904,15 +904,15 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
 
         <div style={{ width:3, alignSelf:'stretch', borderRadius:2, background:barColor, flexShrink:0 }} />
 
-        <button onClick={() => setOpen(v => !v)}
-          style={{ display:'flex', alignItems:'center', flex:1, minWidth:0, background:'none', border:'none', cursor:'pointer', textAlign:'left', padding:0, gap:10 }}>
+        <div onClick={() => setOpen(v => !v)}
+          style={{ display:'flex', alignItems:'center', flex:1, minWidth:0, cursor:'pointer', textAlign:'left', padding:0, gap:10 }}>
           <div style={{ flex:1, minWidth:0 }}>
             <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
               <span style={{ fontSize:14, fontWeight:500, color:'var(--text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                 {article.title}
               </span>
               {article.url && (
-                <a href={article.url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
+                <a href={article.url} target="_blank" rel="noreferrer"
                   style={{ color:'var(--text-3)', display:'flex', flexShrink:0 }}>
                   <ExternalLink size={12} />
                 </a>
@@ -929,7 +929,7 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
             {(clean || allResolved) && <span className="badge badge-success"><CheckCircle size={9} />{allResolved ? 'All resolved' : 'Clean'}</span>}
             {open ? <ChevronUp size={13} style={{ color:'var(--text-3)' }} /> : <ChevronDown size={13} style={{ color:'var(--text-3)' }} />}
           </div>
-        </button>
+        </div>
       </div>
 
       {/* Expanded */}
