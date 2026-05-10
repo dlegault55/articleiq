@@ -165,67 +165,59 @@ export default function LandingPage() {
         <div style={{ maxWidth:960, margin:'0 auto' }}>
           <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9B9B98', textAlign:'center', marginBottom:12 }}>AI-powered improvement</p>
           <h2 style={{ fontSize:32, fontWeight:800, textAlign:'center', letterSpacing:-0.8, marginBottom:8, color:'#1A1A18' }}>Not just find problems — fix them</h2>
-          <p style={{ fontSize:15, color:'#6B6B68', textAlign:'center', marginBottom:48, maxWidth:560, margin:'0 auto 48px' }}>Open any article and ArticleIQ runs a full analysis before touching it. Then improves the writing with that context. You control what goes back to Zendesk®.</p>
+          <p style={{ fontSize:15, color:'#6B6B68', textAlign:'center', marginBottom:48, maxWidth:580, margin:'0 auto 48px' }}>
+            Open any article and ArticleIQ analyses it, rewrites it with that context, and shows you exactly what changed. You control what goes back to Zendesk®.
+          </p>
 
           {/* Flow steps */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:16, marginBottom:40 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:14, marginBottom:40 }}>
             {[
               {
-                step:'1',
-                icon: BarChart2,
-                title:'Quality & SEO analysis',
-                color:'#1B2D5B',
-                bg:'#F0F3FA',
-                border:'#C8D4F0',
+                step:'1', icon: BarChart2, title:'Deep analysis', color:'#1B2D5B', bg:'#F0F3FA', border:'#C8D4F0',
                 points:[
-                  'Quality score across 5 dimensions — Clarity, Completeness, Structure, Accuracy, Actionability',
-                  'SEO grade A–F with specific high/medium/low impact fixes',
-                  'Suggested SEO title if the current one underperforms',
-                  'Readability factored into the Clarity score',
+                  'Quality score across 5 dimensions with specific suggestions',
+                  'SEO grade A–F with high/medium/low impact fixes',
+                  'Both run automatically — no extra clicks',
                 ]
               },
               {
-                step:'2',
-                icon: Wand2,
-                title:'Targeted AI rewrite',
-                color:'#107C10',
-                bg:'#EBF5EB',
-                border:'#A8D5A8',
+                step:'2', icon: Wand2, title:'Targeted rewrite', color:'#107C10', bg:'#EBF5EB', border:'#A8D5A8',
                 points:[
-                  'Detects article type — troubleshooting, how-to, FAQ, release note — and applies the right structure',
-                  'Fixes grammar, passive voice, jargon, and unclear phrasing',
-                  'Rewrite is informed by the quality analysis findings',
-                  'All images, links, code blocks, and tables preserved exactly',
+                  'Rewrite is informed by the specific analysis findings — not a generic grammar pass',
+                  'Detects article type and applies the right structure',
+                  'Meaning is never changed — only how it is expressed',
                 ]
               },
               {
-                step:'3',
-                icon: Globe,
-                title:'You review, you publish',
-                color:'#7C3AED',
-                bg:'#F5F3FF',
-                border:'#DDD6FE',
+                step:'3', icon: CheckCircle, title:'See what changed', color:'#7C3AED', bg:'#F5F3FF', border:'#DDD6FE',
                 points:[
-                  'SEO recommendations shown alongside the editor — apply them yourself',
-                  'Edit the title and body freely before publishing',
+                  'Changes tab shows word-level diff — green additions, red removals',
+                  'Dismiss irrelevant recommendations — score adjusts accordingly',
                   'Re-analyse after edits to see updated scores',
-                  'Publish directly to Zendesk® with one click — or copy to clipboard',
+                ]
+              },
+              {
+                step:'4', icon: Globe, title:'Publish directly', color:'#B45309', bg:'#FFFBEB', border:'#FDE68A',
+                points:[
+                  'Edit the rewrite freely before publishing',
+                  'Publish directly to Zendesk® with one click',
+                  'Or copy to clipboard — your choice',
                 ]
               },
             ].map(({ step, icon: Icon, title, color, bg, border, points }) => (
-              <div key={step} style={{ borderRadius:12, border:`1px solid ${border}`, background:bg, padding:'20px', position:'relative' }}>
-                <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
-                  <div style={{ width:32, height:32, borderRadius:8, background:color, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                    <Icon size={15} color="white" />
+              <div key={step} style={{ borderRadius:12, border:`1px solid ${border}`, background:bg, padding:'18px' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
+                  <div style={{ width:30, height:30, borderRadius:8, background:color, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <Icon size={14} color="white" />
                   </div>
                   <div>
-                    <div style={{ fontSize:10, fontWeight:700, color, opacity:0.7, textTransform:'uppercase', letterSpacing:'0.06em' }}>Step {step}</div>
+                    <div style={{ fontSize:9, fontWeight:700, color, opacity:0.7, textTransform:'uppercase', letterSpacing:'0.06em' }}>Step {step}</div>
                     <div style={{ fontSize:13, fontWeight:800, color:'#1A1A18' }}>{title}</div>
                   </div>
                 </div>
                 {points.map((p, i) => (
-                  <div key={i} style={{ display:'flex', gap:7, marginBottom:6 }}>
-                    <div style={{ width:5, height:5, borderRadius:'50%', background:color, flexShrink:0, marginTop:5 }} />
+                  <div key={i} style={{ display:'flex', gap:7, marginBottom:5 }}>
+                    <div style={{ width:4, height:4, borderRadius:'50%', background:color, flexShrink:0, marginTop:6 }} />
                     <span style={{ fontSize:12, color:'#4A4A48', lineHeight:1.6 }}>{p}</span>
                   </div>
                 ))}
@@ -233,50 +225,71 @@ export default function LandingPage() {
             ))}
           </div>
 
-          {/* AI mock — before/after */}
+          {/* 3-pane mock */}
           <div style={{ background:'white', borderRadius:14, border:'1px solid #E8E8E6', overflow:'hidden', boxShadow:'0 4px 24px rgba(0,0,0,0.06)' }}>
+            {/* Header */}
             <div style={{ padding:'10px 16px', borderBottom:'1px solid #E8E8E6', background:'#F0F3FA', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-              <span style={{ fontSize:11, fontWeight:700, color:'#1B2D5B', textTransform:'uppercase', letterSpacing:'0.08em' }}>ArticleIQ · Analyse & Improve</span>
-              <div style={{ display:'flex', gap:8 }}>
-                <span style={{ fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:4, background:'#FEF9EC', color:'#D97706' }}>Quality 42</span>
-                <span style={{ fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:4, background:'#FDF0EE', color:'#C0392B' }}>SEO D</span>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <span style={{ fontSize:11, fontWeight:700, color:'#1B2D5B' }}>ArticleIQ · Analyse & Improve</span>
+              </div>
+              <div style={{ display:'flex', gap:6 }}>
+                <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:4, background:'#FEF9EC', color:'#D97706' }}>Quality 42 → 78</span>
+                <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:4, background:'#FDF0EE', color:'#C0392B' }}>SEO D</span>
               </div>
             </div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr' }}>
-              <div style={{ padding:'16px', borderRight:'1px solid #E8E8E6' }}>
-                <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#9B9B98', marginBottom:8 }}>Recommendations</p>
-                {[
-                  { type:'quality', text:'Opening sentence buries the problem — lead with what the customer needs to do' },
-                  { type:'quality', text:'Steps are not numbered — use an ordered list so customers can follow along' },
-                  { type:'seo',     text:'Title too generic (62 chars) — use the customer\'s search terms' },
-                  { type:'seo',     text:'No H2 headings — add section headings to help Google understand the structure' },
-                ].map((r, i) => (
-                  <div key={i} style={{ display:'flex', gap:6, marginBottom:6 }}>
-                    <span style={{ fontSize:9, fontWeight:700, padding:'2px 5px', borderRadius:3, flexShrink:0, marginTop:1, textTransform:'uppercase',
-                      background: r.type==='quality' ? '#F0F3FA' : '#FEF9EC',
-                      color: r.type==='quality' ? '#1B2D5B' : '#D97706',
-                    }}>{r.type === 'quality' ? 'Quality' : 'SEO'}</span>
-                    <span style={{ fontSize:11, color:'#4A4A48', lineHeight:1.5 }}>{r.text}</span>
-                  </div>
-                ))}
+
+            {/* 3 panes */}
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 260px 1fr' }}>
+
+              {/* Pane 1 — Original */}
+              <div style={{ padding:'14px', borderRight:'1px solid #E8E8E6' }}>
+                <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#9B9B98', marginBottom:8 }}>Original Article</p>
+                <p style={{ fontSize:12, fontWeight:700, color:'#1A1A18', marginBottom:6 }}>How to reset your password</p>
+                <p style={{ fontSize:11, color:'#6B6B68', lineHeight:1.7, margin:0 }}>
+                  In order to reset your password you will need to go to the login page where there is a link that says forgot password and then you click it and put in your email and then wait for an email...
+                </p>
               </div>
-              <div style={{ padding:'16px', background:'#FAFFFE' }}>
-                <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#107C10', marginBottom:8 }}>AI Rewrite — click to edit</p>
-                <p style={{ fontSize:12, fontWeight:700, color:'#1A1A18', marginBottom:8 }}>How to Reset Your Password (Step-by-Step)</p>
-                <p style={{ fontSize:10, fontWeight:700, color:'#4A4A48', marginBottom:4 }}>If your reset link isn't working:</p>
-                <div style={{ fontSize:11, color:'#6B6B68', lineHeight:1.7 }}>
-                  <div>1. Check that the link is less than 15 minutes old</div>
-                  <div>2. Open the link in a private/incognito window</div>
-                  <div>3. If it still fails, request a new reset email</div>
+
+              {/* Pane 2 — Recommendations */}
+              <div style={{ padding:'14px', borderRight:'1px solid #E8E8E6', background:'#FAFAF8' }}>
+                <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#1B2D5B', marginBottom:8 }}>Recommendations</p>
+                <div style={{ marginBottom:6, padding:'6px 8px', borderRadius:6, background:'#DCFCE7', border:'1px solid #BBF7D0' }}>
+                  <p style={{ fontSize:10, color:'#166534', margin:0, fontWeight:600 }}>✓ Add numbered steps</p>
+                  <p style={{ fontSize:9, color:'#166534', margin:'2px 0 0', opacity:0.7 }}>Applied by AI</p>
+                </div>
+                <div style={{ marginBottom:6, padding:'6px 8px', borderRadius:6, background:'#FEF3C7', border:'1px solid #FDE68A' }}>
+                  <p style={{ fontSize:10, color:'#92400E', margin:0, fontWeight:600 }}>→ Improve opening sentence</p>
+                  <p style={{ fontSize:9, color:'#92400E', margin:'2px 0 0' }}>Apply manually</p>
+                </div>
+                <div style={{ padding:'6px 8px', borderRadius:6, background:'#FEE2E2', border:'1px solid #FECACA' }}>
+                  <span style={{ fontSize:8, fontWeight:700, padding:'1px 5px', borderRadius:3, background:'#FEE2E2', color:'#B91C1C', textTransform:'uppercase' }}>high</span>
+                  <p style={{ fontSize:10, color:'#B91C1C', margin:'3px 0 0', fontWeight:600 }}>Title too generic</p>
+                  <p style={{ fontSize:9, color:'#B91C1C', margin:'2px 0 0', opacity:0.8 }}>Use search terms customers actually type</p>
+                </div>
+              </div>
+
+              {/* Pane 3 — Rewrite with diff */}
+              <div style={{ padding:'14px' }}>
+                <div style={{ display:'flex', gap:8, marginBottom:8 }}>
+                  <span style={{ fontSize:9, fontWeight:700, padding:'2px 8px', borderRadius:4, background:'#1B2D5B', color:'white' }}>Edit</span>
+                  <span style={{ fontSize:9, fontWeight:700, padding:'2px 8px', borderRadius:4, background:'#F0F3FA', color:'#1B2D5B', border:'1px solid #C8D4F0' }}>Changes</span>
+                </div>
+                <p style={{ fontSize:12, fontWeight:700, color:'#1A1A18', marginBottom:6 }}>How to Reset Your ArticleIQ Password (Step-by-Step)</p>
+                <div style={{ fontSize:11, color:'#4A4A48', lineHeight:1.8 }}>
+                  <span style={{ background:'#DCFCE7', color:'#166534', borderRadius:2, padding:'0 2px', fontWeight:600 }}>Follow these steps</span> to reset your password:
+                  <br /><span style={{ background:'#DCFCE7', color:'#166534', borderRadius:2, padding:'0 2px', fontWeight:600 }}>1. Go to the login page</span> and click <strong>Forgot password</strong>
+                  <br /><span style={{ background:'#DCFCE7', color:'#166534', borderRadius:2, padding:'0 2px', fontWeight:600 }}>2. Enter your email</span> and check your inbox
+                  <br /><span style={{ color:'#991B1B', textDecoration:'line-through', background:'#FEE2E2', borderRadius:2, padding:'0 2px' }}>then you click it and put in your email and then wait</span>
                 </div>
               </div>
             </div>
-            <div style={{ padding:'10px 16px', borderTop:'1px solid #E8E8E6', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-              <span style={{ fontSize:11, color:'#9B9B98' }}>Apply SEO recommendations manually, then publish</span>
-              <div style={{ display:'flex', gap:8 }}>
-                <div style={{ padding:'5px 12px', borderRadius:7, background:'#F0F3FA', color:'#1B2D5B', fontSize:11, fontWeight:700, border:'1px solid #C8D4F0' }}>Re-analyse</div>
-                <div style={{ padding:'5px 14px', borderRadius:7, background:'#1B2D5B', color:'white', fontSize:11, fontWeight:700 }}>Publish to Zendesk® →</div>
-              </div>
+
+            {/* Footer */}
+            <div style={{ padding:'10px 16px', borderTop:'1px solid #E8E8E6', display:'flex', alignItems:'center', gap:8 }}>
+              <div style={{ padding:'4px 12px', borderRadius:6, background:'#F0F3FA', color:'#1B2D5B', fontSize:10, fontWeight:700, border:'1px solid #C8D4F0' }}>Re-analyse</div>
+              <div style={{ padding:'4px 12px', borderRadius:6, background:'#F0F3FA', color:'#1B2D5B', fontSize:10, fontWeight:700, border:'1px solid #C8D4F0' }}>Re-improve</div>
+              <div style={{ flex:1 }} />
+              <div style={{ padding:'4px 12px', borderRadius:6, background:'#1B2D5B', color:'white', fontSize:10, fontWeight:700 }}>Publish to Zendesk® →</div>
             </div>
           </div>
         </div>
