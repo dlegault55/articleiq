@@ -346,6 +346,107 @@ function WYSIWYGEditor({ html, onChange }) {
 }
 
 // ─── AI Drawer ─────────────────────────────────────────────────
+// ─── Diff View ────────────────────────────────────────────────
+function DiffView({ original, revised, originalTitle, revisedTitle }) {
+  // Strip HTML to plain text for diffing
+  const strip = html => {
+    const d = document.createElement('div')
+    d.innerHTML = html || ''
+    return (d.textContent || d.innerText || '').replace(/\s+/g, ' ').trim()
+  }
+
+  // Simple word-level LCS diff
+  const diffWords = (a, b) => {
+    const wa = a.split(/\s+/).filter(Boolean)
+    const wb = b.split(/\s+/).filter(Boolean)
+    const m = wa.length, n = wb.length
+
+    // LCS table
+    const dp = Array.from({ length: m+1 }, () => new Array(n+1).fill(0))
+    for (let i = m-1; i >= 0; i--)
+      for (let j = n-1; j >= 0; j--)
+        dp[i][j] = wa[i] === wb[j] ? dp[i+1][j+1]+1 : Math.max(dp[i+1][j], dp[i][j+1])
+
+    // Trace back
+    const tokens = []
+    let i = 0, j = 0
+    while (i < m || j < n) {
+      if (i < m && j < n && wa[i] === wb[j]) {
+        tokens.push({ type:'same', word:wa[i] }); i++; j++
+      } else if (j < n && (i >= m || dp[i][j+1] >= (i < m ? dp[i+1][j] : 0))) {
+        tokens.push({ type:'add', word:wb[j] }); j++
+      } else {
+        tokens.push({ type:'remove', word:wa[i] }); i++
+      }
+    }
+    return tokens
+  }
+
+  const origText = strip(original)
+  const revText  = strip(revised)
+  const tokens   = diffWords(origText, revText)
+
+  const added   = tokens.filter(t => t.type==='add').length
+  const removed = tokens.filter(t => t.type==='remove').length
+  const titleChanged = originalTitle && revisedTitle && originalTitle !== revisedTitle
+
+  return (
+    <div style={{ flex:1, overflowY:'auto', padding:'16px' }}>
+      {/* Summary bar */}
+      <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 12px', borderRadius:8, background:'var(--bg)', border:'1px solid var(--border-md)', marginBottom:14, flexWrap:'wrap', gap:8 }}>
+        {added > 0 && (
+          <span style={{ fontSize:11, fontWeight:700, color:'var(--green)', display:'flex', alignItems:'center', gap:4 }}>
+            <span style={{ width:8, height:8, borderRadius:'50%', background:'var(--green)', display:'inline-block' }} />
+            +{added} words added
+          </span>
+        )}
+        {removed > 0 && (
+          <span style={{ fontSize:11, fontWeight:700, color:'var(--red)', display:'flex', alignItems:'center', gap:4 }}>
+            <span style={{ width:8, height:8, borderRadius:'50%', background:'var(--red)', display:'inline-block' }} />
+            -{removed} words removed
+          </span>
+        )}
+        {titleChanged && (
+          <span style={{ fontSize:11, fontWeight:700, color:'var(--navy)', display:'flex', alignItems:'center', gap:4 }}>
+            <span style={{ width:8, height:8, borderRadius:'50%', background:'var(--navy)', display:'inline-block' }} />
+            Title changed
+          </span>
+        )}
+        {added === 0 && removed === 0 && !titleChanged && (
+          <span style={{ fontSize:11, color:'var(--text-3)' }}>No changes detected</span>
+        )}
+      </div>
+
+      {/* Title diff */}
+      {titleChanged && (
+        <div style={{ marginBottom:14 }}>
+          <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:6 }}>Title</p>
+          <div style={{ padding:'6px 10px', borderRadius:6, background:'#FEF2F2', marginBottom:4 }}>
+            <span style={{ fontSize:12, color:'var(--red)', textDecoration:'line-through' }}>{originalTitle}</span>
+          </div>
+          <div style={{ padding:'6px 10px', borderRadius:6, background:'#F0FDF4' }}>
+            <span style={{ fontSize:12, color:'var(--green)', fontWeight:600 }}>{revisedTitle}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Word diff */}
+      <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:10 }}>Content changes</p>
+      <div style={{ fontSize:13, lineHeight:2, color:'var(--text-2)' }}>
+        {tokens.map((token, i) => (
+          token.type === 'same' ? (
+            <span key={i}>{token.word} </span>
+          ) : token.type === 'add' ? (
+            <span key={i} style={{ background:'#DCFCE7', color:'#166534', borderRadius:3, padding:'0 2px' }}>{token.word} </span>
+          ) : (
+            <span key={i} style={{ background:'#FEE2E2', color:'#991B1B', textDecoration:'line-through', borderRadius:3, padding:'0 2px' }}>{token.word} </span>
+          )
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // Single unified flow — 3 fixed panes: Original | Recommendations | Rewrite
 function AIDrawer({ article, connector, onClose }) {
   const [bodyHtml,    setBodyHtml]    = useState('')
@@ -361,6 +462,7 @@ function AIDrawer({ article, connector, onClose }) {
   const [published,   setPublished]   = useState(false)
   const [confirmPub,  setConfirmPub]  = useState(false)
   const [reanalysing, setReanalysing] = useState(false)
+  const [rewriteTab,  setRewriteTab]  = useState('edit')  // 'edit' | 'changes'
   const [error,       setError]       = useState(null)
 
   // Fetch article + run analysis on open
@@ -452,6 +554,7 @@ function AIDrawer({ article, connector, onClose }) {
       setImproved(result)
       setEditedText(result)
       setEditedTitle(analysis?.seo?.title_suggestion || title)
+      setRewriteTab('edit')
     } catch (e) { setError(e.message) }
     finally { setImproving(false) }
   }
@@ -690,39 +793,55 @@ function AIDrawer({ article, connector, onClose }) {
 
         {/* Pane 3 — AI Rewrite */}
         <div style={{ display:'flex', flexDirection:'column', overflow:'hidden' }}>
-          <PanelHeader
-            icon={Wand2}
-            label="AI Rewrite"
-            color="white"
-            bg="var(--navy)"
-            border="var(--navy)"
-            right={
-              !improving && !analysing && (
-                <button onClick={runImprove} disabled={improving || analysing} className="btn btn-sm"
-                  style={{ background:'rgba(255,255,255,0.15)', color:'white', border:'1px solid rgba(255,255,255,0.25)', fontSize:11, padding:'4px 10px' }}>
-                  {improved ? <><RefreshCcw size={10} /> Re-improve</> : <><Wand2 size={10} /> Improve Article</>}
-                </button>
-              )
-            }
-          />
 
-          {/* Title field */}
-          <div style={{ padding:'10px 16px', borderBottom:'1px solid var(--border)', flexShrink:0, background:'white' }}>
-            <p style={{ fontSize:9, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 3px' }}>Title — edit or paste SEO title from recommendations</p>
-            <input value={editedTitle} onChange={e => setEditedTitle(e.target.value)}
-              style={{ width:'100%', fontSize:14, fontWeight:700, color:'var(--text)', border:'none', outline:'none', fontFamily:'inherit', background:'transparent', padding:0 }}
-              placeholder={article.title} />
+          {/* Header with tabs */}
+          <div style={{ background:'var(--navy)', borderBottom:'1px solid rgba(255,255,255,0.1)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 14px', height:38 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:0 }}>
+              <Wand2 size={12} style={{ color:'rgba(255,255,255,0.6)', marginRight:7 }} />
+              {(improved || editedText) ? [
+                { id:'edit',    label:'Edit' },
+                { id:'changes', label:'Changes' },
+              ].map(({ id, label }) => (
+                <button key={id} onClick={() => setRewriteTab(id)}
+                  style={{ padding:'0 12px', height:38, fontSize:11, fontWeight: rewriteTab===id ? 700 : 500,
+                    color: rewriteTab===id ? 'white' : 'rgba(255,255,255,0.45)',
+                    background:'none', border:'none', borderBottom: rewriteTab===id ? '2px solid white' : '2px solid transparent',
+                    cursor:'pointer', fontFamily:'inherit', marginBottom:-1 }}>
+                  {label}
+                </button>
+              )) : (
+                <span style={{ fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.6)' }}>AI Rewrite</span>
+              )}
+            </div>
+            {!improving && !analysing && (
+              <button onClick={runImprove} disabled={improving || analysing} className="btn btn-sm"
+                style={{ background:'rgba(255,255,255,0.15)', color:'white', border:'1px solid rgba(255,255,255,0.25)', fontSize:11, padding:'4px 10px' }}>
+                {improved ? <><RefreshCcw size={10} /> Re-improve</> : <><Wand2 size={10} /> Improve Article</>}
+              </button>
+            )}
           </div>
+
+          {/* Title field — always visible when content exists */}
+          {(improved || editedText) && rewriteTab === 'edit' && (
+            <div style={{ padding:'10px 16px', borderBottom:'1px solid var(--border)', flexShrink:0, background:'white' }}>
+              <p style={{ fontSize:9, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 3px' }}>Title</p>
+              <input value={editedTitle} onChange={e => setEditedTitle(e.target.value)}
+                style={{ width:'100%', fontSize:14, fontWeight:700, color:'var(--text)', border:'none', outline:'none', fontFamily:'inherit', background:'transparent', padding:0 }}
+                placeholder={article.title} />
+            </div>
+          )}
 
           {/* Content area */}
           {improving ? (
             <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, padding:40 }}>
               <Loader size={22} style={{ animation:'spin 0.8s linear infinite', color:'var(--navy)' }} />
               <p style={{ fontSize:13, fontWeight:600, color:'var(--text-2)', margin:0 }}>Generating AI rewrite...</p>
-              <p style={{ fontSize:11, color:'var(--text-3)', margin:0 }}>Informed by the quality & SEO findings</p>
+              <p style={{ fontSize:11, color:'var(--text-3)', margin:0 }}>Addressing all quality & SEO findings</p>
             </div>
-          ) : improved || editedText ? (
+          ) : (improved || editedText) && rewriteTab === 'edit' ? (
             <WYSIWYGEditor html={editedText || improved} onChange={setEditedText} />
+          ) : (improved || editedText) && rewriteTab === 'changes' ? (
+            <DiffView original={bodyHtml} revised={editedText || improved} originalTitle={article.title} revisedTitle={editedTitle} />
           ) : (
             <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, padding:40, textAlign:'center' }}>
               <div style={{ width:48, height:48, borderRadius:12, background:'var(--navy-light)', border:'1px solid var(--navy-border)', display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -730,7 +849,7 @@ function AIDrawer({ article, connector, onClose }) {
               </div>
               <p style={{ fontSize:13, fontWeight:600, color:'var(--text-2)', margin:0 }}>Ready to improve</p>
               <p style={{ fontSize:12, color:'var(--text-3)', margin:0, maxWidth:220, lineHeight:1.6 }}>
-                Review the recommendations in the middle panel, then click <strong>Improve Article</strong> above to generate an AI rewrite.
+                Review the recommendations in the middle panel, then click <strong>Improve Article</strong> above to generate a targeted rewrite.
               </p>
               {!analysing && (
                 <button onClick={runImprove} disabled={improving} className="btn btn-primary btn-sm" style={{ marginTop:4 }}>
