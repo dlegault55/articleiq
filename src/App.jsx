@@ -63,6 +63,8 @@ export default function App() {
         <Route path="/login" element={<PublicOnly><LoginPage /></PublicOnly>} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/share/:id" element={<SharePage />} />
+        <Route path="/terms"   element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/" element={<Guard><Layout /></Guard>}>
           <Route path="dashboard"           element={<DashboardPage />} />
           <Route path="scanner/results/:id" element={<ScanResultsPage />} />
