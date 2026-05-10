@@ -504,6 +504,8 @@ function AIDrawer({ article, connector, onClose, userId }) {
       callAI('quality', { title, content: html, readabilityScore: article.readability_score }),
       callAI('seo',     { title, content: html }),
     ])
+    console.log('qualityRaw length:', qualityRaw?.length, 'first 100:', qualityRaw?.slice(0,100))
+    console.log('seoRaw length:', seoRaw?.length, 'first 100:', seoRaw?.slice(0,100))
     let quality = {}, seo = {}
     try { quality = JSON.parse(qualityRaw.replace(/```json|```/g,'').trim()) } catch {}
     try { seo     = JSON.parse(seoRaw.replace(/```json|```/g,'').trim())     } catch {}
