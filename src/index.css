@@ -164,3 +164,39 @@ a  { color: inherit; text-decoration: none; }
   .full-mobile   { width: 100% !important; }
   .pad-mobile    { padding: 16px !important; }
 }
+
+/* ─── Range sliders ──────────────────────────────────────────── */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 100px;
+  background: var(--border-md);
+  outline: none;
+  cursor: pointer;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--navy);
+  cursor: pointer;
+  border: 3px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+input[type='range']::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--navy);
+  cursor: pointer;
+  border: 3px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+input[type='range']::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 100px;
+}
