@@ -1112,7 +1112,6 @@ export default function ScanResultsPage() {
     const { error } = await supabase.from('article_issues')
       .update({ resolved, resolved_at: resolved ? new Date().toISOString() : null })
       .eq('id', issueId)
-      .eq('user_id', profile?.id) // ensure user owns this issue
     if (error) {
       console.error('resolveIssue error:', error)
       // Revert optimistic update on failure
@@ -1146,9 +1145,9 @@ export default function ScanResultsPage() {
       const ai      = issues.filter(i => i.article_id===a.id)
       const unrec   = ai.filter(i => !resolvedIssues.has(i.id))
       const allRes  = ai.length > 0 && ai.every(i => resolvedIssues.has(i.id))
-      if (filter==='reviewed') return allRes
+      if (filter==='reviewed') return issues.filter(i=>i.article_id===a.id).some(i=>resolvedIssues.has(i.id))
       if (allRes && filter !== 'reviewed') return false
-      if (filter==='all')      return !allRes
+      if (filter==='all')      return true
       if (filter==='issues')   return unrec.length > 0
       if (filter==='critical') return unrec.some(i=>i.severity==='critical')
       if (filter==='clean')    return ai.length === 0
