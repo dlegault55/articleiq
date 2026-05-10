@@ -1392,9 +1392,30 @@ export default function ScanResultsPage() {
       <div className="card" style={{ overflow:'hidden', marginBottom:16 }}>
         {paginated.length === 0 ? (
           <div style={{ padding:48, textAlign:'center' }}>
-            <CheckCircle size={28} style={{ color:'var(--green)', marginBottom:10 }} />
-            <p style={{ fontSize:14, fontWeight:600, color:'var(--text)', marginBottom:4 }}>Nothing here</p>
-            <p style={{ fontSize:13, color:'var(--text-3)' }}>Try a different filter or resolve some issues to see them here.</p>
+            {isActive ? (
+              // Scan still initialising — no articles yet
+              <>
+                <Loader size={24} style={{ color:'var(--navy)', animation:'spin 0.8s linear infinite', marginBottom:12 }} />
+                <p style={{ fontSize:14, fontWeight:600, color:'var(--text)', marginBottom:4 }}>Scan in progress</p>
+                <p style={{ fontSize:13, color:'var(--text-3)' }}>Articles will appear here as the scan runs — keep this tab open.</p>
+              </>
+            ) : articles.length === 0 ? (
+              // Scan done but truly no articles returned
+              <>
+                <Loader size={24} style={{ color:'var(--text-3)', marginBottom:12 }} />
+                <p style={{ fontSize:14, fontWeight:600, color:'var(--text)', marginBottom:4 }}>Loading results...</p>
+                <p style={{ fontSize:13, color:'var(--text-3)' }}>Fetching scan data — this should only take a moment.</p>
+              </>
+            ) : (
+              // Articles loaded, filter just has no matches
+              <>
+                <CheckCircle size={28} style={{ color:'var(--green)', marginBottom:10 }} />
+                <p style={{ fontSize:14, fontWeight:600, color:'var(--text)', marginBottom:4 }}>
+                  {filter === 'critical' ? '0 critical issues — nice work' : 'Nothing matches this filter'}
+                </p>
+                <p style={{ fontSize:13, color:'var(--text-3)' }}>Try a different filter to see more articles.</p>
+              </>
+            )}
           </div>
         ) : paginated.map(a => (
           <ArticleRow key={a.id} article={a}
