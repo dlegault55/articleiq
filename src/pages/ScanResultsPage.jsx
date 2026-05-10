@@ -543,7 +543,7 @@ function AIDrawer({ article, connector, onClose, userId }) {
         lines.push(`SEO GRADE: ${analysis.seo.grade} — ${analysis.seo.verdict || ''}`)
       }
       if (analysis?.seo?.title_suggestion) {
-        lines.push(`SEO TITLE (use this exactly): "${analysis.seo.title_suggestion}"`)
+        lines.push(`SEO TITLE SUGGESTION (for reference only — do NOT apply to the article title, user will decide): "${analysis.seo.title_suggestion}"`)
       }
       if (analysis?.seo?.issues?.length) {
         const high   = analysis.seo.issues.filter(i => i.impact === 'high')
@@ -575,7 +575,7 @@ function AIDrawer({ article, connector, onClose, userId }) {
       })
       setImproved(result)
       setEditedText(result)
-      setEditedTitle(analysis?.seo?.title_suggestion || title)
+      setEditedTitle(title)  // keep original — user applies SEO title manually from recommendations
       setRewriteTab('edit')
       setOverrideRecs(new Set())
 
@@ -948,7 +948,7 @@ function AIDrawer({ article, connector, onClose, userId }) {
                           textDecoration: addressedRecs.has('title') ? 'line-through' : 'none',
                         }}>{analysis.seo.title_suggestion}</p>
                       </div>
-                      {!addressedRecs.has('title') && <p style={{ fontSize:9, color:'var(--navy)', opacity:0.55, margin:0 }}>Applied automatically after rewrite →</p>}
+                      {!addressedRecs.has('title') && <p style={{ fontSize:9, color:'var(--navy)', opacity:0.55, margin:0 }}>Copy into the title field above if you want to use it</p>}
                     </div>
                   </div>
                 )}

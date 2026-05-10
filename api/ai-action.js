@@ -53,6 +53,13 @@ ARTICLE TYPE — detect and apply the correct structure:
 - Release note: What changed → Why it matters → What action (if any) is needed
 - Reference: Brief description → Key information in table or list → Examples
 
+MEANING PRESERVATION — non-negotiable:
+- Never change the subject, problem, or conclusion of the article
+- Never introduce concepts, causes, or solutions not present in the original
+- If the article is about "unwanted accounts", it must remain about unwanted accounts — not "duplicate accounts" or any other reframe
+- Improve how the content is expressed, not what it says
+- When in doubt, keep the original phrasing and only improve structure and clarity
+
 HTML RULES — non-negotiable:
 - Preserve every <img>, <a href>, <table>, <code>, <pre>, <video> tag and all attributes exactly
 - Use <h2> for major sections, <h3> for sub-sections
@@ -90,7 +97,9 @@ Suggestions must be specific — not "improve clarity" but "the third step is am
       maxTokens: 256,
     },
     seo: {
-      system: `You are an SEO expert specialising in knowledge base and help centre content. Analyse this article for search engine optimisation. Score it 0-100 based on: title length and keyword clarity (ideal 50-60 chars), heading structure (H2/H3 usage), content depth (300+ words for SEO), first paragraph clarity, internal linking signals, and whether the title matches what customers would actually search for. Return JSON only, no markdown: {"score": 0-100, "grade": "A/B/C/D/F", "verdict": "one sentence summary", "issues": [{"issue": "short description", "fix": "specific actionable fix", "impact": "high/medium/low"}], "title_suggestion": "improved SEO title or null if fine"}`,
+      system: `You are an SEO expert specialising in knowledge base and help centre content. Analyse this article for search engine optimisation. Score it 0-100 based on: title length and keyword clarity (ideal 50-60 chars), heading structure (H2/H3 usage), content depth (300+ words for SEO), first paragraph clarity, internal linking signals, and whether the title matches what customers would actually search for. Return JSON only, no markdown: {"score": 0-100, "grade": "A/B/C/D/F", "verdict": "one sentence summary", "issues": [{"issue": "short description", "fix": "specific actionable fix", "impact": "high/medium/low"}], "title_suggestion": "improved SEO title or null if fine"}
+
+CRITICAL RULE for title_suggestion: You may only improve the title for length, clarity, or keyword placement. You must NEVER change the meaning, reframe the problem, or introduce concepts not in the original title. If you cannot improve the title without changing its meaning, return null. A title about \"unwanted accounts\" must remain about unwanted accounts — never suggest \"duplicate accounts\" or any other reframing.`,
       user: `Article title: ${title}\n\nArticle content (HTML):\n${content || title}`,
       maxTokens: 1200,
     },
