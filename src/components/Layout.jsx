@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useScan } from '@/hooks/useScan'
 import { signOut } from '@/lib/supabase'
@@ -64,6 +64,15 @@ function AvatarMenu({ name, email, plan, initials }) {
             ))}
           </div>
 
+          <div style={{ borderTop:'1px solid var(--border)', padding:'8px 16px 6px', display:'flex', gap:14 }}>
+            {[['Terms', '/terms'], ['Privacy', '/privacy'], ['Contact', '/contact']].map(([label, path]) => (
+              <button key={path} onClick={() => go(path)}
+                style={{ fontSize:11, color:'var(--text-3)', background:'none', border:'none', cursor:'pointer', padding:0, fontFamily:'inherit' }}>
+                {label}
+              </button>
+            ))}
+          </div>
+
           <div style={{ borderTop:'1px solid var(--border)', padding:'5px' }}>
             <button onClick={() => signOut()} style={{ ...menuBtn, color:'var(--red)' }}
               onMouseEnter={e => e.currentTarget.style.background='var(--red-light)'}
@@ -101,21 +110,21 @@ export default function Layout() {
           </span>
         </div>
 
-        {/* Nav pill */}
-        <div style={{ display:'flex', gap:2, background:'white', borderRadius:100, padding:3, border:'1px solid var(--border-md)' }}>
-          <NavLink to="/dashboard"
-            style={({ isActive }) => ({
-              padding:'4px 16px', borderRadius:100, fontSize:12, fontWeight:600,
-              color: isActive ? 'white' : 'var(--text-2)',
-              background: isActive ? 'var(--navy)' : 'transparent',
-              textDecoration:'none', transition:'all 0.15s',
-            })}>
-            Dashboard
-          </NavLink>
-        </div>
+        {/* Center — empty spacer */}
+        <div />
 
         {/* Right */}
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <NavLink to="/dashboard"
+            style={({ isActive }) => ({
+              padding:'5px 14px', borderRadius:100, fontSize:12, fontWeight:600,
+              color: isActive ? 'white' : 'var(--text-2)',
+              background: isActive ? 'var(--navy)' : 'transparent',
+              textDecoration:'none', transition:'all 0.15s',
+              border: isActive ? 'none' : '1px solid transparent',
+            })}>
+            Dashboard
+          </NavLink>
           {activeScan && (
             <button onClick={() => navigate(`/scanner/results/${activeScan.id}`)}
               style={{ display:'flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:100, background:'var(--navy-light)', border:'1px solid var(--navy-border)', cursor:'pointer' }}>
@@ -129,6 +138,14 @@ export default function Layout() {
         </div>
       </nav>
       <main><Outlet /></main>
+      <footer style={{ borderTop:'1px solid var(--border-md)', padding:'14px clamp(12px,4vw,24px)', display:'flex', alignItems:'center', justifyContent:'space-between', background:'white' }}>
+        <p style={{ fontSize:11, color:'var(--text-3)', margin:0 }}>© 2026 ArticleIQ</p>
+        <div style={{ display:'flex', gap:16 }}>
+          {[['Terms', '/terms'], ['Privacy', '/privacy'], ['Contact', '/contact']].map(([label, path]) => (
+            <Link key={path} to={path} style={{ fontSize:11, color:'var(--text-3)', textDecoration:'none' }}>{label}</Link>
+          ))}
+        </div>
+      </footer>
     </div>
   )
 }
