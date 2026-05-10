@@ -1062,7 +1062,10 @@ function Pagination({ page, totalPages, onChange }) {
 // ─── Main page ─────────────────────────────────────────────────
 export default function ScanResultsPage() {
   const { id: scanId } = useParams()
-  const { profile }    = useAuth()
+  const { profile, refreshProfile } = useAuth()
+
+  // Refresh profile on mount to pick up plan changes from webhooks
+  useEffect(() => { refreshProfile?.() }, [])
   const { resumeScan } = useScan()
   const upgrade        = useUpgrade()
 
@@ -1282,7 +1285,7 @@ export default function ScanResultsPage() {
                 </div>
               </div>
               <button onClick={upgrade} className="btn btn-sm" style={{ background:'#FFD93D', color:'#0A1A0A', fontWeight:700, flexShrink:0 }}>
-                <Zap size={13} /> Upgrade to Pro →
+                <Zap size={13} /> Upgrade to scan all articles →
               </button>
             </div>
             <div style={{ padding: '10px 20px', background: 'white', display: 'flex', gap: 24 }}>
