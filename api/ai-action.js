@@ -124,9 +124,10 @@ Suggestions must be specific — not "improve clarity" but "the third step is am
     const data = await aiRes.json()
     let result = data.content[0]?.text || ''
 
-    // Strip markdown code fences and bare 'json' prefix Claude sometimes adds
-    result = result.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/, '').trim()
+    // Strip markdown code fences and bare prefixes Claude sometimes adds
+    result = result.replace(/^```html\s*/i, '').replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/, '').trim()
     result = result.replace(/^json\s*\{/, '{').trim()
+    result = result.replace(/^html\s*</i, '<').trim()
 
     return res.status(200).json({ result })
   } catch (err) {
