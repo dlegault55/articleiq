@@ -369,8 +369,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-      )}
-
       {/* Scan Pack credits banner */}
       {profile?.plan === 'pack' && (
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px', borderRadius:10, marginBottom:14,
