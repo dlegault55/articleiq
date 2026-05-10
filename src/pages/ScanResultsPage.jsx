@@ -749,6 +749,35 @@ function AIDrawer({ article, connector, onClose }) {
             {fetchErr && <p style={{ fontSize:12, color:'var(--red)', lineHeight:1.6 }}>{fetchErr}</p>}
             {!analysing && analysis && (
               <>
+                {/* Rewrite summary — only shows after improve runs */}
+                {improved && addressedRecs.size > 0 && (() => {
+                  const totalRecs = (analysis.quality?.suggestions?.length || 0) + (analysis.seo?.issues?.length || 0) + (analysis.seo?.title_suggestion ? 1 : 0)
+                  const applied   = addressedRecs.size
+                  const manual    = totalRecs - applied
+                  return (
+                    <div style={{ marginBottom:14, padding:'10px 12px', borderRadius:8, background:'var(--navy)', border:'1px solid var(--navy)' }}>
+                      <p style={{ fontSize:12, fontWeight:700, color:'white', margin:'0 0 6px' }}>Rewrite complete</p>
+                      <div style={{ display:'flex', gap:8 }}>
+                        <div style={{ flex:1, padding:'6px 8px', borderRadius:6, background:'rgba(74,222,128,0.15)', border:'1px solid rgba(74,222,128,0.3)', textAlign:'center' }}>
+                          <p style={{ fontSize:16, fontWeight:800, color:'#4ade80', margin:'0 0 1px' }}>{applied}</p>
+                          <p style={{ fontSize:9, color:'rgba(255,255,255,0.6)', margin:0 }}>applied by AI</p>
+                        </div>
+                        {manual > 0 && (
+                          <div style={{ flex:1, padding:'6px 8px', borderRadius:6, background:'rgba(251,191,36,0.15)', border:'1px solid rgba(251,191,36,0.3)', textAlign:'center' }}>
+                            <p style={{ fontSize:16, fontWeight:800, color:'#fbbf24', margin:'0 0 1px' }}>{manual}</p>
+                            <p style={{ fontSize:9, color:'rgba(255,255,255,0.6)', margin:0 }}>need your attention</p>
+                          </div>
+                        )}
+                      </div>
+                      {manual > 0 && (
+                        <p style={{ fontSize:10, color:'rgba(255,255,255,0.5)', margin:'8px 0 0', lineHeight:1.5 }}>
+                          The amber items below couldn't be applied automatically — apply them in the editor, then Re-analyse to check your score.
+                        </p>
+                      )}
+                    </div>
+                  )
+                })()}
+
                 {/* Score badges */}
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6, marginBottom:14 }}>
                   {analysis.quality?.score != null && (
