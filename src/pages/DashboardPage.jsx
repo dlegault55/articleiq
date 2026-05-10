@@ -478,10 +478,10 @@ export default function DashboardPage() {
               <span style={{ fontSize:12, fontWeight:700, color:'white' }}>Fix with ArticleIQ</span>
               <span style={{ fontSize:9, fontWeight:700, padding:'2px 7px', borderRadius:100, background:'#FFD93D', color:'#1A1A18' }}>Pro</span>
             </div>
-            <p style={{ fontSize:11, color:'rgba(255,255,255,0.55)', marginBottom: profile?.plan === 'paid' ? 10 : 0 }}>
-              {profile?.plan === 'paid' ? 'AI-powered grammar, rewrites, and quality scoring.' : 'Upgrade to unlock AI-powered article improvements.'}
+            <p style={{ fontSize:11, color:'rgba(255,255,255,0.55)', marginBottom: ['paid','pack','annual'].includes(profile?.plan) ? 10 : 0 }}>
+              {['paid','pack','annual'].includes(profile?.plan) ? 'AI-powered grammar, rewrites, and quality scoring.' : 'Upgrade to unlock AI-powered article improvements.'}
             </p>
-            {profile?.plan === 'paid' && (
+            {['paid','pack','annual'].includes(profile?.plan) && (
               <p style={{ fontSize:11, color:'rgba(255,255,255,0.55)', margin:0 }}>
                 Improve Article, Quality Score, and Label Suggestions are available on any article after scanning.
               </p>

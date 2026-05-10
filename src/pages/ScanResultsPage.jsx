@@ -1067,7 +1067,7 @@ export default function ScanResultsPage() {
 
   usePageTitle(scan ? `Scan report · ${format(new Date(scan.created_at), 'MMM d')}` : 'Scan results')
 
-  const isPaid = profile?.plan === 'paid'
+  const isPaid = ['paid','pack','annual'].includes(profile?.plan)
 
   // Load connector for AI drawer
   useEffect(() => {

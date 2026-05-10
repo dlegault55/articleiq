@@ -27,7 +27,7 @@ export default async function handler(req, res) {
 
   // Verify user is Pro for most AI actions (label suggestions are free)
   const { data: profile } = await supabase.from('profiles').select('plan').eq('id', auth.userId).single()
-  if (profile?.plan !== 'paid' && action !== 'labels' && action !== 'seo') {
+  if (!['paid','pack','annual'].includes(profile?.plan) && action !== 'labels' && action !== 'seo') {
     return res.status(403).json({ error: 'AI features require a Pro subscription' })
   }
 
