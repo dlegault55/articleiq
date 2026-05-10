@@ -455,6 +455,7 @@ function AIDrawer({ article, connector, onClose, userId }) {
   const [rewriteTab,   setRewriteTab]   = useState('edit')  // 'edit' | 'changes'
   const [addressedRecs,  setAddressedRecs]  = useState(new Set())
   const [dismissedRecs,  setDismissedRecs]  = useState(new Set())
+  const [overrideRecs,   setOverrideRecs]   = useState(new Set()) // user-marked as NOT fixed despite AI saying so
   const [error,       setError]       = useState(null)
 
   // Load previous dismissals for this article
@@ -576,6 +577,7 @@ function AIDrawer({ article, connector, onClose, userId }) {
       setEditedText(result)
       setEditedTitle(analysis?.seo?.title_suggestion || title)
       setRewriteTab('edit')
+      setOverrideRecs(new Set())
 
       // Detect which recommendations were addressed in the rewrite
       const addressed = new Set()
@@ -887,7 +889,7 @@ function AIDrawer({ article, connector, onClose, userId }) {
                         return 0
                       })
                       .map(({ s, i }) => {
-                      const isAddressed = addressedRecs.has(`q-${i}`)
+                      const isAddressed    = addressedRecs.has(`q-${i}`) && !overrideRecs.has(`q-${i}`)
                       const showUnaddressed = improved && !isAddressed
                       return (
                         <div key={i} style={{ display:'flex', gap:6, marginBottom:5, padding:'6px 8px', borderRadius:6, transition:'all 0.3s',
@@ -903,7 +905,17 @@ function AIDrawer({ article, connector, onClose, userId }) {
                           <div style={{ flex:1, minWidth:0 }}>
                             <span style={{ fontSize:11, color: isAddressed ? 'var(--green)' : showUnaddressed ? 'var(--amber)' : 'var(--text-2)', lineHeight:1.5, textDecoration: isAddressed ? 'line-through' : 'none' }}>{s}</span>
                             {showUnaddressed && <p style={{ fontSize:9, color:'var(--amber)', margin:'2px 0 0', fontWeight:700 }}>Apply this manually in the editor</p>}
-                            {isAddressed && <p style={{ fontSize:9, color:'var(--green)', margin:'2px 0 0' }}>Applied by AI in the rewrite</p>}
+                            {isAddressed && (
+                              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:2 }}>
+                                <p style={{ fontSize:9, color:'var(--green)', margin:0 }}>Applied by AI in the rewrite</p>
+                                <button onClick={() => setOverrideRecs(prev => new Set([...prev, `q-${i}`]))}
+                                  style={{ fontSize:9, color:'var(--text-3)', background:'none', border:'none', cursor:'pointer', padding:0, fontFamily:'inherit' }}
+                                  onMouseEnter={e => e.currentTarget.style.color='var(--amber)'}
+                                  onMouseLeave={e => e.currentTarget.style.color='var(--text-3)'}>
+                                  Not actually fixed →
+                                </button>
+                              </div>
+                            )}
                           </div>
                           {!isAddressed && (
                             <button onClick={() => dismissRec(`q-${i}`, s, 'quality')} title="Dismiss — not relevant to this article"
@@ -957,7 +969,7 @@ function AIDrawer({ article, connector, onClose, userId }) {
                         return (impactOrder[a.item.impact]||2) - (impactOrder[b.item.impact]||2)
                       })
                       .map(({ item, i }) => {
-                      const isAddressed    = addressedRecs.has(`s-${i}`)
+                      const isAddressed    = addressedRecs.has(`s-${i}`) && !overrideRecs.has(`s-${i}`)
                       const showUnaddressed = improved && !isAddressed
                       return (
                         <div key={i} style={{ marginBottom:7, padding:'6px 8px', borderRadius:6, transition:'all 0.3s',
@@ -984,7 +996,15 @@ function AIDrawer({ article, connector, onClose, userId }) {
                             </button>
                           </div>
                           {isAddressed
-                            ? <p style={{ fontSize:9, color:'var(--green)', margin:0 }}>Applied by AI in the rewrite</p>
+                            ? <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:2 }}>
+                                <p style={{ fontSize:9, color:'var(--green)', margin:0 }}>Applied by AI in the rewrite</p>
+                                <button onClick={() => setOverrideRecs(prev => new Set([...prev, `s-${i}`]))}
+                                  style={{ fontSize:9, color:'var(--text-3)', background:'none', border:'none', cursor:'pointer', padding:0, fontFamily:'inherit' }}
+                                  onMouseEnter={e => e.currentTarget.style.color='var(--amber)'}
+                                  onMouseLeave={e => e.currentTarget.style.color='var(--text-3)'}>
+                                  Not actually fixed →
+                                </button>
+                              </div>
                             : <p style={{ fontSize:10, color: showUnaddressed ? 'var(--amber)' : 'var(--text-3)', margin:0, lineHeight:1.5, fontWeight: showUnaddressed ? 600 : 400 }}>{item.fix}</p>
                           }
                         </div>
@@ -998,7 +1018,7 @@ function AIDrawer({ article, connector, onClose, userId }) {
                   const qualityRecs = analysis.quality?.suggestions?.length || 0
                   const seoRecs     = analysis.seo?.issues?.length || 0
                   const totalRecs   = qualityRecs + seoRecs
-                  const doneRecs    = [...addressedRecs].filter(k => !k.startsWith('dismissed:')).length
+                  const doneRecs    = [...addressedRecs].filter(k => !k.startsWith('dismissed:') && !overrideRecs.has(k)).length
                   const dismissed   = [...dismissedRecs].filter(k => k.startsWith('dismissed:')).length
                   const allDone     = totalRecs > 0 && (doneRecs + dismissed) >= totalRecs
                   if (!allDone) return null
