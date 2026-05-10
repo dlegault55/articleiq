@@ -853,8 +853,7 @@ const AI_ACTIONS = [
   },
 ]
 
-function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolvedIssues, onResolveIssue, onUpgrade }) {
-  const [open, setOpen] = useState(false)
+function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolvedIssues, onResolveIssue, onUpgrade, open, onToggle }) {
   const [aiResult, setAiResult] = useState(null)
   const [aiLoading, setAiLoading] = useState(null)
 
@@ -904,7 +903,7 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
 
         <div style={{ width:3, alignSelf:'stretch', borderRadius:2, background:barColor, flexShrink:0 }} />
 
-        <div onClick={() => setOpen(v => !v)}
+        <div onClick={onToggle}
           style={{ display:'flex', alignItems:'center', flex:1, minWidth:0, cursor:'pointer', textAlign:'left', padding:0, gap:10 }}>
           <div style={{ flex:1, minWidth:0 }}>
             <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
@@ -1076,6 +1075,8 @@ export default function ScanResultsPage() {
   const [page,     setPage]     = useState(1)
   const [exporting,setExporting]= useState(false)
   const [shared,   setShared]   = useState(false)
+  const [openRows, setOpenRows] = useState(new Set())
+  const toggleRow = (id) => setOpenRows(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
   const [resolvedIssues,   setResolvedIssues]   = useState(new Set())
   const [drawer,           setDrawer]           = useState(null) // { article, action }
   const [connector,        setConnector]        = useState(null)
@@ -1441,6 +1442,8 @@ export default function ScanResultsPage() {
             resolvedIssues={resolvedIssues}
             onResolveIssue={resolveIssue}
             onUpgrade={upgrade}
+            open={openRows.has(a.id)}
+            onToggle={() => toggleRow(a.id)}
           />
         ))}
       </div>
