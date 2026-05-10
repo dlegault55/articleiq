@@ -196,7 +196,10 @@ export default function DashboardPage() {
   // Load scan defaults
   useEffect(() => {
     if (profile !== null) {
-      setChecks({ ...DEFAULT_CHECKS, ...(profile?.scan_defaults || {}) })
+      const saved = profile?.scan_defaults || {}
+      // Always respect current defaults for links and duplicates — these were off by default historically
+      const merged = { ...DEFAULT_CHECKS, ...saved, links: saved.links ?? true, duplicates: saved.duplicates ?? true }
+      setChecks(merged)
       setChecksReady(true)
     }
   }, [profile?.id, profile])
