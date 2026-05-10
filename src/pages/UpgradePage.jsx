@@ -49,18 +49,30 @@ function ROICalculator() {
   const net         = savings - cost
   const roi         = cost > 0 ? Math.round((net / cost) * 100) : 0
 
-  const Field = ({ label, value, min, max, step = 1, onChange, prefix = '', suffix = '' }) => (
-    <div style={{ marginBottom: 14 }}>
-      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 5 }}>{label}</label>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 0, border: '1px solid var(--border-md)', borderRadius: 8, overflow: 'hidden', background: 'white' }}>
-        {prefix && <span style={{ padding: '8px 10px', fontSize: 13, fontWeight: 600, color: 'var(--text-3)', background: 'var(--bg)', borderRight: '1px solid var(--border-md)' }}>{prefix}</span>}
-        <input type="number" min={min} max={max} step={step} value={value}
-          onChange={e => onChange(Math.min(max, Math.max(min, Number(e.target.value) || min)))}
-          style={{ flex: 1, padding: '8px 10px', fontSize: 14, fontWeight: 700, color: 'var(--text)', border: 'none', outline: 'none', fontFamily: 'inherit', background: 'white', width: 0 }} />
-        {suffix && <span style={{ padding: '8px 10px', fontSize: 13, fontWeight: 600, color: 'var(--text-3)', background: 'var(--bg)', borderLeft: '1px solid var(--border-md)' }}>{suffix}</span>}
+  const Field = ({ label, value, min, max, onChange, prefix = '', suffix = '' }) => {
+    const [raw, setRaw] = useState(String(value))
+    return (
+      <div style={{ marginBottom: 14 }}>
+        <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 5 }}>{label}</label>
+        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border-md)', borderRadius: 8, overflow: 'hidden', background: 'white' }}>
+          {prefix && <span style={{ padding: '8px 10px', fontSize: 13, fontWeight: 600, color: 'var(--text-3)', background: 'var(--bg)', borderRight: '1px solid var(--border-md)' }}>{prefix}</span>}
+          <input
+            type="text"
+            inputMode="numeric"
+            value={raw}
+            onChange={e => {
+              setRaw(e.target.value)
+              const n = parseInt(e.target.value.replace(/[^0-9]/g, ''), 10)
+              if (!isNaN(n)) onChange(Math.min(max, Math.max(min, n)))
+            }}
+            onBlur={() => setRaw(String(value))}
+            style={{ flex: 1, padding: '8px 10px', fontSize: 14, fontWeight: 700, color: 'var(--text)', border: 'none', outline: 'none', fontFamily: 'inherit', background: 'white', minWidth: 0 }}
+          />
+          {suffix && <span style={{ padding: '8px 10px', fontSize: 13, fontWeight: 600, color: 'var(--text-3)', background: 'var(--bg)', borderLeft: '1px solid var(--border-md)' }}>{suffix}</span>}
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   return (
     <div className="card" style={{ overflow: 'hidden', marginBottom: 24 }}>
