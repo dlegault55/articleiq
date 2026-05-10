@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useScan } from '@/hooks/useScan'
 import { signOut } from '@/lib/supabase'
-import { Scan, Loader, ChevronDown, Plug, LogOut, User, HelpCircle, Sparkles } from 'lucide-react'
+import { Scan, Loader, ChevronDown, Plug, LogOut, User, HelpCircle } from 'lucide-react'
 
 const menuBtn = {
   display:'flex', alignItems:'center', gap:9, width:'100%',
@@ -53,7 +53,6 @@ function AvatarMenu({ name, email, plan, initials }) {
           <div style={{ padding:'5px' }}>
             {[
               { icon: Plug,        label:'Manage connectors', path:'/connector' },
-              { icon: Sparkles,    label:"What's new",        path:'/release-notes' },
               { icon: HelpCircle,  label:'Help & docs',       path:'/help' },
               { icon: User,        label:'Account settings',  path:'/settings' },
             ].map(({ icon: Icon, label, path }) => (

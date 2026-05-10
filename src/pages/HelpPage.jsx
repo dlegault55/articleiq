@@ -1,6 +1,6 @@
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, AlertTriangle, Zap, Scan, BookOpen, Link2, Copy, Tag, Clock, Type, Shield, ExternalLink } from 'lucide-react'
+import { ChevronDown, ChevronUp, AlertTriangle, Zap, Scan, BookOpen, Link2, Copy, Tag, Clock, Type, Shield, ExternalLink, ImageOff } from 'lucide-react'
 
 const Section = ({ title, children }) => (
   <div style={{ marginBottom: 40 }}>
@@ -157,8 +157,8 @@ export default function HelpPage() {
           a="No. ArticleIQ is fully read-only. We never write to Zendesk® unless you explicitly copy an AI-improved article and paste it yourself." />
         <FAQ q="Why does the scan need the tab to stay open?"
           a="Scans run in your browser rather than on a server. Keep the tab active while scanning — you'll get an email when it's done." />
-        <FAQ q="What's the difference between Readability, Quality Score, and SEO Score?"
-          a={<span><strong>Readability</strong> is a simple surface metric — it measures sentence length and word complexity using a formula. Low readability doesn't mean the article is bad, just hard to follow. <strong>Quality Score</strong> goes deeper — it scores Clarity, Completeness, Structure, Accuracy, and Actionability using AI that actually reads the article. <strong>SEO Score</strong> measures how likely the article is to rank in Google — title clarity, heading structure, content depth, and keyword signals. Use Improve Article to fix readability and structure in one pass, then re-run Quality and SEO scores to see the improvement.</span>} />
+        <FAQ q="What's the difference between Quality Score and SEO Score?"
+          a={<span><strong>Quality Score</strong> measures whether the article genuinely helps the reader — scored across Clarity, Completeness, Structure, Accuracy, and Actionability. <strong>SEO Score</strong> measures how likely the article is to rank in Google — title, headings, content depth, keyword signals. Use <strong>Improve Article</strong> to fix the writing, then apply the SEO recommendations manually in the editor. Re-analyse after edits to see updated scores.</span>} />
         <FAQ q="How do I get an API token from Zendesk®?"
           a={<span>Admin Center → Apps & Integrations → APIs → Zendesk® API → API Tokens → Add API token. <a href="https://support.zendesk.com/hc/en-us/articles/4408889192858" target="_blank" rel="noreferrer" style={{ color: 'var(--navy)', fontWeight: 600 }}>View Zendesk® guide →</a></span>} />
         <FAQ q="What does ArticleIQ do with my article content?"

@@ -10,7 +10,6 @@ import ConnectorPage from '@/pages/ConnectorPage'
 import SettingsPage from '@/pages/SettingsPage'
 import LandingPage from '@/pages/LandingPage'
 import HelpPage from '@/pages/HelpPage'
-import ReleaseNotesPage from '@/pages/ReleaseNotesPage'
 import SharePage from '@/pages/SharePage'
 import UpgradePage from '@/pages/UpgradePage'
 import ContactPage from '@/pages/ContactPage'
@@ -68,7 +67,6 @@ export default function App() {
           <Route path="connector"           element={<ConnectorPage />} />
           <Route path="settings"            element={<SettingsPage />} />
           <Route path="help"               element={<HelpPage />} />
-          <Route path="release-notes"      element={<ReleaseNotesPage />} />
           <Route path="upgrade"            element={<UpgradePage />} />
           <Route path="contact"            element={<ContactPage />} />
         </Route>
