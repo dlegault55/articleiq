@@ -65,7 +65,7 @@ function TokenGuide() {
   )
 }
 
-function ConnectorCard({ connector, onRemove }) {
+function ConnectorCard({ connector, onRemove, onRemoveWithHistory }) {
   const [testing,    setTesting]    = useState(false)
   const [testResult, setTestResult] = useState(null)
 
@@ -108,12 +108,12 @@ function ConnectorCard({ connector, onRemove }) {
             {testing ? <Loader size={11} style={{ animation: 'spin 0.7s linear infinite' }} /> : null}
             {testing ? 'Testing...' : 'Test connection'}
           </button>
-          <div style={{ position:'relative' }} className="remove-menu-wrap">
-            <button onClick={() => onRemove(connector.id)} className="btn btn-ghost btn-xs" style={{ color: 'var(--text-3)' }} title="Remove connector">
-              <Trash2 size={12} />
+          <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+            <button onClick={() => onRemove(connector.id)} className="btn btn-secondary btn-xs">
+              Remove
             </button>
-            <button onClick={() => onRemove(connector.id, true)} className="btn btn-ghost btn-xs" style={{ color: 'var(--red)', fontSize:10, marginLeft:2 }} title="Remove and delete all history">
-              Delete all history
+            <button onClick={() => onRemoveWithHistory(connector.id)} className="btn btn-ghost btn-xs" style={{ color:'var(--text-3)' }} title="Remove and delete all scan history">
+              <Trash2 size={12} />
             </button>
           </div>
         </div>
@@ -195,24 +195,34 @@ export default function ConnectorPage() {
     finally { setSaving(false) }
   }
 
-  const remove = async (id, deleteHistory = false) => {
-    const msg = deleteHistory
-      ? 'Remove this connector and delete all scan history? This cannot be undone.'
-      : 'Remove this connector? Scan history will be preserved.'
-    const ok = await toast.confirm(msg, 'Remove', 'Cancel')
+  const remove = async (id) => {
+    const ok = await toast.confirm(
+      'Remove this connector?\n\nScan history will be preserved unless you also check "Delete scan history" below.',
+      'Remove connector',
+      'Cancel'
+    )
     if (!ok) return
-    if (deleteHistory) {
-      // Delete all scan data for this connector
-      const { data: jobs } = await supabase.from('scan_jobs').select('id').eq('connector_id', id)
-      if (jobs?.length) {
-        const jobIds = jobs.map(j => j.id)
-        await supabase.from('article_issues').delete().in('scan_job_id', jobIds)
-        await supabase.from('scanned_articles').delete().in('scan_job_id', jobIds)
-        await supabase.from('scan_jobs').delete().in('id', jobIds)
-      }
+    await supabase.from('zendesk_connectors').delete().eq('id', id).eq('user_id', userId)
+    toast.success('Connector removed — scan history preserved')
+    load()
+  }
+
+  const removeWithHistory = async (id) => {
+    const ok = await toast.confirm(
+      'Remove this connector and permanently delete all scan history? This cannot be undone.',
+      'Delete everything',
+      'Cancel'
+    )
+    if (!ok) return
+    const { data: jobs } = await supabase.from('scan_jobs').select('id').eq('connector_id', id)
+    if (jobs?.length) {
+      const jobIds = jobs.map(j => j.id)
+      await supabase.from('article_issues').delete().in('scan_job_id', jobIds)
+      await supabase.from('scanned_articles').delete().in('scan_job_id', jobIds)
+      await supabase.from('scan_jobs').delete().in('id', jobIds)
     }
     await supabase.from('zendesk_connectors').delete().eq('id', id).eq('user_id', userId)
-    toast.success(deleteHistory ? 'Connector and scan history removed' : 'Connector removed')
+    toast.success('Connector and all scan history deleted')
     load()
   }
 
@@ -225,7 +235,7 @@ export default function ConnectorPage() {
 
       {/* Existing connectors */}
       {!loading && connectors.map(c => (
-        <ConnectorCard key={c.id} connector={c} onRemove={remove} />
+        <ConnectorCard key={c.id} connector={c} onRemove={remove} onRemoveWithHistory={removeWithHistory} />
       ))}
 
       {/* Platform picker */}
