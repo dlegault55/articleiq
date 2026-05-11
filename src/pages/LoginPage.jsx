@@ -130,10 +130,14 @@ export default function LoginPage() {
                 <Mail size={14} /> Sign in with email
               </button>
               <div style={{ display:'flex', alignItems:'center', gap:8, margin:'4px 0' }}>
-                {['300 articles free', 'No credit card', 'Cancel anytime'].map((t, i) => (
-                  <div key={t} style={{ display:'flex', alignItems:'center', gap:4, flex:1 }}>
-                    <CheckCircle size={10} style={{ color:'var(--green)', flexShrink:0 }} />
-                    <span style={{ fontSize:10, color:'var(--text-3)', fontWeight:500 }}>{t}</span>
+                {[
+                  { emoji:'🔗', text:'Find broken links instantly' },
+                  { emoji:'🤖', text:'AI rewrites in seconds' },
+                  { emoji:'📊', text:'Full KB health score' },
+                ].map(({ emoji, text }) => (
+                  <div key={text} style={{ display:'flex', alignItems:'center', gap:4, flex:1 }}>
+                    <span style={{ fontSize:12 }}>{emoji}</span>
+                    <span style={{ fontSize:10, color:'var(--text-3)', fontWeight:500, lineHeight:1.3 }}>{text}</span>
                   </div>
                 ))}
               </div>
