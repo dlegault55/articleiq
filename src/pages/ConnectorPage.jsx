@@ -12,6 +12,7 @@ const PLATFORMS = [
     id: 'helpscout',
     name: 'HelpScout',
     logo: '🔵',
+    available: true,
     description: 'Connect your HelpScout Docs knowledge base',
     fields: [
       { key: 'api_key', label: 'API Key', placeholder: 'Paste your HelpScout API key', hint: 'HelpScout → Your Profile → API Keys → Generate an API key', type: 'password' },
@@ -31,7 +32,6 @@ const PLATFORMS = [
       { key: 'api_key',   label: 'API token', placeholder: 'Paste your API token here', hint: 'Admin Center → Apps & Integrations → APIs → Zendesk® API → API Tokens', type: 'password' },
     ],
   },
-  { id: 'helpscout', name: 'Help Scout', description: 'Scan your Docs knowledge base', available: false },
   { id: 'notion',    name: 'Notion',     description: 'Scan your Notion wiki', available: false },
   { id: 'confluence',name: 'Confluence', description: 'Scan your Confluence space', available: false },
   { id: 'intercom',  name: 'Intercom',   description: 'Scan your Articles', available: false },
@@ -352,11 +352,44 @@ export default function ConnectorPage() {
         </div>
       )}
 
+      {/* HelpScout connection form */}
+      {selectedPlat === 'helpscout' && (
+        <div className="animate-in">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 7, background: 'var(--navy-light)', border: '1px solid var(--navy-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plug size={13} style={{ color: 'var(--navy)' }} /></div>
+              <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Connect HelpScout</p>
+            </div>
+            <button onClick={() => { setSelectedPlat(null); setForm({}) }} className="btn btn-ghost btn-xs" style={{ color: 'var(--text-3)' }}>Cancel</button>
+          </div>
+
+          <div style={{ padding: '12px 14px', borderRadius: 8, background: 'var(--navy-light)', border: '1px solid var(--navy-border)', marginBottom: 14 }}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--navy)', margin: '0 0 3px' }}>How to get your HelpScout API key</p>
+            <p style={{ fontSize: 11, color: 'var(--text-2)', margin: 0, lineHeight: 1.6 }}>
+              In HelpScout → Your Profile (top right) → Authentication → API Keys → Generate an API Key. Copy and paste it below.
+            </p>
+          </div>
+
+          <div className="card" style={{ padding: '18px' }}>
+            <div style={{ marginBottom: 16 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.07em' }}>API Key</p>
+              <input type="password" value={form.api_key || ''} placeholder="Paste your HelpScout API key"
+                onChange={e => setForm(f => ({ ...f, api_key: e.target.value }))}
+                className="input" />
+              <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>Your API key is encrypted and stored securely. We never share it.</p>
+            </div>
+            <button onClick={save} disabled={saving} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+              {saving ? 'Connecting...' : 'Connect HelpScout'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Coming soon platforms */}
       <div style={{ marginTop: 24, padding: '14px 16px', borderRadius: 10, background: 'var(--bg)', border: '1px solid var(--border-md)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <Clock size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
         <p style={{ fontSize: 12, color: 'var(--text-3)', margin: 0, lineHeight: 1.6 }}>
-          Help Scout, Notion, Confluence, and Intercom connectors are coming soon.{' '}
+          Notion, Confluence, Intercom, and Freshdesk connectors are coming soon.{' '}
           <a href="/contact" style={{ color: 'var(--navy)', fontWeight: 600 }}>Let us know</a> which platform you need most.
         </p>
       </div>
