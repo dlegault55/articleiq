@@ -170,7 +170,14 @@ export default function DashboardPage() {
   const toast    = useToast()
   const navigate     = useNavigate()
   const justUpgraded   = new URLSearchParams(window.location.search).get('upgraded') === 'true'
-  const [showCelebration, setShowCelebration] = useState(justUpgraded)
+  const [showCelebration, setShowCelebration] = useState(false)
+
+  // Show celebration once profile loads and confirms paid plan
+  useEffect(() => {
+    if (justUpgraded && profile?.plan && ['pack','annual','paid'].includes(profile.plan)) {
+      setShowCelebration(true)
+    }
+  }, [profile?.plan])
   const upgrade  = useUpgrade()
 
   const [connector,   setConnector]   = useState(null)
