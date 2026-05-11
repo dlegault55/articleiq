@@ -191,16 +191,19 @@ export default function ConnectorPage() {
 
   const save = async () => {
     const { subdomain, email, api_key } = form
-    if (!subdomain || !email || !api_key) { toast.error('All fields required'); return }
+    const platform = selectedPlat || 'zendesk'
+    if (platform === 'zendesk' && (!subdomain || !email || !api_key)) { toast.error('All fields required'); return }
+    if (platform === 'helpscout' && !api_key) { toast.error('API key required'); return }
     setSaving(true)
     try {
-      const cred = `${email}/token:${api_key}`
+      const cred = platform === 'helpscout' ? api_key : `${email}/token:${api_key}`
       const { error } = await supabase.from('kb_connectors').insert({
-        user_id: userId,
-        subdomain: subdomain.replace(/\.zendesk\.com$/, '').trim().toLowerCase(),
+        user_id:           userId,
+        subdomain:         platform === 'helpscout' ? 'helpscout' : subdomain.replace(/\.zendesk\.com$/, '').trim().toLowerCase(),
         api_key_encrypted: cred,
-        is_active: true,
-        published_only: form.published_only !== false,
+        is_active:         true,
+        published_only:    form.published_only !== false,
+        platform,
       })
       if (error) throw new Error(error.message)
       setForm({})
