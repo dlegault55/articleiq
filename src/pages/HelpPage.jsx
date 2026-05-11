@@ -80,8 +80,8 @@ export default function HelpPage() {
         <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 16, letterSpacing: -0.3, paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>Getting started</h2>
         <div className="card" style={{ overflow: 'hidden' }}>
           {[
-            { num: '01', title: 'Connect Zendesk®', desc: "Go to Connectors in the account menu. Enter your Zendesk® subdomain, admin email, and API token. ArticleIQ uses read-only access — we never modify your articles." },
-            { num: '02', title: 'Find your API token', desc: "In Zendesk®: Admin Center → Apps & Integrations → APIs → Zendesk® API → API Tokens. Create a new token and copy it." },
+            { num: '01', title: 'Connect your KB', desc: "Go to Connectors in the account menu. Choose Zendesk® or HelpScout and follow the setup steps. ArticleIQ uses read-only access for scanning — we never modify your articles without your say." },
+            { num: '02', title: 'Find your API credentials', desc: "Zendesk®: Admin Center → Apps & Integrations → APIs → API Tokens. HelpScout: Your Profile → API Keys → Generate a key. Paste into the connector form." },
             { num: '03', title: 'Run your first scan', desc: "From the Dashboard, select which checks to run and click Start scan. Keep the tab open — the scan runs in your browser." },
             { num: '04', title: 'Review your results', desc: "Your health score appears as soon as the scan completes. Click any article to expand its issues. Use the filter tabs to focus on Critical issues first." },
           ].map(({ num, title, desc }, i, arr) => (
@@ -120,7 +120,7 @@ export default function HelpPage() {
             <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', margin:0 }}>Three-pane editor layout</p>
           </div>
           {[
-            { pane:'Left', label:'Original Article', desc:'The untouched article from Zendesk® — always visible for reference while you work.' },
+            { pane:'Left', label:'Original Article', desc:'The untouched original article — always visible for reference while you work.' },
             { pane:'Middle', label:'Recommendations', desc:'Quality Score and SEO Score run automatically when you open an article. Shows dimension bars, specific improvement suggestions, and SEO fixes with high/medium/low impact ratings.' },
             { pane:'Right', label:'AI Rewrite', desc:'The AI rewrite appears here after you click Improve Article. Switch between Edit (editable) and Changes (word-level diff showing additions and removals) using the tabs in the panel header.' },
           ].map(({ pane, label, desc }, i, arr) => (
@@ -163,11 +163,11 @@ export default function HelpPage() {
             },
             {
               title: 'Publish to Zendesk®',
-              desc: 'Publishes the rewrite directly to Zendesk® with one click. Requires a Guide Admin API token — see the FAQ below if publishing returns a 403 error.',
+              desc: 'Publishes the rewrite directly back to your knowledge base with one click. For Zendesk® this requires a Guide Admin API token — see the FAQ below if publishing returns a 403 error. HelpScout publishing works with any API key.',
             },
             {
               title: 'Label suggestions',
-              desc: 'Suggests 3–5 relevant labels based on article content. Click any label to publish it directly to Zendesk® — existing labels are preserved. Available to all users.',
+              desc: 'Suggests 3–5 relevant labels based on article content. Click any label to publish it directly to your KB — existing labels are preserved. Available to all users.',
             },
           ].map(({ title, desc }, i, arr) => (
             <div key={title} style={{ padding: '14px 18px', borderBottom: i < arr.length-1 ? '1px solid var(--border)' : 'none' }}>
@@ -209,18 +209,21 @@ export default function HelpPage() {
       <div style={{ marginBottom: 40 }}>
         <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 16, letterSpacing: -0.3, paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>Frequently asked questions</h2>
         <FAQ q="Does ArticleIQ modify my Zendesk® articles automatically?"
-          a="No. ArticleIQ is fully read-only. We never write to Zendesk® unless you explicitly copy an AI-improved article and paste it yourself." />
+          a="No. ArticleIQ is fully read-only. We never write to your knowledge base unless you explicitly click Publish in the AI drawer. Nothing is changed automatically." />
         <FAQ q="Why does the scan need the tab to stay open?"
           a="Scans run in your browser rather than on a server. Keep the tab active while scanning — you'll get an email when it's done." />
+        <FAQ q="Which platforms does ArticleIQ support?"
+          a={<span>ArticleIQ currently supports <strong>Zendesk®</strong> and <strong>HelpScout</strong>. Go to Connectors → choose your platform → follow the setup steps. More connectors are in the roadmap — if your platform isn't listed, <a href="/contact" style={{color:"var(--navy)"}}>let us know</a> and we'll prioritise it.</span>} />
+
         <FAQ q="Publish is failing with a 403 or permission error — what do I do?"
           a={<span>Publishing requires your API token to belong to a user with <strong>Guide Admin</strong> role in Zendesk® — not just any admin. Go to <strong>Connectors</strong>, remove your current connector, and reconnect using the email and API token of a Guide Admin user. You can check in Zendesk® under Admin Center → People → find a user with Guide Admin role. After reconnecting, use the <strong>Test connection</strong> button — it will confirm whether Guide Admin is detected.</span>} />
 
         <FAQ q="What's the difference between Quality Score and SEO Score?"
           a={<span><strong>Quality Score</strong> measures whether the article genuinely helps the reader — scored across Clarity, Completeness, Structure, Accuracy, and Actionability. <strong>SEO Score</strong> measures how likely the article is to rank in Google — title, headings, content depth, and keyword signals. Both run automatically when you open the AI drawer. Click <strong>Improve Article</strong> to generate a rewrite informed by both scores. Dismiss any recommendation that isn't relevant — the score adjusts automatically to reflect only applicable findings. Re-analyse after editing to see updated scores.</span>} />
-        <FAQ q="How do I get an API token from Zendesk®?"
+        <FAQ q="How do I get API credentials for my platform?"
           a={<span>Admin Center → Apps & Integrations → APIs → Zendesk® API → API Tokens → Add API token. <a href="https://support.zendesk.com/hc/en-us/articles/4408889192858" target="_blank" rel="noreferrer" style={{ color: 'var(--navy)', fontWeight: 600 }}>View Zendesk® guide →</a></span>} />
         <FAQ q="What does ArticleIQ do with my article content?"
-          a="Article content is fetched directly from Zendesk® using your API credentials and processed in your browser. When you use AI features, the article HTML is sent to Anthropic's API. We store article metadata (title, word count, scores) but not the full article body." />
+          a="Article content is fetched directly from your knowledge base using your API credentials. When you use AI features, the article HTML is sent to Anthropic's API. We store article metadata (title, word count, scores) but not the full article body." />
         <FAQ q="How accurate is duplicate detection?"
           a="Duplicate detection compares article titles using similarity scoring. It flags articles with 85%+ title similarity — which catches near-duplicates reliably but won't catch articles with different titles covering the same topic." />
       </div>

@@ -41,7 +41,7 @@ export default function LandingPage() {
             Your knowledge base is hurting your support team. You just don't know where.
           </h1>
           <p style={{ fontSize:17, color:'#4A4A48', lineHeight:1.7, marginBottom:28, maxWidth:480 }}>
-            ArticleIQ scans every article in your Zendesk® knowledge base — broken links, outdated content, thin articles, missing labels — and gives you a health score with a clear fix list. Then uses AI to rewrite and publish improvements directly.
+            ArticleIQ scans every article in your knowledge base — broken links, outdated content, thin articles, missing labels — and gives you a health score with a clear fix list. Then uses AI to rewrite and publish improvements directly. Works with Zendesk® and HelpScout, with more platforms coming.
           </p>
           <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'center' }}>
             <Link to="/login" className="land-btn land-btn-navy" style={{ fontSize:14, padding:'12px 24px' }}>
@@ -92,7 +92,8 @@ export default function LandingPage() {
             {[
               { stat:'30%', label:'of support tickets', sub:'could be prevented by a well-maintained knowledge base — customers find answers instead of calling' },
               { stat:'$15–25', label:'per support ticket', sub:'average handling cost, not including customer frustration and churn risk' },
-              { stat:'2 mins', label:'to connect ArticleIQ', sub:'and get a full health report for your entire Zendesk® KB' },
+              { stat:'2 mins', label:'to connect ArticleIQ', sub:'and get a full health report for your entire knowledge base' },
+              { stat:'Zendesk® + HelpScout', label:'supported platforms', sub:'with more connectors coming soon' },
             ].map(({ stat, label, sub }) => (
               <div key={stat} style={{ padding:'24px 20px', borderRadius:12, background:'#F7F7F5', border:'1px solid #E8E8E6', textAlign:'left' }}>
                 <div style={{ fontSize:36, fontWeight:800, color:'#1B2D5B', letterSpacing:-1, marginBottom:4 }}>{stat}</div>
@@ -112,10 +113,10 @@ export default function LandingPage() {
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:0, position:'relative' }}>
             <div style={{ position:'absolute', top:24, left:'12.5%', right:'12.5%', height:1, background:'#E8E8E6', zIndex:0 }} />
             {[
-              { step:'01', icon:Scan,     title:'Connect',  desc:'Add your Zendesk® subdomain and API token. Takes 2 minutes. Read-only access for scanning.' },
+              { step:'01', icon:Scan,     title:'Connect',  desc:'Connect Zendesk® or HelpScout in 2 minutes. Read-only access for scanning — we never modify your articles without your say.' },
               { step:'02', icon:AlertOctagon, title:'Scan', desc:'We check every article — broken links, broken images, outdated content, thin articles, duplicate titles.' },
               { step:'03', icon:BarChart2,title:'Score',    desc:'Get a health score (0–100) with critical issues first. Quality and SEO scores per article with specific fixes.' },
-              { step:'04', icon:Wand2,    title:'Fix',      desc:'AI rewrites the article informed by the analysis. Review it, apply SEO fixes manually, publish directly to Zendesk®.' },
+              { step:'04', icon:Wand2,    title:'Fix',      desc:'AI rewrites the article informed by the analysis. Review it, apply SEO fixes, publish directly back to your knowledge base.' },
             ].map(({ step, icon: Icon, title, desc }) => (
               <div key={step} style={{ padding:'0 16px', textAlign:'center', position:'relative', zIndex:1 }}>
                 <div style={{ width:48, height:48, borderRadius:12, background:'#1B2D5B', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
@@ -166,7 +167,7 @@ export default function LandingPage() {
           <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9B9B98', textAlign:'center', marginBottom:12 }}>AI-powered improvement</p>
           <h2 style={{ fontSize:32, fontWeight:800, textAlign:'center', letterSpacing:-0.8, marginBottom:8, color:'#1A1A18' }}>Not just find problems — fix them</h2>
           <p style={{ fontSize:15, color:'#6B6B68', textAlign:'center', marginBottom:48, maxWidth:580, margin:'0 auto 48px' }}>
-            Open any article and ArticleIQ analyses it, rewrites it with that context, and shows you exactly what changed. You control what goes back to Zendesk®.
+            Open any article and ArticleIQ analyses it, rewrites it with that context, and shows you exactly what changed. You control what goes back to your knowledge base.
           </p>
 
           {/* Flow steps */}
@@ -200,7 +201,7 @@ export default function LandingPage() {
                 step:'4', icon: Globe, title:'Publish directly', color:'#B45309', bg:'#FFFBEB', border:'#FDE68A',
                 points:[
                   'Edit the rewrite freely before publishing',
-                  'Publish directly to Zendesk® with one click',
+                  'Publish directly back to your knowledge base with one click',
                   'Or copy to clipboard — your choice',
                 ]
               },
@@ -289,7 +290,7 @@ export default function LandingPage() {
               <div style={{ padding:'4px 12px', borderRadius:6, background:'#F0F3FA', color:'#1B2D5B', fontSize:10, fontWeight:700, border:'1px solid #C8D4F0' }}>Re-analyse</div>
               <div style={{ padding:'4px 12px', borderRadius:6, background:'#F0F3FA', color:'#1B2D5B', fontSize:10, fontWeight:700, border:'1px solid #C8D4F0' }}>Re-improve</div>
               <div style={{ flex:1 }} />
-              <div style={{ padding:'4px 12px', borderRadius:6, background:'#1B2D5B', color:'white', fontSize:10, fontWeight:700 }}>Publish to Zendesk® →</div>
+              <div style={{ padding:'4px 12px', borderRadius:6, background:'#1B2D5B', color:'white', fontSize:10, fontWeight:700 }}>Publish to KB →</div>
             </div>
           </div>
         </div>
@@ -300,15 +301,15 @@ export default function LandingPage() {
         <div style={{ maxWidth:800, margin:'0 auto' }}>
           <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9B9B98', textAlign:'center', marginBottom:12 }}>Why ArticleIQ</p>
           <h2 style={{ fontSize:32, fontWeight:800, textAlign:'center', letterSpacing:-0.8, marginBottom:8, color:'#1A1A18' }}>Why not just paste articles into Claude?</h2>
-          <p style={{ fontSize:15, color:'#6B6B68', textAlign:'center', marginBottom:40, maxWidth:520, margin:'0 auto 40px' }}>You could. But you'd do it one article at a time, manually, with no history, no scores, and no way to get the result back into Zendesk® without copy-pasting.</p>
+          <p style={{ fontSize:15, color:'#6B6B68', textAlign:'center', marginBottom:40, maxWidth:520, margin:'0 auto 40px' }}>You could. But you'd do it one article at a time, manually, with no history, no scores, and no way to get the result back into your knowledge base without copy-pasting.</p>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
             {[
               { title:'Scans your entire KB at once', desc:'Hundreds or thousands of articles in a single scan. Claude requires you to copy-paste each one individually.', icon:Scan },
               { title:'Broken links & images', desc:'Claude can\'t check if links are dead or images are missing. We make HTTP requests to every URL.', icon:Link2 },
               { title:'Health trend over time', desc:'Track your KB health score across scans. See if you\'re improving. Claude has no memory between sessions.', icon:TrendingUp },
-              { title:'Publishes back to Zendesk®', desc:'The improved article goes straight back to Zendesk®. No copying, formatting, or switching tabs.', icon:Globe },
+              { title:'Publishes back to your KB', desc:'The improved article goes straight back to Zendesk® or HelpScout. No copying, formatting, or switching tabs.', icon:Globe },
               { title:'Structured output', desc:'Critical issues first. Severity badges. Filters. Export. Claude gives you a wall of text per article.', icon:BarChart2 },
-              { title:'Label suggestions with one click', desc:'AI suggests labels and publishes them directly to Zendesk®. Claude can\'t touch your account.', icon:Tag },
+              { title:'Label suggestions with one click', desc:'AI suggests labels and publishes them directly to your KB. We never write without your explicit action.', icon:Tag },
             ].map(({ title, desc, icon: Icon }) => (
               <div key={title} style={{ display:'flex', gap:12, padding:'16px', borderRadius:10, border:'1px solid #E8E8E6', background:'#FAFAF8' }}>
                 <div style={{ width:32, height:32, borderRadius:8, background:'#F0F3FA', border:'1px solid #C8D4F0', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
@@ -372,7 +373,7 @@ export default function LandingPage() {
                   'Everything in Free',
                   'AI Improve Article',
                   'AI Quality Score',
-                  'Publish directly to Zendesk®',
+                  'Publish directly to Zendesk® or HelpScout',
                   'Label suggestions + publish',
                   'Shareable reports',
                   'Email notifications',
@@ -423,7 +424,7 @@ export default function LandingPage() {
             Find out what's broken in your KB — free
           </h2>
           <p style={{ fontSize:16, color:'#4A4A48', lineHeight:1.7, marginBottom:28 }}>
-            Most teams discover real problems on their first scan. Connect your Zendesk® account in 2 minutes and get a health score for every article.
+            Most teams discover real problems on their first scan. Connect your knowledge base in 2 minutes and get a health score for every article.
           </p>
           <Link to="/login" className="land-btn land-btn-navy" style={{ fontSize:15, padding:'14px 28px', margin:'0 auto' }}>
             Scan your knowledge base free <ArrowRight size={16} />
