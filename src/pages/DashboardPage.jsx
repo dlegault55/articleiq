@@ -163,21 +163,30 @@ const AI_CHECKS = [
 const DEFAULT_CHECKS = { outdated:true, wordCount:true, readability:false, labels:true, duplicates:true, links:true }
 
 function DashboardPage() {
-  const { userId, profile } = useAuth()
+  const { userId, profile, refreshProfile } = useAuth()
   const { recentScans, activeScan, reload: reloadScans } = useScan()
   usePageTitle('Dashboard')
 
   const toast    = useToast()
   const navigate     = useNavigate()
   const justUpgraded   = new URLSearchParams(window.location.search).get('upgraded') === 'true'
-  const [showCelebration, setShowCelebration] = useState(false)
+  const [showCelebration, setShowCelebration] = useState(justUpgraded)
+  const [celebrationPlan, setCelebrationPlan] = useState(null)
 
-  // Show celebration once profile loads and confirms paid plan
+  // Poll profile until plan updates from webhook — can take a few seconds
   useEffect(() => {
-    if (justUpgraded && profile?.plan && ['pack','annual','paid'].includes(profile.plan)) {
-      setShowCelebration(true)
+    if (!justUpgraded) return
+    if (profile?.plan && ['pack','annual','paid'].includes(profile.plan)) {
+      setCelebrationPlan(profile.plan)
+      return
     }
-  }, [profile?.plan])
+    // Plan not updated yet — poll every 1.5s for up to 15s
+    const interval = setInterval(async () => {
+      await refreshProfile?.()
+    }, 1500)
+    const timeout = setTimeout(() => clearInterval(interval), 15000)
+    return () => { clearInterval(interval); clearTimeout(timeout) }
+  }, [justUpgraded, profile?.plan])
   const upgrade  = useUpgrade()
 
   const [connector,   setConnector]   = useState(null)
@@ -647,32 +656,42 @@ function DashboardPage() {
           onClick={() => setShowCelebration(false)}>
           <div onClick={e => e.stopPropagation()}
             style={{ background:'white', borderRadius:20, padding:'40px 32px', maxWidth:420, width:'100%', textAlign:'center', boxShadow:'0 24px 80px rgba(0,0,0,0.25)' }}>
-            <div style={{ fontSize:60, marginBottom:12, lineHeight:1 }}>
-              {profile?.plan === 'annual' ? '🎉' : '🔥'}
-            </div>
-            <h2 style={{ fontSize:24, fontWeight:800, color:'var(--text)', letterSpacing:-0.5, marginBottom:8 }}>
-              {profile?.plan === 'annual' ? 'Welcome to Annual Pro!' : 'Welcome to Scan Pack!'}
-            </h2>
-            <p style={{ fontSize:14, color:'var(--text-2)', lineHeight:1.7, marginBottom:24 }}>
-              {profile?.plan === 'annual'
-                ? 'You now have unlimited scans, full AI features, and KB health trend tracking. Your knowledge base is in good hands.'
-                : 'You have 5 scans ready to use — they never expire. Full AI features, unlimited articles, and direct publishing to Zendesk® are all unlocked.'
-              }
-            </p>
-            <div style={{ display:'grid', gridTemplateColumns: profile?.plan === 'annual' ? '1fr 1fr 1fr' : '1fr 1fr', gap:8, marginBottom:24 }}>
-              {(profile?.plan === 'annual'
-                ? [{ emoji:'♾️', label:'Unlimited scans' }, { emoji:'🤖', label:'Full AI' }, { emoji:'📈', label:'Health trends' }]
-                : [{ emoji:'🔍', label:'5 scans ready' }, { emoji:'🤖', label:'AI rewriting' }, { emoji:'📊', label:'Quality & SEO' }, { emoji:'🚀', label:'Publish direct' }]
-              ).map(({ emoji, label }) => (
-                <div key={label} style={{ padding:'10px 8px', borderRadius:10, background:'var(--navy-light)', border:'1px solid var(--navy-border)' }}>
-                  <div style={{ fontSize:22, marginBottom:4 }}>{emoji}</div>
-                  <div style={{ fontSize:11, fontWeight:600, color:'var(--navy)' }}>{label}</div>
+            {!celebrationPlan ? (
+              <>
+                <Loader size={28} style={{ color:'var(--navy)', animation:'spin 0.8s linear infinite', marginBottom:16 }} />
+                <p style={{ fontSize:14, fontWeight:600, color:'var(--text)', margin:'0 0 4px' }}>Confirming your upgrade...</p>
+                <p style={{ fontSize:12, color:'var(--text-3)', margin:0 }}>Just a moment while we activate your account.</p>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize:60, marginBottom:12, lineHeight:1 }}>
+                  {celebrationPlan === 'annual' ? '🎉' : '🔥'}
                 </div>
-              ))}
-            </div>
-            <button onClick={() => setShowCelebration(false)} className="btn btn-primary" style={{ width:'100%', justifyContent:'center', fontSize:14, padding:'12px' }}>
-              {profile?.plan === 'annual' ? 'Start scanning →' : 'Run my first scan →'}
-            </button>
+                <h2 style={{ fontSize:24, fontWeight:800, color:'var(--text)', letterSpacing:-0.5, marginBottom:8 }}>
+                  {celebrationPlan === 'annual' ? 'Welcome to Annual Pro!' : 'Welcome to Scan Pack!'}
+                </h2>
+                <p style={{ fontSize:14, color:'var(--text-2)', lineHeight:1.7, marginBottom:24 }}>
+                  {celebrationPlan === 'annual'
+                    ? 'You now have unlimited scans, full AI features, and KB health trend tracking. Your knowledge base is in good hands.'
+                    : 'You have 5 scans ready to use — they never expire. Full AI features, unlimited articles, and direct publishing to Zendesk® are all unlocked.'
+                  }
+                </p>
+                <div style={{ display:'grid', gridTemplateColumns: celebrationPlan === 'annual' ? '1fr 1fr 1fr' : '1fr 1fr', gap:8, marginBottom:24 }}>
+                  {(celebrationPlan === 'annual'
+                    ? [{ emoji:'♾️', label:'Unlimited scans' }, { emoji:'🤖', label:'Full AI' }, { emoji:'📈', label:'Health trends' }]
+                    : [{ emoji:'🔍', label:'5 scans ready' }, { emoji:'🤖', label:'AI rewriting' }, { emoji:'📊', label:'Quality & SEO' }, { emoji:'🚀', label:'Publish direct' }]
+                  ).map(({ emoji, label }) => (
+                    <div key={label} style={{ padding:'10px 8px', borderRadius:10, background:'var(--navy-light)', border:'1px solid var(--navy-border)' }}>
+                      <div style={{ fontSize:22, marginBottom:4 }}>{emoji}</div>
+                      <div style={{ fontSize:11, fontWeight:600, color:'var(--navy)' }}>{label}</div>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => setShowCelebration(false)} className="btn btn-primary" style={{ width:'100%', justifyContent:'center', fontSize:14, padding:'12px' }}>
+                  {celebrationPlan === 'annual' ? 'Start scanning →' : 'Run my first scan →'}
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
