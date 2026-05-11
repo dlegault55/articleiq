@@ -61,7 +61,7 @@ export default function LoginPage() {
         {/* Hero */}
         <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'center' }}>
           <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.12em', color:'rgba(255,255,255,0.4)', marginBottom:12 }}>
-            Zendesk® Knowledge Base Scanner
+            Knowledge Base Scanner
           </p>
           <h1 style={{ fontSize:'clamp(24px,3vw,36px)', fontWeight:800, color:'white', lineHeight:1.2, letterSpacing:-0.8, marginBottom:16 }}>
             Your KB is full of issues.<br />
@@ -77,7 +77,7 @@ export default function LoginPage() {
               { emoji:'🔗', title:'Broken link detection', desc:'Find every dead link before customers do' },
               { emoji:'🤖', title:'AI-powered rewrites', desc:'Quality & SEO analysis with targeted improvements' },
               { emoji:'📊', title:'Health score tracking', desc:'See your KB improve scan over scan' },
-              { emoji:'🚀', title:'Publish direct to Zendesk®', desc:'One click — no copy-pasting required' },
+              { emoji:'🚀', title:'Publish direct to your KB', desc:'One click back to Zendesk® or HelpScout — no copy-pasting' },
             ].map(({ emoji, title, desc }) => (
               <div key={title} style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
                 <div style={{ width:34, height:34, borderRadius:8, background:'rgba(255,255,255,0.08)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:16 }}>
