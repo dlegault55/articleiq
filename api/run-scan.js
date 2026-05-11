@@ -155,9 +155,23 @@ const fetchZendeskArticles = async (subdomain, apiKey) => {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
+  // Verify the request is from an authenticated user
+  let auth
+  try {
+    const { requireAuth } = await import('./_auth.js')
+    auth = await requireAuth(req)
+  } catch (e) {
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+
   const { scanJobId, userId, connectorId, preset = 'standard' } = req.body
   if (!scanJobId || !userId || !connectorId) {
     return res.status(400).json({ error: 'Missing required fields' })
+  }
+
+  // Ensure the authenticated user matches the requested userId
+  if (auth.userId !== userId) {
+    return res.status(403).json({ error: 'Forbidden' })
   }
 
   // Fetch connector

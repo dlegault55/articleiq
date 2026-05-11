@@ -3,9 +3,16 @@
 // Called from the frontend, runs server-side so no CORS issues
 
 export default async function handler(req, res) {
-  // Only allow POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  // Require authentication — prevents abuse of email sending
+  try {
+    const { requireAuth } = await import('./_auth.js')
+    await requireAuth(req)
+  } catch (e) {
+    return res.status(401).json({ error: 'Unauthorized' })
   }
 
   const RESEND_KEY = process.env.RESEND_API_KEY
