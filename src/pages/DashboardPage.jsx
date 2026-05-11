@@ -197,8 +197,8 @@ export default function DashboardPage() {
   useEffect(() => {
     if (profile !== null) {
       const saved = profile?.scan_defaults || {}
-      // Always respect current defaults for links and duplicates — these were off by default historically
-      const merged = { ...DEFAULT_CHECKS, ...saved, links: saved.links ?? true, duplicates: saved.duplicates ?? true }
+      // Force links and duplicates on — old saved defaults may have these as false
+      const merged = { ...DEFAULT_CHECKS, ...saved, links: true, duplicates: true }
       setChecks(merged)
       setChecksReady(true)
     }

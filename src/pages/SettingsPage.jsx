@@ -66,7 +66,8 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!profile) return
     setEmailNotifs(profile.email_notifications !== false)
-    setScanDefaults(profile.scan_defaults || DEFAULT_SCAN)
+    const saved = profile.scan_defaults || DEFAULT_SCAN
+    setScanDefaults({ ...saved, links: true, duplicates: true })
   }, [profile])
 
   const save = async (field, value) => {
