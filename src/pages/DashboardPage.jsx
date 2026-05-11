@@ -162,7 +162,7 @@ const AI_CHECKS = [
 ]
 const DEFAULT_CHECKS = { outdated:true, wordCount:true, readability:false, labels:true, duplicates:true, links:true }
 
-export default function DashboardPage() {
+function DashboardPage() {
   const { userId, profile } = useAuth()
   const { recentScans, activeScan, reload: reloadScans } = useScan()
   usePageTitle('Dashboard')
