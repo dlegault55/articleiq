@@ -135,11 +135,24 @@ export default function UpgradePage() {
 
       {/* Discount banner */}
       {coupon && (
-        <div style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 16px', borderRadius:10, marginBottom:16, background:'#FFF9EC', border:'1px solid #FDE68A' }}>
-          <span style={{ fontSize:20 }}>⚡</span>
-          <div>
-            <p style={{ fontSize:13, fontWeight:700, color:'#92400E', margin:'0 0 1px' }}>Limited offer — $50 off Annual Pro</p>
-            <p style={{ fontSize:12, color:'#B45309', margin:0 }}>Discount applied automatically at checkout. Annual Pro for $440 instead of $490.</p>
+        <div style={{ borderRadius:12, marginBottom:16, overflow:'hidden', boxShadow:'0 4px 20px rgba(255,107,53,0.25)' }}>
+          <div style={{ background:'linear-gradient(135deg, #FF6B35, #FF8C00)', padding:'14px 18px', display:'flex', alignItems:'center', gap:12 }}>
+            <span style={{ fontSize:28, lineHeight:1 }}>🔥</span>
+            <div>
+              <p style={{ fontSize:14, fontWeight:800, color:'white', margin:'0 0 2px', letterSpacing:'-0.3px' }}>
+                As a thank you — $50 off Annual Pro
+              </p>
+              <p style={{ fontSize:12, color:'rgba(255,255,255,0.85)', margin:0 }}>
+                You're a Scan Pack customer. Upgrade to Annual Pro for <strong style={{ color:'white' }}>$440</strong> instead of $490 — discount applied automatically at checkout.
+              </p>
+            </div>
+          </div>
+          <div style={{ background:'#FFF4EE', padding:'10px 18px', borderTop:'1px solid rgba(255,107,53,0.2)', display:'flex', alignItems:'center', gap:6 }}>
+            <span style={{ fontSize:11, color:'#92400E', fontWeight:600 }}>✓ No code needed</span>
+            <span style={{ fontSize:11, color:'#C2410C', margin:'0 6px' }}>·</span>
+            <span style={{ fontSize:11, color:'#92400E', fontWeight:600 }}>✓ Applied at checkout automatically</span>
+            <span style={{ fontSize:11, color:'#C2410C', margin:'0 6px' }}>·</span>
+            <span style={{ fontSize:11, color:'#92400E', fontWeight:600 }}>✓ Limited time offer</span>
           </div>
         </div>
       )}
