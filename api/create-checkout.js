@@ -53,11 +53,10 @@ export default async function handler(req, res) {
     const session = await stripe.checkout.sessions.create({
       customer:   customerId,
       mode,
-      ...(coupon ? { discounts: [{ coupon }] } : {}),
+      ...(coupon ? { discounts: [{ coupon }] } : { allow_promotion_codes: true }),
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${baseUrl}/dashboard?upgraded=true`,
       cancel_url:  `${baseUrl}/dashboard`,
-      allow_promotion_codes: true,
     })
 
     return res.status(200).json({ url: session.url })
