@@ -663,6 +663,9 @@ function DashboardPage() {
                 <h2 style={{ fontSize:24, fontWeight:800, color:'var(--text)', letterSpacing:-0.5, marginBottom:8 }}>
                   {celebrationPlan === 'annual' ? 'Welcome to Annual Pro!' : 'Welcome to Scan Pack!'}
                 </h2>
+                <p style={{ fontSize:13, fontWeight:600, color:'var(--navy)', marginBottom:8 }}>
+                  Thank you for your support — it means everything to us. 🙏
+                </p>
                 <p style={{ fontSize:14, color:'var(--text-2)', lineHeight:1.7, marginBottom:24 }}>
                   {celebrationPlan === 'annual'
                     ? 'You now have unlimited scans, full AI features, and KB health trend tracking. Your knowledge base is in good hands.'
