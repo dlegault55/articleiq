@@ -192,7 +192,7 @@ export default async function handler(req, res) {
   try {
     // Get connector
     const { data: connector } = await supabase
-      .from('zendesk_connectors').select('*')
+      .from('kb_connectors').select('*')
       .eq('id', connectorId).eq('user_id', userId).single()
     if (!connector) return res.status(404).json({ error: 'Connector not found' })
 
@@ -202,7 +202,6 @@ export default async function handler(req, res) {
 
     const checks = parseChecks(preset)
     const PER_PAGE = 50
-    const authHeader = `Basic ${Buffer.from(connector.api_key_encrypted).toString('base64')}`
     const now = new Date().toISOString()
 
     // Mark running + heartbeat on every chunk
@@ -212,18 +211,63 @@ export default async function handler(req, res) {
       ...(page === 1 ? { started_at: now } : {}),
     }).eq('id', scanJobId)
 
-    // Fetch articles from Zendesk — filter to published only if setting enabled
-    const draftFilter = connector.published_only !== false ? '&draft=false' : ''
-    const zdRes = await fetch(
-      `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles?per_page=${PER_PAGE}&page=${page}${draftFilter}`,
-      { headers: { Authorization: authHeader } }
-    )
-    if (!zdRes.ok) throw new Error(`Zendesk API error ${zdRes.status}`)
+    // Fetch articles — platform-aware
+    let articles = [], totalCount = 0, hasMore = false
 
-    const zdData = await zdRes.json()
-    const articles = zdData.articles || []
-    const totalCount = zdData.count || 0
-    const hasMore = !!zdData.next_page
+    if (connector.platform === 'helpscout') {
+      const authHeader = `Basic ${Buffer.from(`${connector.api_key_encrypted}:X`).toString('base64')}`
+      const base = 'https://docsapi.helpscout.net/v1'
+
+      // First get all collections, then fetch articles per collection
+      if (page === 1) {
+        const colRes = await fetch(`${base}/collections?pageSize=100`, { headers: { Authorization: authHeader } })
+        if (!colRes.ok) throw new Error(`HelpScout API error ${colRes.status}`)
+        const colData = await colRes.json()
+        const collections = colData.collections?.items || []
+
+        // Fetch articles from all collections
+        for (const col of collections) {
+          let colPage = 1, colHasMore = true
+          while (colHasMore) {
+            const artRes = await fetch(`${base}/collections/${col.id}/articles?pageSize=100&page=${colPage}&status=${connector.published_only !== false ? 'published' : 'all'}`, {
+              headers: { Authorization: authHeader }
+            })
+            if (!artRes.ok) break
+            const artData = await artRes.json()
+            const colArticles = (artData.articles?.items || []).map(a => ({
+              id: a.id,
+              title: a.name,
+              body: a.text || '',
+              html_url: a.url,
+              updated_at: a.updatedAt,
+              label_names: [],
+              locale: 'en-us',
+              section_id: col.id,
+              author_id: a.createdBy?.id,
+              draft: a.status !== 'published',
+            }))
+            articles = [...articles, ...colArticles]
+            totalCount += artData.articles?.count || 0
+            colHasMore = colPage < (artData.articles?.pages || 1)
+            colPage++
+          }
+        }
+        hasMore = false // We fetch everything in one go for HelpScout
+      }
+    } else {
+      // Zendesk
+      const authHeader = `Basic ${Buffer.from(connector.api_key_encrypted).toString('base64')}`
+      const draftFilter = connector.published_only !== false ? '&draft=false' : ''
+      const zdRes = await fetch(
+        `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles?per_page=${PER_PAGE}&page=${page}${draftFilter}`,
+        { headers: { Authorization: authHeader } }
+      )
+      if (!zdRes.ok) throw new Error(`Zendesk API error ${zdRes.status}`)
+      const zdData = await zdRes.json()
+      articles = zdData.articles || []
+      totalCount = zdData.count || 0
+      hasMore = !!zdData.next_page
+    }
 
     // Set total on first page
     if (page === 1) {

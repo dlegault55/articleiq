@@ -198,7 +198,7 @@ function DashboardPage() {
   // Load connector
   useEffect(() => {
     if (!userId) return
-    supabase.from('zendesk_connectors').select('*').eq('user_id', userId).eq('is_active', true)
+    supabase.from('kb_connectors').select('*').eq('user_id', userId).eq('is_active', true)
       .order('created_at', { ascending: false }).limit(1)
       .then(({ data }) => { setConnector(data?.[0] || null); setHasConn(!!(data?.length)) })
   }, [userId])

@@ -176,7 +176,7 @@ export default async function handler(req, res) {
 
   // Fetch connector
   const { data: connector, error: connErr } = await supabase
-    .from('zendesk_connectors')
+    .from('kb_connectors')
     .select('*')
     .eq('id', connectorId)
     .eq('user_id', userId)

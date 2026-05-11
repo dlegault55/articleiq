@@ -33,7 +33,7 @@ export const ScanProvider = ({ children }) => {
 
     // Get connector
     const { data: connector } = await supabase
-      .from('zendesk_connectors').select('id')
+      .from('kb_connectors').select('id')
       .eq('user_id', scan.user_id).eq('is_active', true)
       .order('created_at', { ascending: false }).limit(1).single()
     if (!connector) return

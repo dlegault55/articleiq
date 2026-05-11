@@ -1577,7 +1577,7 @@ export default function ScanResultsPage() {
   // Load connector for AI drawer
   useEffect(() => {
     if (!scan?.user_id) return
-    supabase.from('zendesk_connectors').select('*').eq('user_id', scan.user_id).eq('is_active', true)
+    supabase.from('kb_connectors').select('*').eq('user_id', scan.user_id).eq('is_active', true)
       .order('created_at', { ascending: false }).limit(1).single()
       .then(({ data }) => setConnector(data || null))
   }, [scan?.user_id])

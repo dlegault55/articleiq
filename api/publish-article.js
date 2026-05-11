@@ -24,14 +24,28 @@ export default async function handler(req, res) {
 
   try {
     const { data: connector } = await supabase
-      .from('zendesk_connectors').select('*')
+      .from('kb_connectors').select('*')
       .eq('id', connectorId).eq('user_id', auth.userId).single()
     if (!connector) return res.status(404).json({ error: 'Connector not found' })
 
     const safeHtml = sanitizeHtml(html)
 
-    // api_key_encrypted is stored as "email/token:apikey"
-    // Basic auth needs this base64 encoded
+    // HelpScout publish
+    if (connector.platform === 'helpscout') {
+      const authHeader = `Basic ${Buffer.from(`${connector.api_key_encrypted}:X`).toString('base64')}`
+      const updateRes = await fetch(`https://docsapi.helpscout.net/v1/articles/${articleId}`, {
+        method: 'PUT',
+        headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: title, text: safeHtml, status: 'published' }),
+      })
+      if (!updateRes.ok) {
+        const err = await updateRes.text()
+        return res.status(500).json({ error: `HelpScout publish failed: ${updateRes.status} ${err.slice(0,200)}` })
+      }
+      return res.status(200).json({ success: true, method: 'helpscout' })
+    }
+
+    // Zendesk publish
     const authHeader = `Basic ${Buffer.from(connector.api_key_encrypted).toString('base64')}`
     const base = `https://${connector.subdomain}.zendesk.com`
 

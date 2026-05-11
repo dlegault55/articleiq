@@ -16,7 +16,7 @@ export default async function handler(req, res) {
 
   try {
     const { data: connector } = await supabase
-      .from('zendesk_connectors').select('*')
+      .from('kb_connectors').select('*')
       .eq('id', connectorId).eq('user_id', auth.userId).single()
     if (!connector) return res.status(404).json({ error: 'Connector not found' })
 

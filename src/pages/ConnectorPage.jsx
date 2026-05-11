@@ -9,6 +9,17 @@ import { Plug, Trash2, ExternalLink, Loader, CheckCircle, AlertTriangle, Chevron
 
 const PLATFORMS = [
   {
+    id: 'helpscout',
+    name: 'HelpScout',
+    logo: '🔵',
+    description: 'Connect your HelpScout Docs knowledge base',
+    fields: [
+      { key: 'api_key', label: 'API Key', placeholder: 'Paste your HelpScout API key', hint: 'HelpScout → Your Profile → API Keys → Generate an API key', type: 'password' },
+    ],
+    helpUrl: 'https://developer.helpscout.com/docs-api/',
+    helpLabel: 'How to get your API key →',
+  },
+  {
     id: 'zendesk',
     name: 'Zendesk®',
     logo: '🎫',
@@ -94,7 +105,7 @@ function ConnectorCard({ connector, onRemove, onRemoveWithHistory }) {
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-              <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{connector.subdomain}.zendesk.com</p>
+              <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{connector.platform === 'helpscout' ? 'HelpScout Docs' : `${connector.subdomain}.zendesk.com`}</p>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)' }} />
             </div>
             <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0 }}>
@@ -171,7 +182,7 @@ export default function ConnectorPage() {
 
   const load = async () => {
     if (!userId) return
-    const { data } = await supabase.from('zendesk_connectors').select('*').eq('user_id', userId).order('created_at')
+    const { data } = await supabase.from('kb_connectors').select('*').eq('user_id', userId).order('created_at')
     setConnectors(data || [])
     setLoading(false)
   }
@@ -184,7 +195,7 @@ export default function ConnectorPage() {
     setSaving(true)
     try {
       const cred = `${email}/token:${api_key}`
-      const { error } = await supabase.from('zendesk_connectors').insert({
+      const { error } = await supabase.from('kb_connectors').insert({
         user_id: userId,
         subdomain: subdomain.replace(/\.zendesk\.com$/, '').trim().toLowerCase(),
         api_key_encrypted: cred,
@@ -207,7 +218,7 @@ export default function ConnectorPage() {
       'Cancel'
     )
     if (!ok) return
-    await supabase.from('zendesk_connectors').delete().eq('id', id).eq('user_id', userId)
+    await supabase.from('kb_connectors').delete().eq('id', id).eq('user_id', userId)
     toast.success('Connector removed — scan history preserved')
     load()
   }
@@ -226,7 +237,7 @@ export default function ConnectorPage() {
       await supabase.from('scanned_articles').delete().in('scan_job_id', jobIds)
       await supabase.from('scan_jobs').delete().in('id', jobIds)
     }
-    await supabase.from('zendesk_connectors').delete().eq('id', id).eq('user_id', userId)
+    await supabase.from('kb_connectors').delete().eq('id', id).eq('user_id', userId)
     toast.success('Connector and all scan history deleted')
     load()
   }
