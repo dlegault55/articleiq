@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useScan } from '@/hooks/useScan'
 import { signOut } from '@/lib/supabase'
-import { Scan, Loader, ChevronDown, Plug, LogOut, User, HelpCircle } from 'lucide-react'
+import { Scan, Loader, ChevronDown, Plug, LogOut, User, HelpCircle, Zap } from 'lucide-react'
 
 const menuBtn = {
   display:'flex', alignItems:'center', gap:9, width:'100%',
@@ -55,6 +55,8 @@ function AvatarMenu({ name, email, plan, initials }) {
               { icon: Plug,        label:'Manage connectors', path:'/connector' },
               { icon: HelpCircle,  label:'Help & docs',       path:'/help' },
               { icon: User,        label:'Account settings',  path:'/settings' },
+              ...(plan === 'pack' ? [{ icon: Zap, label:'Upgrade to Annual Pro', path:'/upgrade' }] : []),
+              ...(plan === 'free' ? [{ icon: Zap, label:'Upgrade to Scan Pack', path:'/upgrade' }] : []),
             ].map(({ icon: Icon, label, path }) => (
               <button key={path} onClick={() => go(path)} style={menuBtn}
                 onMouseEnter={e => e.currentTarget.style.background='var(--bg-hover)'}
