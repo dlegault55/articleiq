@@ -151,7 +151,45 @@ const fetchZendeskArticles = async (subdomain, apiKey) => {
   return all
 }
 
-// ─── Main handler ──────────────────────────────────────────────
+const fetchHelpScoutArticles = async (apiKey, publishedOnly = true) => {
+  const authHeader = `Basic ${Buffer.from(`${apiKey}:X`).toString('base64')}`
+  const base = 'https://docsapi.helpscout.net/v1'
+  const status = publishedOnly ? 'published' : 'all'
+
+  const colRes = await fetch(`${base}/collections?pageSize=100`, { headers: { Authorization: authHeader } })
+  if (!colRes.ok) throw new Error(`HelpScout collections API error ${colRes.status}`)
+  const colData = await colRes.json()
+  const collections = colData.collections?.items || []
+
+  let all = []
+  for (const col of collections) {
+    let page = 1, hasMore = true
+    while (hasMore) {
+      const artRes = await fetch(`${base}/collections/${col.id}/articles?pageSize=100&page=${page}&status=${status}`, {
+        headers: { Authorization: authHeader }
+      })
+      if (!artRes.ok) break
+      const artData = await artRes.json()
+      const items = (artData.articles?.items || []).map(a => ({
+        id: a.id,
+        title: a.name,
+        body: a.text || '',
+        html_url: a.url,
+        updated_at: a.updatedAt,
+        label_names: [],
+        locale: 'en-us',
+        section_id: col.id,
+        draft: a.status !== 'published',
+      }))
+      all = [...all, ...items]
+      hasMore = page < (artData.articles?.pages || 1)
+      page++
+    }
+  }
+  return all
+}
+
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
@@ -204,8 +242,10 @@ export default async function handler(req, res) {
 async function runScanAsync({ scanJobId, userId, connector, preset }) {
   const { subdomain, api_key_encrypted: apiKey } = connector
 
-  // Fetch articles
-  const articles = await fetchZendeskArticles(subdomain, apiKey)
+  // Fetch articles — platform aware
+  const articles = connector.platform === 'helpscout'
+    ? await fetchHelpScoutArticles(connector.api_key_encrypted, connector.published_only !== false)
+    : await fetchZendeskArticles(subdomain, apiKey)
 
   await supabase.from('scan_jobs').update({
     total_articles: articles.length,
