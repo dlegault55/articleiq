@@ -169,7 +169,8 @@ export default function DashboardPage() {
 
   const toast    = useToast()
   const navigate     = useNavigate()
-  const justUpgraded = new URLSearchParams(window.location.search).get('upgraded') === 'true'
+  const justUpgraded   = new URLSearchParams(window.location.search).get('upgraded') === 'true'
+  const [showCelebration, setShowCelebration] = useState(justUpgraded)
   const upgrade  = useUpgrade()
 
   const [connector,   setConnector]   = useState(null)

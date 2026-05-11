@@ -99,7 +99,7 @@ export default function Layout() {
   const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()
 
   return (
-    <div style={{ minHeight:'100vh', background:'var(--bg)' }}>
+    <div style={{ minHeight:'100vh', background:'var(--bg)', display:'flex', flexDirection:'column' }}>
       <nav style={{ position:'sticky', top:0, zIndex:100, background:'rgba(247,247,245,0.92)', backdropFilter:'blur(12px)', borderBottom:'1px solid var(--border-md)', padding:'0 clamp(12px,4vw,24px)', height:52, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
 
         {/* Logo */}
@@ -139,7 +139,7 @@ export default function Layout() {
           <AvatarMenu name={name} email={email} plan={plan} initials={initials} />
         </div>
       </nav>
-      <main><Outlet /></main>
+      <main style={{ flex:1 }}><Outlet /></main>
       <footer style={{ borderTop:'1px solid var(--border-md)', padding:'14px clamp(12px,4vw,24px)', display:'flex', alignItems:'center', justifyContent:'space-between', background:'white' }}>
         <p style={{ fontSize:11, color:'var(--text-3)', margin:0 }}>© 2026 ArticleIQ</p>
         <div style={{ display:'flex', gap:16 }}>
