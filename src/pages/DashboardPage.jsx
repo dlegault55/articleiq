@@ -173,21 +173,13 @@ function DashboardPage() {
   const [showCelebration, setShowCelebration] = useState(justUpgraded)
   const [celebrationPlan, setCelebrationPlan] = useState(null)
 
-  // Keep polling until profile reflects new plan
   useEffect(() => {
-    if (!justUpgraded || !showCelebration) return
-    if (profile?.plan && ['pack','annual','paid'].includes(profile.plan)) {
-      setCelebrationPlan(profile.plan)
-      return
+    if (!showCelebration) return
+    const plan = profile?.plan
+    if (plan && ['pack','annual','paid'].includes(plan)) {
+      setCelebrationPlan(plan)
     }
-    const interval = setInterval(() => refreshProfile?.(), 1500)
-    const timeout  = setTimeout(() => {
-      clearInterval(interval)
-      // Fallback — show generic if plan never updates
-      setCelebrationPlan(profile?.plan || 'pack')
-    }, 10000)
-    return () => { clearInterval(interval); clearTimeout(timeout) }
-  }, [justUpgraded, showCelebration, profile?.plan])
+  })  // runs every render — as soon as profile.plan is a paid plan, locks it in
   const upgrade  = useUpgrade()
 
   const [connector,   setConnector]   = useState(null)
