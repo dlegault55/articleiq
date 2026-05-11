@@ -173,20 +173,21 @@ function DashboardPage() {
   const [showCelebration, setShowCelebration] = useState(justUpgraded)
   const [celebrationPlan, setCelebrationPlan] = useState(null)
 
-  // Poll profile until plan updates from webhook — can take a few seconds
+  // Keep polling until profile reflects new plan
   useEffect(() => {
-    if (!justUpgraded) return
+    if (!justUpgraded || !showCelebration) return
     if (profile?.plan && ['pack','annual','paid'].includes(profile.plan)) {
       setCelebrationPlan(profile.plan)
       return
     }
-    // Plan not updated yet — poll every 1.5s for up to 15s
-    const interval = setInterval(async () => {
-      await refreshProfile?.()
-    }, 1500)
-    const timeout = setTimeout(() => clearInterval(interval), 15000)
+    const interval = setInterval(() => refreshProfile?.(), 1500)
+    const timeout  = setTimeout(() => {
+      clearInterval(interval)
+      // Fallback — show generic if plan never updates
+      setCelebrationPlan(profile?.plan || 'pack')
+    }, 10000)
     return () => { clearInterval(interval); clearTimeout(timeout) }
-  }, [justUpgraded, profile?.plan])
+  }, [justUpgraded, showCelebration, profile?.plan])
   const upgrade  = useUpgrade()
 
   const [connector,   setConnector]   = useState(null)
