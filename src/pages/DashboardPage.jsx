@@ -334,12 +334,12 @@ function DashboardPage() {
             <p style={{ fontSize:10, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(255,255,255,0.45)', marginBottom:8 }}>Welcome to ArticleIQ</p>
             <h1 style={{ fontSize:26, fontWeight:800, color:'white', marginBottom:8, letterSpacing:-0.5 }}>Let's score your knowledge base</h1>
             <p style={{ fontSize:15, color:'rgba(255,255,255,0.7)', maxWidth:480, lineHeight:1.6 }}>
-              Connect Zendesk® in 2 minutes and we'll tell you exactly what's hurting your customer experience — and what to fix first.
+              Connect your knowledge base in 2 minutes and we'll tell you exactly what's hurting your customer experience — and what to fix first.
             </p>
           </div>
           <div className='onboard-grid' style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12, marginBottom:16 }}>
             {[
-              { step:1, icon:<Plug size={16} style={{ color:'var(--navy)' }} />, title:'Connect Zendesk®', desc:'Add your subdomain and API token. Read-only — we never touch your articles.', action:true },
+              { step:1, icon:<Plug size={16} style={{ color:'var(--navy)' }} />, title:'Connect your KB', desc:'Connect Zendesk® or HelpScout. Read-only — we never touch your articles.', action:true },
               { step:2, icon:<Scan size={16} style={{ color:'var(--text-3)' }} />, title:'Run a scan', desc:'We analyze every article for readability, freshness, duplicates, and more.', action:false },
               { step:3, icon:<Target size={16} style={{ color:'var(--text-3)' }} />, title:'Fix what matters', desc:'Get a health score, see top issues, and use AI to fix them.', action:false },
             ].map(({ step, icon, title, desc, action }) => (
@@ -350,7 +350,7 @@ function DashboardPage() {
                 </div>
                 <p style={{ fontSize:13, fontWeight:700, color: action ? 'var(--text)' : 'var(--text-3)', marginBottom:5 }}>{title}</p>
                 <p style={{ fontSize:12, color:'var(--text-2)', lineHeight:1.6, marginBottom: action ? 14 : 0 }}>{desc}</p>
-                {action && <Link to="/connector" className="btn btn-primary btn-sm" style={{ width:'100%', justifyContent:'center' }}><Plug size={12} /> Connect Zendesk® →</Link>}
+                {action && <Link to="/connector" className="btn btn-primary btn-sm" style={{ width:'100%', justifyContent:'center' }}><Plug size={12} /> Connect your KB →</Link>}
               </div>
             ))}
           </div>
