@@ -217,42 +217,44 @@ export default async function handler(req, res) {
     if (connector.platform === 'helpscout') {
       const authHeader = `Basic ${Buffer.from(`${connector.api_key_encrypted}:X`).toString('base64')}`
       const base = 'https://docsapi.helpscout.net/v1'
+      const status = connector.published_only !== false ? 'published' : 'all'
 
-      // First get all collections, then fetch articles per collection
-      if (page === 1) {
-        const colRes = await fetch(`${base}/collections?pageSize=100`, { headers: { Authorization: authHeader } })
-        if (!colRes.ok) throw new Error(`HelpScout API error ${colRes.status}`)
-        const colData = await colRes.json()
-        const collections = colData.collections?.items || []
+      // Get collections list once (page 1 only)
+      const colRes = await fetch(`${base}/collections?pageSize=100`, { headers: { Authorization: authHeader } })
+      if (!colRes.ok) throw new Error(`HelpScout collections API error ${colRes.status}`)
+      const colData = await colRes.json()
+      const collections = colData.collections?.items || []
 
-        // Fetch articles from all collections
-        for (const col of collections) {
-          let colPage = 1, colHasMore = true
-          while (colHasMore) {
-            const artRes = await fetch(`${base}/collections/${col.id}/articles?pageSize=100&page=${colPage}&status=${connector.published_only !== false ? 'published' : 'all'}`, {
-              headers: { Authorization: authHeader }
-            })
-            if (!artRes.ok) break
-            const artData = await artRes.json()
-            const colArticles = (artData.articles?.items || []).map(a => ({
-              id: a.id,
-              title: a.name,
-              body: a.text || '',
-              html_url: a.url,
-              updated_at: a.updatedAt,
-              label_names: [],
-              locale: 'en-us',
-              section_id: col.id,
-              author_id: a.createdBy?.id,
-              draft: a.status !== 'published',
-            }))
-            articles = [...articles, ...colArticles]
-            totalCount += artData.articles?.count || 0
-            colHasMore = colPage < (artData.articles?.pages || 1)
-            colPage++
-          }
+      if (collections.length === 0) {
+        articles = []; totalCount = 0; hasMore = false
+      } else {
+        // Use page as collection index — fetch one collection per chunk
+        const colIndex = page - 1
+        const col = collections[colIndex]
+
+        if (col) {
+          const artRes = await fetch(`${base}/collections/${col.id}/articles?pageSize=100&status=${status}`, {
+            headers: { Authorization: authHeader }
+          })
+          if (!artRes.ok) throw new Error(`HelpScout articles API error ${artRes.status}`)
+          const artData = await artRes.json()
+          articles = (artData.articles?.items || []).map(a => ({
+            id: a.id,
+            title: a.name,
+            body: a.text || '',
+            html_url: a.url,
+            updated_at: a.updatedAt,
+            label_names: [],
+            locale: 'en-us',
+            section_id: col.id,
+            author_id: a.createdBy?.id,
+            draft: a.status !== 'published',
+          }))
+          totalCount = collections.reduce((sum, c) => sum + (c.articleCount || 0), 0)
+          hasMore = colIndex < collections.length - 1
+        } else {
+          articles = []; hasMore = false
         }
-        hasMore = false // We fetch everything in one go for HelpScout
       }
     } else {
       // Zendesk
