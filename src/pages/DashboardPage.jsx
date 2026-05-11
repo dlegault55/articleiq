@@ -396,7 +396,7 @@ export default function DashboardPage() {
                 <p style={{ fontSize:11, color:'var(--text-3)', margin:0 }}>
                   {profile.scans_remaining === 0
                     ? 'Buy another Scan Pack or upgrade to Annual for unlimited scans'
-                    : 'Scan Pack · credits never expire · upgrade anytime for unlimited scans'}
+                    : profile.scans_remaining <= 2 ? `Only ${profile.scans_remaining} scan${profile.scans_remaining !== 1 ? 's' : ''} left — upgrade to Annual and save $50` : 'Scan Pack · credits never expire · upgrade anytime for unlimited scans'}
                 </p>
               </div>
             </div>
@@ -404,9 +404,16 @@ export default function DashboardPage() {
               {profile.scans_remaining === 0 && (
                 <button onClick={upgrade} className="btn btn-primary btn-sm">Buy more scans</button>
               )}
-              <button onClick={upgrade} className="btn btn-secondary btn-sm">
-                {profile.scans_remaining === 0 ? 'Upgrade to Annual' : 'Go Annual — unlimited'}
-              </button>
+              {profile.scans_remaining > 0 && profile.scans_remaining <= 2 ? (
+                <button onClick={() => navigate('/upgrade?coupon=UPGRADE50')} className="btn btn-sm"
+                  style={{ background:'#FFD93D', color:'#1A1A18', fontWeight:700, border:'none' }}>
+                  ⚡ Go Annual — save $50
+                </button>
+              ) : (
+                <button onClick={upgrade} className="btn btn-secondary btn-sm">
+                  {profile.scans_remaining === 0 ? 'Upgrade to Annual' : 'Go Annual — unlimited'}
+                </button>
+              )}
             </div>
           </div>
         )}

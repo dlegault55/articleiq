@@ -14,12 +14,12 @@ export const useCheckout = () => {
   const { userId, user } = useAuth()
   const toast = useToast()
 
-  return async (plan = 'monthly') => {
+  return async (plan = 'monthly', coupon = null) => {
     if (!userId || !user?.email) { toast.error('Please sign in first'); return }
     try {
       const res = await apiFetch('/api/create-checkout', {
         method: 'POST',
-        body: JSON.stringify({ email: user.email, plan }),
+        body: JSON.stringify({ email: user.email, plan, coupon }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)

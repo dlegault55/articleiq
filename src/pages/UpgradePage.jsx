@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useCheckout } from '@/hooks/useUpgrade'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { CheckCircle, Zap, ArrowLeft, Loader, Wand2, Star, Tag, Globe, BarChart2, TrendingUp, Clock, Shield } from 'lucide-react'
@@ -105,12 +105,14 @@ function ROICalculator() {
 export default function UpgradePage() {
   usePageTitle('Upgrade')
   const navigate  = useNavigate()
+  const location  = useLocation()
   const checkout  = useCheckout()
   const [loading, setLoading] = useState(null)
+  const coupon    = new URLSearchParams(location.search).get('coupon')
 
   const buy = async (plan) => {
     setLoading(plan)
-    await checkout(plan)
+    await checkout(plan, coupon)
     setLoading(null)
   }
 
@@ -130,6 +132,17 @@ export default function UpgradePage() {
       <button onClick={() => navigate(-1)} className="btn btn-ghost btn-sm" style={{ marginBottom: 24 }}>
         <ArrowLeft size={14} /> Back
       </button>
+
+      {/* Discount banner */}
+      {coupon && (
+        <div style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 16px', borderRadius:10, marginBottom:16, background:'#FFF9EC', border:'1px solid #FDE68A' }}>
+          <span style={{ fontSize:20 }}>⚡</span>
+          <div>
+            <p style={{ fontSize:13, fontWeight:700, color:'#92400E', margin:'0 0 1px' }}>Limited offer — $50 off Annual Pro</p>
+            <p style={{ fontSize:12, color:'#B45309', margin:0 }}>Discount applied automatically at checkout. Annual Pro for $440 instead of $490.</p>
+          </div>
+        </div>
+      )}
 
       {/* Hero */}
       <div style={{ background: 'var(--navy)', borderRadius: 'var(--radius-xl)', padding: 'clamp(24px,4vw,36px)', marginBottom: 24, position: 'relative', overflow: 'hidden' }}>

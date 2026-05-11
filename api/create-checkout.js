@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { plan = 'pack' } = req.body
+    const { plan = 'pack', coupon } = req.body
 
     const { data: profile } = await supabase
       .from('profiles').select('stripe_customer_id, plan').eq('id', auth.userId).single()
@@ -53,6 +53,7 @@ export default async function handler(req, res) {
     const session = await stripe.checkout.sessions.create({
       customer:   customerId,
       mode,
+      ...(coupon ? { discounts: [{ coupon }] } : {}),
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${baseUrl}/dashboard?upgraded=true`,
       cancel_url:  `${baseUrl}/dashboard`,
