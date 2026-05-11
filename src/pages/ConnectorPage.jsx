@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { useNavigate, Link } from 'react-router-dom'
 import { useToast } from '@/hooks/useToast'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { supabase } from '@/lib/supabase'
@@ -68,6 +69,7 @@ function TokenGuide() {
 function ConnectorCard({ connector, onRemove, onRemoveWithHistory }) {
   const [testing,    setTesting]    = useState(false)
   const [testResult, setTestResult] = useState(null)
+  const navigate = useNavigate()
 
   const testConnection = async () => {
     setTesting(true); setTestResult(null)
@@ -109,6 +111,9 @@ function ConnectorCard({ connector, onRemove, onRemoveWithHistory }) {
             {testing ? 'Testing...' : 'Test connection'}
           </button>
           <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+            <button onClick={() => navigate('/dashboard')} className="btn btn-primary btn-xs">
+              Run a scan →
+            </button>
             <button onClick={() => onRemove(connector.id)} className="btn btn-secondary btn-xs">
               Remove
             </button>
@@ -237,6 +242,19 @@ export default function ConnectorPage() {
       {!loading && connectors.map(c => (
         <ConnectorCard key={c.id} connector={c} onRemove={remove} onRemoveWithHistory={removeWithHistory} />
       ))}
+
+      {/* CTA after connecting */}
+      {!loading && connectors.length > 0 && (
+        <div style={{ padding:'16px 18px', borderRadius:12, background:'var(--navy)', marginBottom:16, display:'flex', alignItems:'center', justifyContent:'space-between', gap:16 }}>
+          <div>
+            <p style={{ fontSize:13, fontWeight:700, color:'white', margin:'0 0 3px' }}>Ready to scan your knowledge base</p>
+            <p style={{ fontSize:11, color:'rgba(255,255,255,0.55)', margin:0 }}>Go to the dashboard to run your first scan and find issues across your articles.</p>
+          </div>
+          <Link to="/dashboard" className="btn btn-sm" style={{ background:'white', color:'var(--navy)', fontWeight:700, flexShrink:0 }}>
+            Run a scan →
+          </Link>
+        </div>
+      )}
 
       {/* Platform picker */}
       {!selectedPlat && (
