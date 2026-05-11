@@ -26,6 +26,7 @@ async function findAndUpdateUser(email, customerId, plan, status, scansRemaining
     console.error('No email provided to findAndUpdateUser')
     return false
   }
+  console.log(`findAndUpdateUser: email=${email} customerId=${customerId} plan=${plan}`)
 
   // First try by stripe_customer_id
   if (customerId) {
@@ -36,10 +37,11 @@ async function findAndUpdateUser(email, customerId, plan, status, scansRemaining
       .single()
 
     if (existing) {
-      await supabase.from('profiles').update({ plan, subscription_status: status, stripe_customer_id: customerId, ...(scansRemaining !== null && { scans_remaining: scansRemaining }) }).eq('id', existing.id)
-      console.log(`Updated profile by customer ID: ${existing.id} → plan=${plan}`)
+      const { error } = await supabase.from('profiles').update({ plan, subscription_status: status, stripe_customer_id: customerId, ...(scansRemaining !== null && { scans_remaining: scansRemaining }) }).eq('id', existing.id)
+      console.log(`Updated by customer ID: ${existing.id} → plan=${plan} error=${error?.message}`)
       return true
     }
+    console.log(`No profile found for customerId=${customerId}, falling back to email`)
   }
 
   // Fall back to email lookup via auth
