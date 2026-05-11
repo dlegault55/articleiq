@@ -66,15 +66,6 @@ function AvatarMenu({ name, email, plan, initials }) {
             ))}
           </div>
 
-          <div style={{ borderTop:'1px solid var(--border)', padding:'8px 16px 6px', display:'flex', gap:14 }}>
-            {[['Terms', '/terms'], ['Privacy', '/privacy'], ['Contact', '/contact']].map(([label, path]) => (
-              <button key={path} onClick={() => go(path)}
-                style={{ fontSize:11, color:'var(--text-3)', background:'none', border:'none', cursor:'pointer', padding:0, fontFamily:'inherit' }}>
-                {label}
-              </button>
-            ))}
-          </div>
-
           <div style={{ borderTop:'1px solid var(--border)', padding:'5px' }}>
             <button onClick={() => signOut()} style={{ ...menuBtn, color:'var(--red)' }}
               onMouseEnter={e => e.currentTarget.style.background='var(--red-light)'}
