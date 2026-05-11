@@ -142,7 +142,7 @@ export default function LoginPage() {
             <form onSubmit={handleEmail}>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="Email address" className="input" style={{ marginBottom:8 }} />
-              <div style={{ position:'relative', marginBottom:16 }}>
+              <div style={{ position:'relative', marginBottom:8 }}>
                 <input type={showPw ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
                   placeholder="Password" className="input" style={{ paddingRight:40 }} />
                 <button type="button" onClick={() => setShowPw(v => !v)}
@@ -150,6 +150,11 @@ export default function LoginPage() {
                   {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
+              {mode === 'signup' && (
+                <p style={{ fontSize:11, color:'var(--text-3)', margin:'0 0 12px', lineHeight:1.5 }}>
+                  Min. 8 characters with at least one uppercase letter and one number.
+                </p>
+              )}
               <button type="submit" disabled={!!loading} className="btn btn-primary" style={{ width:'100%', justifyContent:'center', marginBottom:10, padding:'12px', fontSize:14 }}>
                 {loading === 'email' ? <Loader size={14} style={{ animation:'spin 0.7s linear infinite' }} /> : <Mail size={14} />}
                 {loading === 'email' ? 'Please wait...' : mode === 'signup' ? 'Create account' : 'Sign in'}
