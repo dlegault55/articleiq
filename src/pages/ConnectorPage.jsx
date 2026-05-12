@@ -411,7 +411,8 @@ export default function ConnectorPage() {
         </div>
       )}
 
-      {/* Coming soon platforms */}
+      {/* Coming soon platforms — only show when no platform selected */}
+      {!selectedPlat && (
       <div style={{ marginTop: 24, padding: '14px 16px', borderRadius: 10, background: 'var(--bg)', border: '1px solid var(--border-md)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <Clock size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
         <p style={{ fontSize: 12, color: 'var(--text-3)', margin: 0, lineHeight: 1.6 }}>
@@ -419,6 +420,7 @@ export default function ConnectorPage() {
           <a href="/contact" style={{ color: 'var(--navy)', fontWeight: 600 }}>Let us know</a> which platform you need most.
         </p>
       </div>
+      )}
     </div>
   )
 }
