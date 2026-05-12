@@ -502,7 +502,7 @@ function DiffView({ original, revised, originalTitle, revisedTitle }) {
 }
 
 // Single unified flow — 3 fixed panes: Original | Recommendations | Rewrite
-function AIDrawer({ article, connector, onClose, userId }) {
+function AIDrawer({ article, connector, onClose, userId, globalDismissed = new Set(), onDismiss }) {
   const [bodyHtml,    setBodyHtml]    = useState('')
   const [fetchErr,    setFetchErr]    = useState(null)
   const [analysing,   setAnalysing]   = useState(true)
@@ -519,29 +519,11 @@ function AIDrawer({ article, connector, onClose, userId }) {
   const [rewriteTab,   setRewriteTab]   = useState('edit')  // 'edit' | 'changes'
   const [leftTab,      setLeftTab]      = useState('recommendations')  // 'original' | 'recommendations'
   const [addressedRecs,  setAddressedRecs]  = useState(new Set())
-  const [dismissedRecs,  setDismissedRecs]  = useState(new Set())
+  const [dismissedRecs,  setDismissedRecs]  = useState(globalDismissed)
   const [overrideRecs,   setOverrideRecs]   = useState(new Set()) // user-marked as NOT fixed despite AI saying so
   const [error,       setError]       = useState(null)
 
-  // Load previous dismissals for this article
-  useEffect(() => {
-    if (!article || !userId) return
-    supabase.from('recommendation_feedback')
-      .select('rec_text, rec_type')
-      .eq('user_id', userId)
-      .eq('article_id', article.article_id)
-      .eq('vote', 'down')
-      .then(({ data }) => {
-        if (data?.length) {
-          const keys = new Set()
-          data.forEach(({ rec_text, rec_type }) => {
-            // Match against current recs by text
-            keys.add(`dismissed:${rec_type}:${rec_text}`)
-          })
-          setDismissedRecs(keys)
-        }
-      })
-  }, [article?.id, userId])
+  // Dismissals are loaded at page level and passed via globalDismissed prop
 
   // Fetch article + run analysis on open
   useEffect(() => {
@@ -722,6 +704,7 @@ function AIDrawer({ article, connector, onClose, userId }) {
   const dismissRec = async (key, text, type) => {
     const persistKey = `dismissed:${type}:${text}`
     setDismissedRecs(prev => new Set([...prev, key, persistKey]))
+    onDismiss?.(persistKey)
     try {
       await supabase.from('recommendation_feedback').insert({
         user_id:    userId,
@@ -1989,6 +1972,8 @@ export default function ScanResultsPage() {
           connector={connector}
           onClose={() => setDrawer(null)}
           userId={userId}
+          globalDismissed={globalDismissed}
+          onDismiss={(key) => setGlobalDismissed(prev => new Set([...prev, key]))}
         />
       )}
     </div>

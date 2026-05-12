@@ -21,7 +21,7 @@ const REC_PREF_CHECKS = [
   { key:'seoTitle',       label:'SEO title suggestions',         desc:'Suggested rewrites for article titles — disable if your team does not control titles' },
   { key:'wordCountWarn',  label:'Word count warnings',           desc:'Thin content flags for short articles — disable if you intentionally use short articles' },
   { key:'readabilityRec', label:'Readability suggestions',       desc:'Passive voice, sentence length, and clarity fixes — disable if style is not a priority' },
-  { key:'seoGrade',       label:'SEO grade & fixes',             desc:'Full SEO analysis — disable if your KB is internal-only and SEO doesn't apply' },
+  { key:'seoGrade',       label:'SEO grade & fixes',             desc:'Full SEO analysis — disable if your KB is internal-only and SEO does not apply' },
 ]
 const SCAN_CHECKS  = [
   { key:'outdated',    label:'Outdated articles',   desc:'Not updated in 180+ days' },
