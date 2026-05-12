@@ -32,9 +32,10 @@ const PLATFORMS = [
       { key: 'api_key',   label: 'API token', placeholder: 'Paste your API token here', hint: 'Admin Center → Apps & Integrations → APIs → Zendesk® API → API Tokens', type: 'password' },
     ],
   },
+  { id: 'freshdesk', name: 'Freshdesk',  description: 'Scan your Freshdesk Solution articles', available: false },
+  { id: 'intercom',  name: 'Intercom',   description: 'Scan your Intercom Articles', available: false },
   { id: 'notion',    name: 'Notion',     description: 'Scan your Notion wiki', available: false },
   { id: 'confluence',name: 'Confluence', description: 'Scan your Confluence space', available: false },
-  { id: 'intercom',  name: 'Intercom',   description: 'Scan your Articles', available: false },
 ]
 
 function TokenGuide() {
@@ -392,7 +393,7 @@ export default function ConnectorPage() {
       <div style={{ marginTop: 24, padding: '14px 16px', borderRadius: 10, background: 'var(--bg)', border: '1px solid var(--border-md)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <Clock size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
         <p style={{ fontSize: 12, color: 'var(--text-3)', margin: 0, lineHeight: 1.6 }}>
-          Notion, Confluence, Intercom, and Freshdesk connectors are coming soon.{' '}
+          Freshdesk, Intercom, Notion, and Confluence connectors are coming soon.{' '}
           <a href="/contact" style={{ color: 'var(--navy)', fontWeight: 600 }}>Let us know</a> which platform you need most.
         </p>
       </div>
