@@ -304,12 +304,12 @@ export default function LandingPage() {
 
           {/* Live platforms */}
           {[
-            { name:'Zendesk®', bg:'#03363D', live:true },
-            { name:'HelpScout', bg:'#1292EE', live:true },
-          ].map(({ name, bg, live }) => (
+            { name:'Zendesk®', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/zendesk.svg', bg:'#03363D', live:true },
+            { name:'HelpScout', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/helpscout.svg', bg:'#1292EE', live:true },
+          ].map(({ name, logo, bg }) => (
             <div key={name} style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <div style={{ width:28, height:28, borderRadius:7, background:bg, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <span style={{ fontSize:10, fontWeight:800, color:'white' }}>{name[0]}</span>
+              <div style={{ width:28, height:28, borderRadius:7, background:bg, display:'flex', alignItems:'center', justifyContent:'center', padding:5, boxSizing:'border-box' }}>
+                <img src={logo} alt={name} style={{ width:'100%', height:'100%', filter:'brightness(0) invert(1)' }} />
               </div>
               <span style={{ fontSize:13, fontWeight:700, color:'#1A1A18' }}>{name}</span>
               <span style={{ fontSize:9, fontWeight:700, padding:'2px 7px', borderRadius:20, background:'#E8F5E9', color:'#2E7D32' }}>Live</span>
