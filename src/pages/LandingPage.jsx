@@ -433,6 +433,84 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Works with ── */}
+      <section style={{ padding:'clamp(32px,5vw,48px) clamp(20px,5vw,48px)', borderTop:'1px solid #E8E8E6' }}>
+        <div style={{ maxWidth:960, margin:'0 auto', textAlign:'center' }}>
+          <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9B9B98', marginBottom:32 }}>Works with your knowledge base</p>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:32, flexWrap:'wrap', marginBottom:32 }}>
+
+            {/* Zendesk */}
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
+              <div style={{ width:56, height:56, borderRadius:14, background:'#03363D', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <svg width="32" height="32" viewBox="0 0 33 32" fill="none">
+                  <path d="M16.5 11.2c0-3.1-2.5-5.7-5.7-5.7s-5.7 2.5-5.7 5.7v15.1h11.4V11.2z" fill="white"/>
+                  <path d="M16.5 6.9c0 3.1 2.5 5.7 5.7 5.7s5.7-2.5 5.7-5.7S25.3 1.2 22.2 1.2s-5.7 2.6-5.7 5.7z" fill="white" opacity="0.7"/>
+                  <path d="M27.9 11.2H16.5v15.1h11.4V11.2z" fill="white" opacity="0.5"/>
+                </svg>
+              </div>
+              <p style={{ fontSize:13, fontWeight:700, color:'#1A1A18', margin:0 }}>Zendesk®</p>
+              <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20, background:'#E8F5E9', color:'#2E7D32' }}>Live</span>
+            </div>
+
+            {/* HelpScout */}
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
+              <div style={{ width:56, height:56, borderRadius:14, background:'#1292EE', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                  <circle cx="16" cy="16" r="12" fill="white" opacity="0.2"/>
+                  <path d="M10 16c0-3.3 2.7-6 6-6s6 2.7 6 6-2.7 6-6 6-6-2.7-6-6z" fill="white"/>
+                  <circle cx="16" cy="16" r="3" fill="#1292EE"/>
+                </svg>
+              </div>
+              <p style={{ fontSize:13, fontWeight:700, color:'#1A1A18', margin:0 }}>HelpScout</p>
+              <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20, background:'#E8F5E9', color:'#2E7D32' }}>Live</span>
+            </div>
+
+            <div style={{ width:1, height:60, background:'#E8E8E6' }} />
+
+            {/* Freshdesk */}
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10, opacity:0.5 }}>
+              <div style={{ width:56, height:56, borderRadius:14, background:'#25C16F', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                  <rect x="8" y="8" width="16" height="16" rx="4" fill="white" opacity="0.9"/>
+                  <path d="M12 13h8M12 16h6M12 19h4" stroke="#25C16F" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <p style={{ fontSize:13, fontWeight:700, color:'#1A1A18', margin:0 }}>Freshdesk</p>
+              <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20, background:'#F5F5F5', color:'#9B9B98' }}>Coming soon</span>
+            </div>
+
+            {/* Intercom */}
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10, opacity:0.5 }}>
+              <div style={{ width:56, height:56, borderRadius:14, background:'#1F8DED', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                  <rect x="6" y="8" width="20" height="14" rx="3" fill="white" opacity="0.9"/>
+                  <path d="M10 13h12M10 17h8" stroke="#1F8DED" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M10 22l3-3" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <p style={{ fontSize:13, fontWeight:700, color:'#1A1A18', margin:0 }}>Intercom</p>
+              <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20, background:'#F5F5F5', color:'#9B9B98' }}>Coming soon</span>
+            </div>
+
+            {/* Notion */}
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10, opacity:0.5 }}>
+              <div style={{ width:56, height:56, borderRadius:14, background:'#1A1A18', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                  <rect x="5" y="4" width="18" height="20" rx="2" fill="white"/>
+                  <path d="M9 9h10M9 13h10M9 17h6" stroke="#1A1A18" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <p style={{ fontSize:13, fontWeight:700, color:'#1A1A18', margin:0 }}>Notion</p>
+              <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20, background:'#F5F5F5', color:'#9B9B98' }}>Coming soon</span>
+            </div>
+
+          </div>
+          <p style={{ fontSize:12, color:'#9B9B98', margin:0 }}>
+            Missing your platform? <a href="/contact" style={{ color:'#1B2D5B', fontWeight:600, textDecoration:'none' }}>Let us know →</a>
+          </p>
+        </div>
+      </section>
+
       {/* ── Footer ── */}
       <footer className='landing-footer' style={{ background:'#1A1A18', padding:'28px 48px 20px' }}>
         <div className='landing-footer-row' style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
