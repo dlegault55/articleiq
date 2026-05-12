@@ -338,7 +338,7 @@ export default function ConnectorPage() {
 
           <div className="card" style={{ padding: '18px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
-              {PLATFORMS[0].fields.map(({ key, label, placeholder, hint, type }) => (
+              {PLATFORMS.find(p => p.id === 'zendesk').fields.map(({ key, label, placeholder, hint, type }) => (
                 <div key={key}>
                   <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</p>
                   <input type={type} value={form[key] || ''} placeholder={placeholder}
