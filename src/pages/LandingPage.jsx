@@ -26,7 +26,7 @@ export default function LandingPage() {
           <a href="#how-it-works" className="land-btn land-btn-ghost" style={{ padding:'7px 14px' }}>How it works</a>
           <a href="#pricing" className="land-btn land-btn-ghost" style={{ padding:'7px 14px' }}>Pricing</a>
           <Link to="/login" className="land-btn land-btn-outline" style={{ padding:'7px 16px' }}>Sign in</Link>
-          <Link to="/login" className="land-btn land-btn-navy">Get started free</Link>
+          <Link to="/login" className="land-btn land-btn-navy">Scan your first 300 articles free</Link>
         </div>
       </nav>
 
@@ -402,53 +402,28 @@ export default function LandingPage() {
         <div style={{ maxWidth:780, margin:'0 auto' }}>
           <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9B9B98', textAlign:'center', marginBottom:12 }}>Pricing</p>
           <h2 style={{ fontSize:32, fontWeight:800, textAlign:'center', letterSpacing:-0.8, marginBottom:8, color:'#1A1A18' }}>Simple, honest pricing</h2>
-          <p style={{ fontSize:15, color:'#6B6B68', textAlign:'center', marginBottom:40 }}>Start free. Upgrade when you're ready to fix what you find.</p>
+          <p style={{ fontSize:15, color:'#6B6B68', textAlign:'center', marginBottom:40 }}>No subscription required. Start with a Scan Pack and upgrade when it makes sense.</p>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:16 }} className='landing-pricing'>
 
-            {/* Free */}
-            <div style={{ borderRadius:14, padding:'24px', border:'1px solid #E8E8E6', background:'#FAFAF8' }}>
-              <p style={{ fontSize:12, fontWeight:700, color:'#9B9B98', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' }}>Free</p>
-              <div style={{ fontSize:36, fontWeight:800, color:'#1A1A18', letterSpacing:-1.5, lineHeight:1, marginBottom:4 }}>$0</div>
-              <p style={{ fontSize:12, color:'#9B9B98', marginBottom:16, lineHeight:1.6 }}>See what's broken before you commit.</p>
-              <div style={{ marginBottom:20 }}>
-                {[
-                  { text:'300 articles per scan', on:true },
-                  { text:'All quality checks', on:true },
-                  { text:'Broken links & images', on:true },
-                  { text:'SEO Score', on:true },
-                  { text:'Unlimited scans', on:true },
-                  { text:'Shareable reports', on:false },
-                  { text:'AI features', on:false },
-                  { text:'Label suggestions', on:false },
-                ].map(({ text, on }) => (
-                  <div key={text} style={{ display:'flex', alignItems:'center', gap:7, marginBottom:6, opacity: on ? 1 : 0.35 }}>
-                    <CheckCircle size={12} style={{ color: on ? '#107C10' : '#9B9B98', flexShrink:0 }} />
-                    <span style={{ fontSize:12, color:'#1A1A18' }}>{text}</span>
-                  </div>
-                ))}
-              </div>
-              <Link to="/login" className="land-btn land-btn-outline" style={{ width:'100%', justifyContent:'center', fontSize:12 }}>Get started free</Link>
-            </div>
-
-            {/* Scan Pack */}
+            {/* Scan Pack — FIRST, featured */}
             <div style={{ borderRadius:14, padding:'24px', border:'2px solid #1B2D5B', background:'white', position:'relative' }}>
-              <div style={{ position:'absolute', top:-12, left:'50%', transform:'translateX(-50%)', background:'#1B2D5B', color:'white', fontSize:10, fontWeight:700, padding:'3px 14px', borderRadius:100, whiteSpace:'nowrap' }}>Most popular</div>
-              <p style={{ fontSize:12, fontWeight:700, color:'#9B9B98', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' }}>Scan Pack</p>
+              <div style={{ position:'absolute', top:-12, left:'50%', transform:'translateX(-50%)', background:'#1B2D5B', color:'white', fontSize:10, fontWeight:700, padding:'3px 14px', borderRadius:100, whiteSpace:'nowrap' }}>Best way to start</div>
+              <p style={{ fontSize:12, fontWeight:700, color:'#1B2D5B', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' }}>Scan Pack</p>
               <div style={{ display:'flex', alignItems:'baseline', gap:3, marginBottom:4 }}>
                 <span style={{ fontSize:36, fontWeight:800, color:'#1A1A18', letterSpacing:-1.5, lineHeight:1 }}>$79</span>
+                <span style={{ fontSize:13, color:'#9B9B98' }}>one-time</span>
               </div>
-              <p style={{ fontSize:12, color:'#9B9B98', marginBottom:16, lineHeight:1.6 }}>5 full scans, never expire. Perfect for quarterly audits.</p>
+              <p style={{ fontSize:12, color:'#9B9B98', marginBottom:16, lineHeight:1.6 }}>5 full scans, never expire. Full AI. No commitment.</p>
               <div style={{ marginBottom:20 }}>
                 {[
                   'Unlimited articles per scan',
                   '5 scans — use whenever you need',
                   'Everything in Free',
                   'AI Improve Article',
-                  'AI Quality Score',
-                  'Publish directly to Zendesk® or HelpScout',
+                  'AI Quality & SEO Score',
+                  'Publish directly to your KB',
                   'Label suggestions + publish',
                   'Shareable reports',
-                  'Email notifications',
                 ].map(f => (
                   <div key={f} style={{ display:'flex', alignItems:'center', gap:7, marginBottom:6 }}>
                     <CheckCircle size={12} style={{ color:'#107C10', flexShrink:0 }} />
@@ -460,14 +435,39 @@ export default function LandingPage() {
               <p style={{ fontSize:11, color:'#9B9B98', textAlign:'center' }}>One-time payment · No subscription</p>
             </div>
 
+            {/* Free */}
+            <div style={{ borderRadius:14, padding:'24px', border:'1px solid #E8E8E6', background:'#FAFAF8' }}>
+              <p style={{ fontSize:12, fontWeight:700, color:'#9B9B98', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' }}>Free</p>
+              <div style={{ fontSize:36, fontWeight:800, color:'#1A1A18', letterSpacing:-1.5, lineHeight:1, marginBottom:4 }}>$0</div>
+              <p style={{ fontSize:12, color:'#9B9B98', marginBottom:16, lineHeight:1.6 }}>Scan up to 300 articles and see exactly what's broken.</p>
+              <div style={{ marginBottom:20 }}>
+                {[
+                  { text:'300 articles per scan', on:true },
+                  { text:'All quality checks', on:true },
+                  { text:'Broken links & images', on:true },
+                  { text:'SEO Score', on:true },
+                  { text:'Unlimited scans', on:true },
+                  { text:'AI features', on:false },
+                  { text:'Publish to your KB', on:false },
+                  { text:'Shareable reports', on:false },
+                ].map(({ text, on }) => (
+                  <div key={text} style={{ display:'flex', alignItems:'center', gap:7, marginBottom:6, opacity: on ? 1 : 0.35 }}>
+                    <CheckCircle size={12} style={{ color: on ? '#107C10' : '#9B9B98', flexShrink:0 }} />
+                    <span style={{ fontSize:12, color:'#1A1A18' }}>{text}</span>
+                  </div>
+                ))}
+              </div>
+              <Link to="/login" className="land-btn land-btn-outline" style={{ width:'100%', justifyContent:'center', fontSize:12 }}>Scan your first 300 articles free</Link>
+            </div>
+
             {/* Annual Pro */}
             <div style={{ borderRadius:14, padding:'24px', border:'1px solid #E8E8E6', background:'#FAFAF8', position:'relative' }}>
               <p style={{ fontSize:12, fontWeight:700, color:'#9B9B98', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' }}>Annual Pro</p>
               <div style={{ display:'flex', alignItems:'baseline', gap:3, marginBottom:4 }}>
-                <span style={{ fontSize:36, fontWeight:800, color:'#1A1A18', letterSpacing:-1.5, lineHeight:1 }}>$490</span>
+                <span style={{ fontSize:36, fontWeight:800, color:'#1A1A18', letterSpacing:-1.5, lineHeight:1 }}>$290</span>
                 <span style={{ fontSize:13, color:'#9B9B98' }}>/year</span>
               </div>
-              <p style={{ fontSize:12, color:'#9B9B98', marginBottom:16, lineHeight:1.6 }}>Unlimited scans + ongoing health monitoring.</p>
+              <p style={{ fontSize:12, color:'#9B9B98', marginBottom:16, lineHeight:1.6 }}>Unlimited scans + ongoing health monitoring. ~$24/month.</p>
               <div style={{ marginBottom:20 }}>
                 {[
                   'Everything in Scan Pack',
@@ -475,15 +475,15 @@ export default function LandingPage() {
                   'KB health trend — full history',
                   'Scheduled monthly scans (coming soon)',
                   'Priority support',
-                ].map((f, i) => (
+                ].map((f) => (
                   <div key={f} style={{ display:'flex', alignItems:'center', gap:7, marginBottom:6, opacity: f.includes('coming soon') ? 0.6 : 1 }}>
                     <CheckCircle size={12} style={{ color: f.includes('coming soon') ? '#9B9B98' : '#107C10', flexShrink:0 }} />
                     <span style={{ fontSize:12, color:'#1A1A18' }}>{f}</span>
                   </div>
                 ))}
               </div>
-              <Link to="/upgrade" className="land-btn land-btn-navy" style={{ width:'100%', justifyContent:'center', marginBottom:8, background:'#107C10' }}>Go Annual — $490/year</Link>
-              <p style={{ fontSize:11, color:'#9B9B98', textAlign:'center' }}>~$41/month · Cancel anytime</p>
+              <Link to="/upgrade" className="land-btn land-btn-navy" style={{ width:'100%', justifyContent:'center', marginBottom:8, background:'#107C10' }}>Go Annual — $290/year</Link>
+              <p style={{ fontSize:11, color:'#9B9B98', textAlign:'center' }}>~$24/month · Cancel anytime</p>
             </div>
           </div>
         </div>

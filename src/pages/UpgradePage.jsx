@@ -85,7 +85,7 @@ function ROICalculator() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 8, background: 'white', border: '1px solid var(--green-border)' }}>
           <div>
-            <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', margin: '0 0 1px' }}>Annual Pro — ~$41/month</p>
+            <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', margin: '0 0 1px' }}>Annual Pro — ~$24/month</p>
             <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0 }}>Unlimited scans, ongoing monitoring</p>
           </div>
           <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--green)' }}>
@@ -143,7 +143,7 @@ export default function UpgradePage() {
                 As a thank you — $50 off Annual Pro
               </p>
               <p style={{ fontSize:12, color:'rgba(255,255,255,0.85)', margin:0 }}>
-                You're a Scan Pack customer. Upgrade to Annual Pro for <strong style={{ color:'white' }}>$440</strong> instead of $490 — discount applied automatically at checkout.
+                You're a Scan Pack customer. Upgrade to Annual Pro for <strong style={{ color:'white' }}>$440</strong> instead of $290 — discount applied automatically at checkout.
               </p>
             </div>
           </div>
@@ -203,7 +203,7 @@ export default function UpgradePage() {
         <div className="card" style={{ padding: 24, background: 'var(--bg)' }}>
           <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-3)', marginBottom: 6 }}>Annual Pro</p>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 4 }}>
-            <span style={{ fontSize: 40, fontWeight: 800, color: 'var(--text)', letterSpacing: -1.5, lineHeight: 1 }}>$490</span>
+            <span style={{ fontSize: 40, fontWeight: 800, color: 'var(--text)', letterSpacing: -1.5, lineHeight: 1 }}>$290</span>
             <span style={{ fontSize: 13, color: 'var(--text-3)' }}>/year</span>
           </div>
           <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 16, lineHeight: 1.6 }}>
@@ -224,9 +224,9 @@ export default function UpgradePage() {
           </div>
           <button onClick={() => buy('annual')} disabled={loading === 'annual'} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginBottom: 8, background: 'var(--green)' }}>
             {loading === 'annual' ? <Loader size={14} style={{ animation: 'spin 0.7s linear infinite' }} /> : <TrendingUp size={14} />}
-            {loading === 'annual' ? 'Redirecting...' : 'Go Annual — $490/year'}
+            {loading === 'annual' ? 'Redirecting...' : 'Go Annual — $290/year'}
           </button>
-          <p style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' }}>~$41/month · Cancel anytime</p>
+          <p style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' }}>~$24/month · Cancel anytime</p>
         </div>
       </div>
 
