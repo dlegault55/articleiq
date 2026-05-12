@@ -1583,6 +1583,23 @@ export default function ScanResultsPage() {
   const toggleRow = (id) => setOpenRows(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
   const [resolvedIssues,   setResolvedIssues]   = useState(new Set())
   const [drawer,           setDrawer]           = useState(null) // { article, action }
+  const [globalDismissed,  setGlobalDismissed]  = useState(new Set())
+
+  // Load all dismissals once at page level — shared across all article drawers
+  useEffect(() => {
+    if (!userId) return
+    supabase.from('recommendation_feedback')
+      .select('rec_text, rec_type')
+      .eq('user_id', userId)
+      .eq('vote', 'down')
+      .then(({ data }) => {
+        if (data?.length) {
+          const keys = new Set()
+          data.forEach(({ rec_text, rec_type }) => keys.add(`dismissed:${rec_type}:${rec_text}`))
+          setGlobalDismissed(keys)
+        }
+      })
+  }, [userId])
   const [connector,        setConnector]        = useState(null)
   const intervalRef = useRef(null)
 
