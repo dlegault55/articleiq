@@ -502,7 +502,7 @@ function DiffView({ original, revised, originalTitle, revisedTitle }) {
 }
 
 // Single unified flow — 3 fixed panes: Original | Recommendations | Rewrite
-function AIDrawer({ article, connector, onClose, userId, globalDismissed = new Set(), onDismiss }) {
+function AIDrawer({ article, connector, onClose, userId, globalDismissed = new Set(), onDismiss, recPrefs = {} }) {
   const [bodyHtml,    setBodyHtml]    = useState('')
   const [fetchErr,    setFetchErr]    = useState(null)
   const [analysing,   setAnalysing]   = useState(true)
@@ -518,6 +518,15 @@ function AIDrawer({ article, connector, onClose, userId, globalDismissed = new S
   const [reanalysing, setReanalysing] = useState(false)
   const [rewriteTab,   setRewriteTab]   = useState('edit')  // 'edit' | 'changes'
   const [leftTab,      setLeftTab]      = useState('recommendations')  // 'original' | 'recommendations'
+
+  const shouldShowRec = (text, type) => {
+    if (recPrefs.internalLinks === false && text?.toLowerCase().includes('internal link')) return false
+    if (recPrefs.seoTitle === false && type === 'seo_title') return false
+    if (recPrefs.wordCountWarn === false && text?.toLowerCase().match(/word|thin|short|length/)) return false
+    if (recPrefs.readabilityRec === false && text?.toLowerCase().match(/passive|readab|sentence|clarity|voice/)) return false
+    if (recPrefs.seoGrade === false && type === 'seo') return false
+    return true
+  }
   const [addressedRecs,  setAddressedRecs]  = useState(new Set())
   const [dismissedRecs,  setDismissedRecs]  = useState(globalDismissed)
   const [overrideRecs,   setOverrideRecs]   = useState(new Set()) // user-marked as NOT fixed despite AI saying so
@@ -1610,16 +1619,6 @@ export default function ScanResultsPage() {
   const isPaid    = ['paid','pack','annual'].includes(profile?.plan)
   const recPrefs  = profile?.rec_preferences || {}
 
-  // Filter a suggestion/issue based on rec preferences
-  const shouldShowRec = (text, type) => {
-    if (recPrefs.internalLinks === false && text?.toLowerCase().includes('internal link')) return false
-    if (recPrefs.seoTitle === false && type === 'seo_title') return false
-    if (recPrefs.wordCountWarn === false && text?.toLowerCase().match(/word|thin|short|length/)) return false
-    if (recPrefs.readabilityRec === false && text?.toLowerCase().match(/passive|readab|sentence|clarity|voice/)) return false
-    if (recPrefs.seoGrade === false && type === 'seo') return false
-    return true
-  }
-
   // Load connector for AI drawer
   useEffect(() => {
     if (!scan?.user_id) return
@@ -1993,6 +1992,7 @@ export default function ScanResultsPage() {
           userId={userId}
           globalDismissed={globalDismissed}
           onDismiss={(key) => setGlobalDismissed(prev => new Set([...prev, key]))}
+          recPrefs={recPrefs}
         />
       )}
     </div>

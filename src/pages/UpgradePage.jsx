@@ -143,7 +143,7 @@ export default function UpgradePage() {
                 As a thank you — $50 off Annual Pro
               </p>
               <p style={{ fontSize:12, color:'rgba(255,255,255,0.85)', margin:0 }}>
-                You're a Scan Pack customer. Upgrade to Annual Pro for <strong style={{ color:'white' }}>$440</strong> instead of $290 — discount applied automatically at checkout.
+                You're a Scan Pack customer. Upgrade to Annual Pro for <strong style={{ color:'white' }}>$240</strong> instead of $290 — discount applied automatically at checkout.
               </p>
             </div>
           </div>
