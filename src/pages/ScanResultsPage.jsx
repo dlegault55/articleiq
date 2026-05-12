@@ -1263,7 +1263,7 @@ function AIDrawer({ article, connector, onClose, userId, globalDismissed = new S
                   )}
                 </div>
               )
-            })()}
+            })()
           )}
         </div>
       </div>
