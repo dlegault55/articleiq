@@ -376,12 +376,12 @@ export default function LandingPage() {
           <p style={{ fontSize:15, color:'#6B6B68', textAlign:'center', marginBottom:40, maxWidth:560, margin:'0 auto 40px' }}>Generic AI tools don't know your KB exists. ArticleIQ connects directly to your platform, scans every article at once, tracks health over time, and publishes improvements back — no copy-pasting, no context switching, no lost work.</p>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
             {[
-              { title:'Scans your entire KB at once', desc:'Hundreds or thousands of articles in a single scan. Claude requires you to copy-paste each one individually.', icon:Scan },
-              { title:'Broken links & images', desc:'Claude can\'t check if links are dead or images are missing. We make HTTP requests to every URL.', icon:Link2 },
-              { title:'Health trend over time', desc:'Track your KB health score across scans. See if you\'re improving. Claude has no memory between sessions.', icon:TrendingUp },
-              { title:'Publishes back to your KB', desc:'The improved article goes straight back to Zendesk® or HelpScout. No copying, formatting, or switching tabs.', icon:Globe },
-              { title:'Structured output', desc:'Critical issues first. Severity badges. Filters. Export. Claude gives you a wall of text per article.', icon:BarChart2 },
-              { title:'Label suggestions with one click', desc:'AI suggests labels and publishes them directly to your KB. We never write without your explicit action.', icon:Tag },
+              { title:'Scans your entire KB at once', desc:'Hundreds or thousands of articles in a single scan — broken links, outdated content, thin articles, duplicates — all surfaced in one health report.', icon:Scan },
+              { title:'Live broken link detection', desc:'Every hyperlink and image in every article is checked with a real HTTP request. Dead links flagged as critical. Your customers never hit a dead end.', icon:Link2 },
+              { title:'Health trend over time', desc:'Track your KB health score across scans and see whether things are getting better or worse. Know exactly where to focus next.', icon:TrendingUp },
+              { title:'Publishes directly back', desc:'The AI-improved article goes straight back to Zendesk® or HelpScout with one click. No copy-pasting, no reformatting, no tab switching.', icon:Globe },
+              { title:'Critical issues surface first', desc:'Severity-ordered results — broken things before imperfect things. Filters, badges, and per-article scores so your team knows exactly what to fix first.', icon:BarChart2 },
+              { title:'Label suggestions with one click', desc:'AI reads the article and suggests the right labels. Publish them directly to your KB — your existing labels are always preserved.', icon:Tag },
             ].map(({ title, desc, icon: Icon }) => (
               <div key={title} style={{ display:'flex', gap:12, padding:'16px', borderRadius:10, border:'1px solid #E8E8E6', background:'#FAFAF8' }}>
                 <div style={{ width:32, height:32, borderRadius:8, background:'#F0F3FA', border:'1px solid #C8D4F0', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
