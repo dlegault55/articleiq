@@ -347,14 +347,17 @@ export default function LandingPage() {
             <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9B9B98', margin:0, flexShrink:0 }}>Coming soon</p>
             <div style={{ display:'flex', gap:10, flexWrap:'wrap', flex:1 }}>
               {[
-                { name:'Freshdesk', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/freshdesk.svg', bg:'#25C16F' },
+                { name:'Freshdesk', logo:null, bg:'#25C16F', letter:'f' },
                 { name:'Intercom', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/intercom.svg', bg:'#1F8DED' },
                 { name:'Notion', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/notion.svg', bg:'#1A1A18' },
                 { name:'Confluence', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/confluence.svg', bg:'#0052CC' },
-              ].map(({ name, logo, bg }) => (
+              ].map(({ name, logo, bg, letter }) => (
                 <div key={name} style={{ display:'flex', alignItems:'center', gap:7, padding:'6px 12px', borderRadius:8, border:'1px solid #E8E8E6', background:'white' }}>
-                  <div style={{ width:20, height:20, borderRadius:5, background:bg, display:'flex', alignItems:'center', justifyContent:'center', padding:3, boxSizing:'border-box', flexShrink:0 }}>
-                    <img src={logo} alt={name} style={{ width:'100%', height:'100%', filter:'brightness(0) invert(1)' }} />
+                  <div style={{ width:20, height:20, borderRadius:5, background:bg, display:'flex', alignItems:'center', justifyContent:'center', padding:logo ? 3 : 0, boxSizing:'border-box', flexShrink:0 }}>
+                    {logo
+                      ? <img src={logo} alt={name} style={{ width:'100%', height:'100%', filter:'brightness(0) invert(1)' }} />
+                      : <span style={{ fontSize:11, fontWeight:800, color:'white', lineHeight:1 }}>{letter || name[0]}</span>
+                    }
                   </div>
                   <span style={{ fontSize:12, fontWeight:600, color:'#6B6B68' }}>{name}</span>
                 </div>
