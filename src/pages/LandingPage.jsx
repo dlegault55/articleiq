@@ -314,7 +314,7 @@ export default function LandingPage() {
                 name: 'Zendesk®',
                 logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/zendesk.svg',
                 bg: '#03363D',
-                desc: 'The world's most widely used customer support platform. Connect your help centre subdomain with a Guide Admin API token and scan your entire knowledge base in minutes.',
+                desc: "The world's most widely used customer support platform. Connect your help centre subdomain with a Guide Admin API token and scan your entire knowledge base in minutes.",
                 setup: 'Subdomain + Guide Admin API token',
               },
               {
