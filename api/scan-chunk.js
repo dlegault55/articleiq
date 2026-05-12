@@ -253,7 +253,8 @@ export default async function handler(req, res) {
 
     // Log what we're about to process
     console.log(`[scan-chunk] processing ${articles.length} articles for job ${scanJobId}`)
-
+    console.log(`[scan-chunk] savedIds already:`, [...savedIds])
+    console.log(`[scan-chunk] article IDs to process:`, articles.map(a => String(a.id)))
     // Process articles
     for (const article of articles) {
       if (savedIds.has(String(article.id))) continue // already saved, skip
