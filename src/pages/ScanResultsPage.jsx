@@ -580,7 +580,7 @@ function AIDrawer({ article, connector, onClose, userId, globalDismissed = new S
     return { quality, seo }
   }
 
-  const runImprove = async () => {
+  const runImprove = async (cleanupOnly = false) => {
     setImproving(true); setError(null)
     try {
       const source = editedText || improved || bodyHtml
@@ -636,6 +636,8 @@ function AIDrawer({ article, connector, onClose, userId, globalDismissed = new S
       }
 
       const analysisContext = lines.length ? lines.join(nl) : ''
+      if (cleanupOnly) lines.unshift('MODE: CLEANUP ONLY — fix grammar, formatting, and structure. Do NOT add any new information, steps, or details. The article is too thin for safe AI improvement.')
+
 
       const result = await callAI('improve', {
         content: source, title,
@@ -1190,20 +1192,78 @@ function AIDrawer({ article, connector, onClose, userId, globalDismissed = new S
           ) : (improved || editedText) && rewriteTab === 'changes' ? (
             <DiffView original={bodyHtml} revised={editedText || improved} originalTitle={article.title} revisedTitle={editedTitle} />
           ) : (
-            <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, padding:40, textAlign:'center' }}>
-              <div style={{ width:48, height:48, borderRadius:12, background:'var(--navy-light)', border:'1px solid var(--navy-border)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <Wand2 size={20} style={{ color:'var(--navy)' }} />
-              </div>
-              <p style={{ fontSize:13, fontWeight:600, color:'var(--text-2)', margin:0 }}>Ready to improve</p>
-              <p style={{ fontSize:12, color:'var(--text-3)', margin:0, maxWidth:220, lineHeight:1.6 }}>
-                Review the recommendations in the middle panel, then click <strong>Improve Article</strong> above to generate a targeted rewrite.
-              </p>
-              {!analysing && (
-                <button onClick={runImprove} disabled={improving} className="btn btn-primary btn-sm" style={{ marginTop:4 }}>
-                  <Wand2 size={12} /> Improve Article
-                </button>
-              )}
-            </div>
+            {(() => {
+              const wordCount = article.word_count || 0
+              const qualityScore = analysis?.quality?.score
+              const isThin = wordCount < 150 || (qualityScore != null && qualityScore < 35)
+
+              if (isThin) {
+                return (
+                  <div style={{ flex:1, overflowY:'auto', padding:'24px' }}>
+                    {/* Thin article warning */}
+                    <div style={{ padding:'16px', borderRadius:10, background:'#FFFBEB', border:'1px solid #FDE68A', marginBottom:16 }}>
+                      <div style={{ display:'flex', gap:10, marginBottom:8 }}>
+                        <AlertTriangle size={16} style={{ color:'#D97706', flexShrink:0, marginTop:1 }} />
+                        <p style={{ fontSize:13, fontWeight:700, color:'#92400E', margin:0 }}>This article needs a human, not AI</p>
+                      </div>
+                      <p style={{ fontSize:12, color:'#92400E', margin:'0 0 4px', lineHeight:1.6, paddingLeft:26 }}>
+                        {wordCount < 150
+                          ? `At ${wordCount} words, there isn't enough content for AI to work with safely.`
+                          : `This article scored ${qualityScore}/100 — there isn't enough substance for AI to improve meaningfully.`
+                        } Adding detail would require knowledge of your product that AI doesn't have — and guessing risks publishing incorrect information.
+                      </p>
+                    </div>
+
+                    {/* What's missing */}
+                    <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:10 }}>What this article likely needs</p>
+                    <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:20 }}>
+                      {[
+                        { label:'More context', desc:'Why does this issue happen? What causes it?' },
+                        { label:'Step-by-step instructions', desc:'Numbered steps a customer can follow to resolve it' },
+                        { label:'Expected outcome', desc:'What should the customer see when it works?' },
+                        { label:'What to do if it still fails', desc:'Escalation path or alternative solution' },
+                      ].map(({ label, desc }) => (
+                        <div key={label} style={{ display:'flex', gap:10, padding:'10px 12px', borderRadius:8, border:'1px solid var(--border-md)', background:'white' }}>
+                          <div style={{ width:6, height:6, borderRadius:'50%', background:'var(--amber)', flexShrink:0, marginTop:5 }} />
+                          <div>
+                            <p style={{ fontSize:12, fontWeight:700, color:'var(--text)', margin:'0 0 2px' }}>{label}</p>
+                            <p style={{ fontSize:11, color:'var(--text-3)', margin:0 }}>{desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Clean up option */}
+                    <div style={{ padding:'14px', borderRadius:10, border:'1px solid var(--border-md)', background:'var(--bg)' }}>
+                      <p style={{ fontSize:12, fontWeight:700, color:'var(--text)', margin:'0 0 4px' }}>Still want AI to help?</p>
+                      <p style={{ fontSize:11, color:'var(--text-3)', margin:'0 0 12px', lineHeight:1.6 }}>
+                        We can clean up grammar, formatting, and structure — but won't add any new information. Safe to use, but the article will still be thin.
+                      </p>
+                      <button onClick={() => runImprove(true)} disabled={improving || analysing} className="btn btn-secondary btn-sm" style={{ width:'100%', justifyContent:'center' }}>
+                        {improving ? <><Loader size={11} style={{ animation:'spin 0.7s linear infinite' }} /> Cleaning up...</> : <><Wand2 size={11} /> Clean up formatting only</>}
+                      </button>
+                    </div>
+                  </div>
+                )
+              }
+
+              return (
+                <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, padding:40, textAlign:'center' }}>
+                  <div style={{ width:48, height:48, borderRadius:12, background:'var(--navy-light)', border:'1px solid var(--navy-border)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    <Wand2 size={20} style={{ color:'var(--navy)' }} />
+                  </div>
+                  <p style={{ fontSize:13, fontWeight:600, color:'var(--text-2)', margin:0 }}>Ready to improve</p>
+                  <p style={{ fontSize:12, color:'var(--text-3)', margin:0, maxWidth:220, lineHeight:1.6 }}>
+                    Review the recommendations in the middle panel, then click <strong>Improve Article</strong> above to generate a targeted rewrite.
+                  </p>
+                  {!analysing && (
+                    <button onClick={runImprove} disabled={improving} className="btn btn-primary btn-sm" style={{ marginTop:4 }}>
+                      <Wand2 size={12} /> Improve Article
+                    </button>
+                  )}
+                </div>
+              )
+            })()}
           )}
         </div>
       </div>
