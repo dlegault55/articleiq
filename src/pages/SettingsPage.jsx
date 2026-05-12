@@ -7,6 +7,22 @@ import { supabase, signOut } from '@/lib/supabase'
 import { Loader, AlertOctagon, Trash2, CheckCircle } from 'lucide-react'
 
 const DEFAULT_SCAN = { outdated:true, wordCount:true, readability:false, labels:true, duplicates:true, links:true }
+
+const DEFAULT_REC_PREFS = {
+  internalLinks:   true,   // "Add internal links" suggestions
+  seoTitle:        true,   // SEO title suggestions
+  wordCountWarn:   true,   // Word count / thin content warnings
+  readabilityRec:  true,   // Readability / passive voice suggestions
+  seoGrade:        true,   // SEO grade and fixes entirely
+}
+
+const REC_PREF_CHECKS = [
+  { key:'internalLinks',  label:'Internal linking suggestions',  desc:'Recommendations to add links to related articles — disable if your KB is small or internal-only' },
+  { key:'seoTitle',       label:'SEO title suggestions',         desc:'Suggested rewrites for article titles — disable if your team does not control titles' },
+  { key:'wordCountWarn',  label:'Word count warnings',           desc:'Thin content flags for short articles — disable if you intentionally use short articles' },
+  { key:'readabilityRec', label:'Readability suggestions',       desc:'Passive voice, sentence length, and clarity fixes — disable if style is not a priority' },
+  { key:'seoGrade',       label:'SEO grade & fixes',             desc:'Full SEO analysis — disable if your KB is internal-only and SEO doesn't apply' },
+]
 const SCAN_CHECKS  = [
   { key:'outdated',    label:'Outdated articles',   desc:'Not updated in 180+ days' },
   { key:'wordCount',   label:'Thin content',         desc:'Under 150 words' },
@@ -59,6 +75,7 @@ export default function SettingsPage() {
 
   const [emailNotifs,    setEmailNotifs]    = useState(true)
   const [scanDefaults,   setScanDefaults]   = useState(DEFAULT_SCAN)
+  const [recPrefs,       setRecPrefs]       = useState(DEFAULT_REC_PREFS)
   const [saving,         setSaving]         = useState(null)
   const [deleting,       setDeleting]       = useState(false)
   const [confirmDelete,  setConfirmDelete]  = useState(false)
@@ -68,6 +85,7 @@ export default function SettingsPage() {
     setEmailNotifs(profile.email_notifications !== false)
     const saved = profile.scan_defaults || DEFAULT_SCAN
     setScanDefaults({ ...saved, links: true, duplicates: true })
+    setRecPrefs({ ...DEFAULT_REC_PREFS, ...(profile.rec_preferences || {}) })
   }, [profile])
 
   const save = async (field, value) => {
@@ -81,6 +99,12 @@ export default function SettingsPage() {
   }
 
   const toggleEmail = async (val) => { setEmailNotifs(val); await save('email_notifications', val) }
+
+  const toggleRecPref = async (key, val) => {
+    const updated = { ...recPrefs, [key]: val }
+    setRecPrefs(updated)
+    await save('rec_preferences', updated)
+  }
 
   const toggleScanDefault = async (key, val) => {
     const updated = { ...scanDefaults, [key]: val }
@@ -161,6 +185,19 @@ export default function SettingsPage() {
             </div>
           </Row>
         ))}
+      </Section>
+
+      <Section title="Recommendation preferences" desc="Control which types of AI recommendations appear in the analysis panel">
+        <div>
+          {REC_PREF_CHECKS.map(({ key, label, desc }, i, arr) => (
+            <Row key={key} label={label} desc={desc} border={i < arr.length - 1}>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                {saving===`rec_${key}` && <Loader size={12} style={{ color:'var(--navy)', animation:'spin 0.7s linear infinite' }} />}
+                <Toggle value={recPrefs[key] ?? true} onChange={val => toggleRecPref(key, val)} />
+              </div>
+            </Row>
+          ))}
+        </div>
       </Section>
 
       <Section title="Session">

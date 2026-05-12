@@ -1044,7 +1044,7 @@ function AIDrawer({ article, connector, onClose, userId }) {
                   <div>
                     <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:8 }}>{improved ? 'SEO fixes — check what needs manual action' : 'SEO fixes'}</p>
                     {[...analysis.seo.issues.map((item, i) => ({ item, i }))]
-                      .filter(({ item, i }) => !dismissedRecs.has(`s-${i}`) && !dismissedRecs.has(`dismissed:seo:${item.issue}`))
+                      .filter(({ item, i }) => !dismissedRecs.has(`s-${i}`) && !dismissedRecs.has(`dismissed:seo:${item.issue}`) && shouldShowRec(item.issue + ' ' + item.fix, 'seo'))
                       .sort((a, b) => {
                         const aAddressed = addressedRecs.has(`s-${a.i}`)
                         const bAddressed = addressedRecs.has(`s-${b.i}`)
@@ -1605,7 +1605,18 @@ export default function ScanResultsPage() {
 
   usePageTitle(scan ? `Scan report · ${format(new Date(scan.created_at), 'MMM d')}` : 'Scan results')
 
-  const isPaid = ['paid','pack','annual'].includes(profile?.plan)
+  const isPaid    = ['paid','pack','annual'].includes(profile?.plan)
+  const recPrefs  = profile?.rec_preferences || {}
+
+  // Filter a suggestion/issue based on rec preferences
+  const shouldShowRec = (text, type) => {
+    if (recPrefs.internalLinks === false && text?.toLowerCase().includes('internal link')) return false
+    if (recPrefs.seoTitle === false && type === 'seo_title') return false
+    if (recPrefs.wordCountWarn === false && text?.toLowerCase().match(/word|thin|short|length/)) return false
+    if (recPrefs.readabilityRec === false && text?.toLowerCase().match(/passive|readab|sentence|clarity|voice/)) return false
+    if (recPrefs.seoGrade === false && type === 'seo') return false
+    return true
+  }
 
   // Load connector for AI drawer
   useEffect(() => {
