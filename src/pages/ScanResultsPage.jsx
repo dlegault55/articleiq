@@ -1508,23 +1508,25 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
                 </div>
               </div>
             ) : (
-              // Paid state — clean action cards
-              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', margin:'0 0 4px' }}>Fix with ArticleIQ</p>
-                {AI_ACTIONS.map(({ key, label, desc, icon: Icon, action }) => (
-                  <div key={key} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', borderRadius:9, border:'1px solid var(--border-md)', background:'white' }}>
-                    <div style={{ width:30, height:30, borderRadius:7, background:'var(--navy-light)', border:'1px solid var(--navy-border)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                      <Icon size={14} style={{ color:'var(--navy)' }} />
+              // Paid state — prominent action card
+              <div>
+                <div style={{ borderRadius:12, overflow:'hidden', border:'1px solid var(--navy-border)', background:'linear-gradient(135deg, #1B2D5B 0%, #243d7a 100%)', padding:'14px 16px', position:'relative' }}>
+                  {/* Sparkle decoration */}
+                  <div style={{ position:'absolute', top:10, right:14, fontSize:16, opacity:0.4, pointerEvents:'none' }}>✦</div>
+                  <div style={{ position:'absolute', top:24, right:28, fontSize:9, opacity:0.25, pointerEvents:'none' }}>✦</div>
+                  <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+                    <div style={{ width:28, height:28, borderRadius:7, background:'rgba(255,255,255,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                      <Wand2 size={14} color="white" />
                     </div>
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <p style={{ fontSize:13, fontWeight:700, color:'var(--text)', margin:'0 0 2px' }}>{label}</p>
-                      <p style={{ fontSize:11, color:'var(--text-3)', margin:0, lineHeight:1.5 }}>{desc}</p>
+                    <div>
+                      <p style={{ fontSize:13, fontWeight:800, color:'white', margin:0, letterSpacing:-0.2 }}>Analyse & Improve</p>
+                      <p style={{ fontSize:10, color:'rgba(255,255,255,0.55)', margin:0 }}>Quality score, SEO grade, AI rewrite — all in one flow</p>
                     </div>
-                    <button onClick={() => onOpenDrawer(action)} className="btn btn-secondary btn-xs" style={{ flexShrink:0 }}>
-                      Open
-                    </button>
                   </div>
-                ))}
+                  <button onClick={() => onOpenDrawer('improve')} style={{ width:'100%', padding:'9px', borderRadius:8, background:'white', border:'none', cursor:'pointer', fontSize:13, fontWeight:700, color:'var(--navy)', fontFamily:'inherit', display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
+                    <Wand2 size={13} /> Open AI editor
+                  </button>
+                </div>
               </div>
             )}
           </div>
