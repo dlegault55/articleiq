@@ -297,56 +297,70 @@ export default function LandingPage() {
       </section>
 
       {/* ── Supported platforms ── */}
-      <section style={{ padding:'clamp(40px,6vw,64px) clamp(20px,5vw,48px)', borderTop:'1px solid #E8E8E6' }}>
-        <div style={{ maxWidth:960, margin:'0 auto', textAlign:'center' }}>
+      <section style={{ padding:'clamp(48px,7vw,80px) clamp(20px,5vw,48px)', borderTop:'1px solid #E8E8E6' }}>
+        <div style={{ maxWidth:960, margin:'0 auto' }}>
           <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.12em', color:'#9B9B98', marginBottom:12 }}>Supported platforms</p>
-          <h2 style={{ fontSize:'clamp(22px,3vw,30px)', fontWeight:800, color:'#1A1A18', letterSpacing:-0.5, marginBottom:8 }}>
-            Works with the tools your team already uses
+          <h2 style={{ fontSize:'clamp(24px,3.5vw,36px)', fontWeight:800, color:'#1A1A18', letterSpacing:-0.8, marginBottom:8 }}>
+            Works where your KB lives
           </h2>
-          <p style={{ fontSize:15, color:'#6B6B68', marginBottom:40, maxWidth:520, margin:'0 auto 40px' }}>
-            Connect in 2 minutes. No complex setup — just your API key and you're scanning.
+          <p style={{ fontSize:16, color:'#6B6B68', lineHeight:1.7, maxWidth:560, marginBottom:40 }}>
+            Connect in 2 minutes. No complex setup — just your API key and ArticleIQ starts scanning every article immediately.
           </p>
 
-          {/* Live */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, maxWidth:560, margin:'0 auto 32px' }}>
+          {/* Live platforms — big cards */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:20 }}>
             {[
-              { name:'Zendesk®', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/zendesk.svg', bg:'#03363D', desc:'Subdomain + Guide Admin API token' },
-              { name:'HelpScout', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/helpscout.svg', bg:'#1292EE', desc:'API key from your profile settings' },
-            ].map(({ name, logo, bg, desc }) => (
-              <div key={name} style={{ padding:'20px', borderRadius:14, border:'2px solid #E8E8E6', background:'white', display:'flex', flexDirection:'column', alignItems:'center', gap:12, position:'relative' }}>
-                <span style={{ position:'absolute', top:12, right:12, fontSize:9, fontWeight:800, padding:'3px 8px', borderRadius:20, background:'#E8F5E9', color:'#2E7D32', letterSpacing:'0.05em' }}>LIVE</span>
-                <div style={{ width:56, height:56, borderRadius:14, background:bg, display:'flex', alignItems:'center', justifyContent:'center', padding:12, boxSizing:'border-box' }}>
+              {
+                name: 'Zendesk®',
+                logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/zendesk.svg',
+                bg: '#03363D',
+                desc: 'The world's most widely used customer support platform. Connect your help centre subdomain with a Guide Admin API token and scan your entire knowledge base in minutes.',
+                setup: 'Subdomain + Guide Admin API token',
+              },
+              {
+                name: 'HelpScout',
+                logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/helpscout.svg',
+                bg: '#1292EE',
+                desc: 'A popular choice for customer-first teams. Connect with a single API key from your HelpScout profile — no subdomain, no complex permissions needed.',
+                setup: 'API key from your profile settings',
+              },
+            ].map(({ name, logo, bg, desc, setup }) => (
+              <div key={name} style={{ padding:'28px', borderRadius:16, border:'1px solid #E8E8E6', background:'white', position:'relative', overflow:'hidden' }}>
+                {/* Live badge */}
+                <span style={{ position:'absolute', top:20, right:20, fontSize:9, fontWeight:800, padding:'3px 10px', borderRadius:20, background:'#E8F5E9', color:'#2E7D32', letterSpacing:'0.07em' }}>● LIVE</span>
+                {/* Logo */}
+                <div style={{ width:52, height:52, borderRadius:13, background:bg, display:'flex', alignItems:'center', justifyContent:'center', padding:11, boxSizing:'border-box', marginBottom:16 }}>
                   <img src={logo} alt={name} style={{ width:'100%', height:'100%', filter:'brightness(0) invert(1)' }} />
                 </div>
-                <div>
-                  <p style={{ fontSize:15, fontWeight:800, color:'#1A1A18', margin:'0 0 3px' }}>{name}</p>
-                  <p style={{ fontSize:12, color:'#6B6B68', margin:0 }}>{desc}</p>
+                <p style={{ fontSize:18, fontWeight:800, color:'#1A1A18', margin:'0 0 8px', letterSpacing:-0.3 }}>{name}</p>
+                <p style={{ fontSize:14, color:'#6B6B68', lineHeight:1.7, margin:'0 0 16px' }}>{desc}</p>
+                <div style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 12px', borderRadius:8, background:'#F7F7F5', border:'1px solid #E8E8E6' }}>
+                  <span style={{ fontSize:11, color:'#9B9B98', fontWeight:600 }}>Setup:</span>
+                  <span style={{ fontSize:11, color:'#1A1A18', fontWeight:700 }}>{setup}</span>
                 </div>
               </div>
             ))}
           </div>
 
           {/* Coming soon */}
-          <div>
-            <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9B9B98', marginBottom:12 }}>Coming soon</p>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, flexWrap:'wrap' }}>
+          <div style={{ padding:'20px 24px', borderRadius:12, border:'1px solid #E8E8E6', background:'#FAFAF8', display:'flex', alignItems:'center', gap:16, flexWrap:'wrap' }}>
+            <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9B9B98', margin:0, flexShrink:0 }}>Coming soon</p>
+            <div style={{ display:'flex', gap:10, flexWrap:'wrap', flex:1 }}>
               {[
                 { name:'Freshdesk', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/freshdesk.svg', bg:'#25C16F' },
                 { name:'Intercom', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/intercom.svg', bg:'#1F8DED' },
                 { name:'Notion', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/notion.svg', bg:'#1A1A18' },
                 { name:'Confluence', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/confluence.svg', bg:'#0052CC' },
               ].map(({ name, logo, bg }) => (
-                <div key={name} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 14px', borderRadius:10, border:'1px solid #E8E8E6', background:'#FAFAF8', opacity:0.7 }}>
-                  <div style={{ width:24, height:24, borderRadius:6, background:bg, display:'flex', alignItems:'center', justifyContent:'center', padding:4, boxSizing:'border-box', flexShrink:0 }}>
+                <div key={name} style={{ display:'flex', alignItems:'center', gap:7, padding:'6px 12px', borderRadius:8, border:'1px solid #E8E8E6', background:'white' }}>
+                  <div style={{ width:20, height:20, borderRadius:5, background:bg, display:'flex', alignItems:'center', justifyContent:'center', padding:3, boxSizing:'border-box', flexShrink:0 }}>
                     <img src={logo} alt={name} style={{ width:'100%', height:'100%', filter:'brightness(0) invert(1)' }} />
                   </div>
-                  <span style={{ fontSize:13, fontWeight:600, color:'#6B6B68' }}>{name}</span>
+                  <span style={{ fontSize:12, fontWeight:600, color:'#6B6B68' }}>{name}</span>
                 </div>
               ))}
-              <a href="/contact" style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:10, border:'1px dashed #C8D4F0', background:'white', fontSize:13, fontWeight:600, color:'#1B2D5B', textDecoration:'none' }}>
-                + Request yours
-              </a>
             </div>
+            <a href="/contact" style={{ fontSize:12, fontWeight:700, color:'#1B2D5B', textDecoration:'none', flexShrink:0 }}>Request yours →</a>
           </div>
         </div>
       </section>
