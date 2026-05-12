@@ -368,12 +368,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Why not just use Claude ── */}
+      {/* ── Built for KB teams ── */}
       <section style={{ padding:'clamp(32px,6vw,60px) clamp(20px,5vw,48px)', background:'white', borderTop:'1px solid #E8E8E6', borderBottom:'1px solid #E8E8E6' }}>
         <div style={{ maxWidth:800, margin:'0 auto' }}>
           <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9B9B98', textAlign:'center', marginBottom:12 }}>Why ArticleIQ</p>
-          <h2 style={{ fontSize:32, fontWeight:800, textAlign:'center', letterSpacing:-0.8, marginBottom:8, color:'#1A1A18' }}>Why not just paste articles into Claude?</h2>
-          <p style={{ fontSize:15, color:'#6B6B68', textAlign:'center', marginBottom:40, maxWidth:520, margin:'0 auto 40px' }}>You could. But you'd do it one article at a time, manually, with no history, no scores, and no way to get the result back into your knowledge base without copy-pasting.</p>
+          <h2 style={{ fontSize:32, fontWeight:800, textAlign:'center', letterSpacing:-0.8, marginBottom:8, color:'#1A1A18' }}>Built specifically for knowledge base teams</h2>
+          <p style={{ fontSize:15, color:'#6B6B68', textAlign:'center', marginBottom:40, maxWidth:560, margin:'0 auto 40px' }}>Generic AI tools don't know your KB exists. ArticleIQ connects directly to your platform, scans every article at once, tracks health over time, and publishes improvements back — no copy-pasting, no context switching, no lost work.</p>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
             {[
               { title:'Scans your entire KB at once', desc:'Hundreds or thousands of articles in a single scan. Claude requires you to copy-paste each one individually.', icon:Scan },
