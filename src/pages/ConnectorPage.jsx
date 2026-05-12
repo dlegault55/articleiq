@@ -38,6 +38,28 @@ const PLATFORMS = [
   { id: 'confluence',name: 'Confluence', description: 'Scan your Confluence space', available: false },
 ]
 
+
+const PLATFORM_LOGOS = {
+  zendesk:  { logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/zendesk.svg',   bg: '#03363D' },
+  helpscout:{ logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/helpscout.svg', bg: '#1292EE' },
+  freshdesk:{ logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/freshdesk.svg', bg: '#25C16F' },
+  intercom: { logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/intercom.svg',  bg: '#1F8DED' },
+  notion:   { logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/notion.svg',    bg: '#1A1A18' },
+  confluence:{ logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/confluence.svg', bg: '#0052CC' },
+}
+
+function PlatformLogo({ platform, size = 32 }) {
+  const cfg = PLATFORM_LOGOS[platform] || {}
+  return (
+    <div style={{ width:size, height:size, borderRadius: size * 0.25, background: cfg.bg || 'var(--navy-light)', display:'flex', alignItems:'center', justifyContent:'center', padding: size * 0.18, boxSizing:'border-box', flexShrink:0, border: cfg.bg ? 'none' : '1px solid var(--navy-border)' }}>
+      {cfg.logo
+        ? <img src={cfg.logo} alt={platform} style={{ width:'100%', height:'100%', filter:'brightness(0) invert(1)' }} />
+        : <span style={{ fontSize: size * 0.35, fontWeight:800, color:'white' }}>{(platform||'?')[0].toUpperCase()}</span>
+      }
+    </div>
+  )
+}
+
 function TokenGuide() {
   const [open, setOpen] = useState(false)
   return (
@@ -102,7 +124,7 @@ function ConnectorCard({ connector, onRemove, onRemoveWithHistory }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 38, height: 38, borderRadius: 9, background: 'var(--navy-light)', border: '1px solid var(--navy-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Plug size={16} style={{ color: 'var(--navy)' }} />
+<PlatformLogo platform={connector.platform || 'zendesk'} size={32} />
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
@@ -286,7 +308,7 @@ export default function ConnectorPage() {
                 onMouseEnter={e => p.available && (e.currentTarget.style.borderColor = 'var(--navy-border)')}
                 onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-md)'}>
                 <div style={{ width: 32, height: 32, borderRadius: 8, background: p.available ? 'var(--navy-light)' : 'var(--bg)', border: `1px solid ${p.available ? 'var(--navy-border)' : 'var(--border-md)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Plug size={15} style={{ color: p.available ? 'var(--navy)' : 'var(--text-3)' }} />
+<PlatformLogo platform={p.id} size={22} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: '0 0 1px' }}>{p.name}</p>
@@ -306,7 +328,7 @@ export default function ConnectorPage() {
         <div className="animate-in">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 7, background: 'var(--navy-light)', border: '1px solid var(--navy-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plug size={13} style={{ color: 'var(--navy)' }} /></div>
+<PlatformLogo platform='zendesk' size={28} />
               <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Connect Zendesk®</p>
             </div>
             <button onClick={() => { setSelectedPlat(null); setForm({}) }} className="btn btn-ghost btn-xs" style={{ color: 'var(--text-3)' }}>Cancel</button>
@@ -361,7 +383,7 @@ export default function ConnectorPage() {
         <div className="animate-in">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 7, background: 'var(--navy-light)', border: '1px solid var(--navy-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plug size={13} style={{ color: 'var(--navy)' }} /></div>
+<PlatformLogo platform='helpscout' size={28} />
               <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Connect HelpScout</p>
             </div>
             <button onClick={() => { setSelectedPlat(null); setForm({}) }} className="btn btn-ghost btn-xs" style={{ color: 'var(--text-3)' }}>Cancel</button>
