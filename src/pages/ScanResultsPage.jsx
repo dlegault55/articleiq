@@ -517,6 +517,7 @@ function AIDrawer({ article, connector, onClose, userId }) {
   const [confirmPub,  setConfirmPub]  = useState(false)
   const [reanalysing, setReanalysing] = useState(false)
   const [rewriteTab,   setRewriteTab]   = useState('edit')  // 'edit' | 'changes'
+  const [leftTab,      setLeftTab]      = useState('recommendations')  // 'original' | 'recommendations'
   const [addressedRecs,  setAddressedRecs]  = useState(new Set())
   const [dismissedRecs,  setDismissedRecs]  = useState(new Set())
   const [overrideRecs,   setOverrideRecs]   = useState(new Set()) // user-marked as NOT fixed despite AI saying so
@@ -831,23 +832,32 @@ function AIDrawer({ article, connector, onClose, userId }) {
         )}
       </div>
 
-      {/* ── Three panes ── */}
-      <div style={{ flex:1, display:'grid', gridTemplateColumns:'1fr 320px 1fr', overflow:'hidden' }}>
+      {/* ── Two panes ── */}
+      <div style={{ flex:1, display:'grid', gridTemplateColumns:'380px 1fr', overflow:'hidden' }}>
 
-        {/* Pane 1 — Original article */}
+        {/* Pane 1 — Tabbed: Recommendations | Original */}
         <div style={{ display:'flex', flexDirection:'column', borderRight:'1px solid var(--border-md)', overflow:'hidden' }}>
-          <PanelHeader icon={BookOpen} label="Original Article" />
-          <div style={{ flex:1, overflowY:'auto', padding:'16px' }}>
-            <p style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 4px' }}>Title</p>
-            <p style={{ fontSize:14, fontWeight:700, color:'var(--text)', margin:'0 0 16px', lineHeight:1.4 }}>{article.title}</p>
-            <div className="article-html" dangerouslySetInnerHTML={{ __html: bodyHtml || '<p style="color:var(--text-3)">Loading article...</p>' }} />
+          {/* Tab header */}
+          <div style={{ display:'flex', borderBottom:'1px solid var(--border-md)', flexShrink:0, background:'white' }}>
+            {[
+              { id:'recommendations', label:'Recommendations', icon: BarChart2 },
+              { id:'original',        label:'Original',        icon: BookOpen },
+            ].map(({ id, label, icon: Icon }) => (
+              <button key={id} onClick={() => setLeftTab(id)}
+                style={{ display:'flex', alignItems:'center', gap:6, padding:'10px 16px', fontSize:11, fontWeight: leftTab===id ? 700 : 500,
+                  color: leftTab===id ? 'var(--navy)' : 'var(--text-3)',
+                  background:'none', border:'none', borderBottom: leftTab===id ? '2px solid var(--navy)' : '2px solid transparent',
+                  cursor:'pointer', fontFamily:'inherit', marginBottom:-1 }}>
+                <Icon size={12} />
+                {label}
+              </button>
+            ))}
           </div>
-        </div>
 
-        {/* Pane 2 — Recommendations (narrow) */}
-        <div style={{ display:'flex', flexDirection:'column', borderRight:'1px solid var(--border-md)', overflow:'hidden', background:'#FAFAF8' }}>
-          <PanelHeader icon={BarChart2} label="Recommendations" color="var(--navy)" bg="var(--navy-light)" border="var(--navy-border)" />
-          <div style={{ flex:1, overflowY:'auto', padding:'12px' }}>
+          {/* Recommendations tab */}
+          {leftTab === 'recommendations' && (
+            <div style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden' }}>
+              <div style={{ flex:1, overflowY:'auto', padding:'12px' }}>
             {analysing && (
               <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, padding:'40px 0', textAlign:'center' }}>
                 <Loader size={20} style={{ animation:'spin 0.8s linear infinite', color:'var(--navy)' }} />
@@ -1130,10 +1140,21 @@ function AIDrawer({ article, connector, onClose, userId }) {
                 )}
               </>
             )}
-          </div>
+              </div>
+            </div>
+          )}
+
+          {/* Original tab */}
+          {leftTab === 'original' && (
+            <div style={{ flex:1, overflowY:'auto', padding:'16px' }}>
+              <p style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.06em', margin:'0 0 4px' }}>Title</p>
+              <p style={{ fontSize:14, fontWeight:700, color:'var(--text)', margin:'0 0 16px', lineHeight:1.4 }}>{article.title}</p>
+              <div className="article-html" dangerouslySetInnerHTML={{ __html: bodyHtml || '<p style="color:var(--text-3)">Loading article...</p>' }} />
+            </div>
+          )}
         </div>
 
-        {/* Pane 3 — AI Rewrite */}
+        {/* Pane 2 — AI Rewrite */}
         <div style={{ display:'flex', flexDirection:'column', overflow:'hidden' }}>
 
           {/* Header with tabs */}
