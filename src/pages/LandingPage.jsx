@@ -376,10 +376,11 @@ export default function LandingPage() {
           <p style={{ fontSize:15, color:'#6B6B68', textAlign:'center', marginBottom:40, maxWidth:560, margin:'0 auto 40px' }}>Generic AI tools don't know your KB exists. ArticleIQ connects directly to your platform, scans every article at once, tracks health over time, and publishes improvements back — no copy-pasting, no context switching, no lost work.</p>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
             {[
-              { title:'Scans your entire KB at once', desc:'Hundreds or thousands of articles in a single scan — broken links, outdated content, thin articles, duplicates — all surfaced in one health report.', icon:Scan },
+              { title:'Scans your entire KB at once', desc:'Hundreds or thousands of articles in a single scan — broken links, outdated content, thin articles, duplicates — all surfaced in one health report. Thin articles get flagged for human attention, not AI guesswork.', icon:Scan },
               { title:'Live broken link detection', desc:'Every hyperlink and image in every article is checked with a real HTTP request. Dead links flagged as critical. Your customers never hit a dead end.', icon:Link2 },
               { title:'Health trend over time', desc:'Track your KB health score across scans and see whether things are getting better or worse. Know exactly where to focus next.', icon:TrendingUp },
               { title:'Publishes directly back', desc:'The AI-improved article goes straight back to Zendesk® or HelpScout with one click. No copy-pasting, no reformatting, no tab switching.', icon:Globe },
+              { title:'Honest about what AI can\'t do', desc:'Thin or low-quality articles get flagged for human rewriting — not padded with AI-generated content that could be wrong. We tell you exactly what\'s missing.', icon:AlertTriangle },
               { title:'Critical issues surface first', desc:'Severity-ordered results — broken things before imperfect things. Filters, badges, and per-article scores so your team knows exactly what to fix first.', icon:BarChart2 },
               { title:'Label suggestions with one click', desc:'AI reads the article and suggests the right labels. Publish them directly to your KB — your existing labels are always preserved.', icon:Tag },
             ].map(({ title, desc, icon: Icon }) => (

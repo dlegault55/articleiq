@@ -147,7 +147,7 @@ export default function HelpPage() {
             },
             {
               title: 'Improve Article',
-              desc: 'Generates a targeted rewrite informed by the specific quality and SEO findings — not a generic grammar pass. Detects the article type (troubleshooting, how-to, FAQ, release note) and applies the correct structure. All images, links, code blocks, and tables are preserved exactly.',
+              desc: 'Generates a targeted rewrite informed by the specific quality and SEO findings — not a generic grammar pass. Detects the article type (troubleshooting, how-to, FAQ, release note) and applies the correct structure. All images, links, code blocks, and tables are preserved exactly. For thin or low-scoring articles, ArticleIQ will tell you the article needs a human rewrite rather than attempting to improve content it cannot safely expand.',
             },
             {
               title: 'Dismissing recommendations',
@@ -212,6 +212,9 @@ export default function HelpPage() {
           a="No. ArticleIQ is fully read-only. We never write to your knowledge base unless you explicitly click Publish in the AI drawer. Nothing is changed automatically." />
         <FAQ q="Why does the scan need the tab to stay open?"
           a="Scans run in your browser rather than on a server. Keep the tab active while scanning — you'll get an email when it's done." />
+        <FAQ q="What happens if an article is too short or low quality for AI to improve?"
+          a={<span>If an article scores below 35/100 or has fewer than 150 words, ArticleIQ will flag it as <strong>needing a human rewrite</strong> rather than running AI on it. The rewrite panel explains exactly what the article is missing — context, steps, expected outcome, escalation path — so you know what to write. A <strong>Clean up formatting only</strong> option is still available if you want AI to fix grammar and structure without adding any new content. This is intentional: AI improvising on thin articles risks publishing inaccurate information.</span>} />
+
         <FAQ q="Which platforms does ArticleIQ support?"
           a={<span>ArticleIQ currently supports <strong>Zendesk®</strong> and <strong>HelpScout</strong>. Go to Connectors → choose your platform → follow the setup steps. More connectors are in the roadmap — if your platform isn't listed, <a href="/contact" style={{color:"var(--navy)"}}>let us know</a> and we'll prioritise it.</span>} />
 
