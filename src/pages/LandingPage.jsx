@@ -93,7 +93,7 @@ export default function LandingPage() {
               { stat:'30%', label:'of support tickets', sub:'could be prevented by a well-maintained knowledge base — customers find answers instead of calling' },
               { stat:'$15–25', label:'per support ticket', sub:'average handling cost, not including customer frustration and churn risk' },
               { stat:'2 mins', label:'to connect ArticleIQ', sub:'and get a full health report for your entire knowledge base' },
-              { stat:'Zendesk® + HelpScout', label:'supported platforms', sub:'with more connectors coming soon' },
+              { stat:'2 platforms', label:'Zendesk® & HelpScout', sub:'Freshdesk, Intercom & more coming soon' },
             ].map(({ stat, label, sub }) => (
               <div key={stat} style={{ padding:'24px 20px', borderRadius:12, background:'#F7F7F5', border:'1px solid #E8E8E6', textAlign:'left' }}>
                 <div style={{ fontSize:36, fontWeight:800, color:'#1B2D5B', letterSpacing:-1, marginBottom:4 }}>{stat}</div>
