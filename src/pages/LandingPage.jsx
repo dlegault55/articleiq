@@ -93,7 +93,7 @@ export default function LandingPage() {
               { stat:'30%', label:'of support tickets', sub:'could be prevented by a well-maintained knowledge base — customers find answers instead of calling' },
               { stat:'$15–25', label:'per support ticket', sub:'average handling cost, not including customer frustration and churn risk' },
               { stat:'2 mins', label:'to connect ArticleIQ', sub:'and get a full health report for your entire knowledge base' },
-              { stat:'2 platforms', label:'Zendesk® & HelpScout', sub:'Freshdesk, Intercom & more coming soon' },
+
             ].map(({ stat, label, sub }) => (
               <div key={stat} style={{ padding:'24px 20px', borderRadius:12, background:'#F7F7F5', border:'1px solid #E8E8E6', textAlign:'left' }}>
                 <div style={{ fontSize:36, fontWeight:800, color:'#1B2D5B', letterSpacing:-1, marginBottom:4 }}>{stat}</div>
@@ -296,6 +296,37 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Works with ── */}
+      <section style={{ padding:'16px clamp(20px,5vw,48px)', borderTop:'1px solid #E8E8E6', borderBottom:'1px solid #E8E8E6', background:'#FAFAF8' }}>
+        <div style={{ maxWidth:960, margin:'0 auto', display:'flex', alignItems:'center', gap:20, flexWrap:'wrap', justifyContent:'center' }}>
+          <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9B9B98', margin:0, flexShrink:0 }}>Supported platforms</p>
+          <div style={{ width:1, height:28, background:'#E8E8E6', flexShrink:0 }} />
+
+          {/* Live platforms */}
+          {[
+            { name:'Zendesk®', bg:'#03363D', live:true },
+            { name:'HelpScout', bg:'#1292EE', live:true },
+          ].map(({ name, bg, live }) => (
+            <div key={name} style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <div style={{ width:28, height:28, borderRadius:7, background:bg, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <span style={{ fontSize:10, fontWeight:800, color:'white' }}>{name[0]}</span>
+              </div>
+              <span style={{ fontSize:13, fontWeight:700, color:'#1A1A18' }}>{name}</span>
+              <span style={{ fontSize:9, fontWeight:700, padding:'2px 7px', borderRadius:20, background:'#E8F5E9', color:'#2E7D32' }}>Live</span>
+            </div>
+          ))}
+
+          <div style={{ width:1, height:28, background:'#E8E8E6', flexShrink:0 }} />
+          <p style={{ fontSize:11, fontWeight:600, color:'#9B9B98', margin:0, flexShrink:0 }}>Coming soon</p>
+
+          {['Freshdesk', 'Intercom', 'Notion', 'Confluence'].map(name => (
+            <span key={name} style={{ fontSize:12, fontWeight:600, color:'#9B9B98', padding:'3px 10px', borderRadius:20, border:'1px solid #E8E8E6', background:'white' }}>{name}</span>
+          ))}
+
+          <a href="/contact" style={{ fontSize:11, color:'#1B2D5B', fontWeight:600, textDecoration:'none', marginLeft:4 }}>+ Request yours</a>
+        </div>
+      </section>
+
       {/* ── Why not just use Claude ── */}
       <section style={{ padding:'clamp(32px,6vw,60px) clamp(20px,5vw,48px)', background:'white', borderTop:'1px solid #E8E8E6', borderBottom:'1px solid #E8E8E6' }}>
         <div style={{ maxWidth:800, margin:'0 auto' }}>
@@ -430,84 +461,6 @@ export default function LandingPage() {
             Scan your knowledge base free <ArrowRight size={16} />
           </Link>
           <p style={{ fontSize:12, color:'#9B9B98', marginTop:12 }}>No credit card · 300 articles free · Connects in 2 minutes</p>
-        </div>
-      </section>
-
-      {/* ── Works with ── */}
-      <section style={{ padding:'clamp(32px,5vw,48px) clamp(20px,5vw,48px)', borderTop:'1px solid #E8E8E6' }}>
-        <div style={{ maxWidth:960, margin:'0 auto', textAlign:'center' }}>
-          <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9B9B98', marginBottom:32 }}>Works with your knowledge base</p>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:32, flexWrap:'wrap', marginBottom:32 }}>
-
-            {/* Zendesk */}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
-              <div style={{ width:56, height:56, borderRadius:14, background:'#03363D', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <svg width="32" height="32" viewBox="0 0 33 32" fill="none">
-                  <path d="M16.5 11.2c0-3.1-2.5-5.7-5.7-5.7s-5.7 2.5-5.7 5.7v15.1h11.4V11.2z" fill="white"/>
-                  <path d="M16.5 6.9c0 3.1 2.5 5.7 5.7 5.7s5.7-2.5 5.7-5.7S25.3 1.2 22.2 1.2s-5.7 2.6-5.7 5.7z" fill="white" opacity="0.7"/>
-                  <path d="M27.9 11.2H16.5v15.1h11.4V11.2z" fill="white" opacity="0.5"/>
-                </svg>
-              </div>
-              <p style={{ fontSize:13, fontWeight:700, color:'#1A1A18', margin:0 }}>Zendesk®</p>
-              <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20, background:'#E8F5E9', color:'#2E7D32' }}>Live</span>
-            </div>
-
-            {/* HelpScout */}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
-              <div style={{ width:56, height:56, borderRadius:14, background:'#1292EE', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                  <circle cx="16" cy="16" r="12" fill="white" opacity="0.2"/>
-                  <path d="M10 16c0-3.3 2.7-6 6-6s6 2.7 6 6-2.7 6-6 6-6-2.7-6-6z" fill="white"/>
-                  <circle cx="16" cy="16" r="3" fill="#1292EE"/>
-                </svg>
-              </div>
-              <p style={{ fontSize:13, fontWeight:700, color:'#1A1A18', margin:0 }}>HelpScout</p>
-              <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20, background:'#E8F5E9', color:'#2E7D32' }}>Live</span>
-            </div>
-
-            <div style={{ width:1, height:60, background:'#E8E8E6' }} />
-
-            {/* Freshdesk */}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10, opacity:0.5 }}>
-              <div style={{ width:56, height:56, borderRadius:14, background:'#25C16F', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                  <rect x="8" y="8" width="16" height="16" rx="4" fill="white" opacity="0.9"/>
-                  <path d="M12 13h8M12 16h6M12 19h4" stroke="#25C16F" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <p style={{ fontSize:13, fontWeight:700, color:'#1A1A18', margin:0 }}>Freshdesk</p>
-              <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20, background:'#F5F5F5', color:'#9B9B98' }}>Coming soon</span>
-            </div>
-
-            {/* Intercom */}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10, opacity:0.5 }}>
-              <div style={{ width:56, height:56, borderRadius:14, background:'#1F8DED', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                  <rect x="6" y="8" width="20" height="14" rx="3" fill="white" opacity="0.9"/>
-                  <path d="M10 13h12M10 17h8" stroke="#1F8DED" strokeWidth="1.5" strokeLinecap="round"/>
-                  <path d="M10 22l3-3" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <p style={{ fontSize:13, fontWeight:700, color:'#1A1A18', margin:0 }}>Intercom</p>
-              <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20, background:'#F5F5F5', color:'#9B9B98' }}>Coming soon</span>
-            </div>
-
-            {/* Notion */}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10, opacity:0.5 }}>
-              <div style={{ width:56, height:56, borderRadius:14, background:'#1A1A18', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                  <rect x="5" y="4" width="18" height="20" rx="2" fill="white"/>
-                  <path d="M9 9h10M9 13h10M9 17h6" stroke="#1A1A18" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <p style={{ fontSize:13, fontWeight:700, color:'#1A1A18', margin:0 }}>Notion</p>
-              <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20, background:'#F5F5F5', color:'#9B9B98' }}>Coming soon</span>
-            </div>
-
-          </div>
-          <p style={{ fontSize:12, color:'#9B9B98', margin:0 }}>
-            Missing your platform? <a href="/contact" style={{ color:'#1B2D5B', fontWeight:600, textDecoration:'none' }}>Let us know →</a>
-          </p>
         </div>
       </section>
 
