@@ -1440,7 +1440,7 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
               </div>
               <a href={article.url} target="_blank" rel="noreferrer"
                 className="btn btn-secondary btn-sm" style={{ flexShrink:0 }}>
-                <ExternalLink size={13} /> Open in Zendesk®
+                <ExternalLink size={13} /> {connector?.platform === 'helpscout' ? 'Open in HelpScout' : 'Open in Zendesk®'}
               </a>
             </div>
           )}
