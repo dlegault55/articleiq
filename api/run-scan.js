@@ -242,10 +242,9 @@ export default async function handler(req, res) {
 async function runScanAsync({ scanJobId, userId, connector, preset }) {
   const { subdomain, api_key_encrypted: apiKey } = connector
 
-  // Fetch articles — platform aware
-  const articles = connector.platform === 'helpscout'
-    ? await fetchHelpScoutArticles(connector.api_key_encrypted, connector.published_only !== false)
-    : await fetchZendeskArticles(subdomain, apiKey)
+  // Fetch articles via platform adapter
+  const platformAdapter = await import(`./platforms/${connector.platform || 'zendesk'}.js`)
+  const articles = await platformAdapter.fetchArticles(connector)
 
   await supabase.from('scan_jobs').update({
     total_articles: articles.length,

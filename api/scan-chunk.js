@@ -212,64 +212,9 @@ export default async function handler(req, res) {
     }).eq('id', scanJobId)
 
     // Fetch articles — platform-aware
-    let articles = [], totalCount = 0, hasMore = false
-
-    if (connector.platform === 'helpscout') {
-      const authHeader = `Basic ${Buffer.from(`${connector.api_key_encrypted}:X`).toString('base64')}`
-      const base = 'https://docsapi.helpscout.net/v1'
-      const status = connector.published_only !== false ? 'published' : 'all'
-
-      // Get collections list once (page 1 only)
-      const colRes = await fetch(`${base}/collections?pageSize=100`, { headers: { Authorization: authHeader } })
-      if (!colRes.ok) throw new Error(`HelpScout collections API error ${colRes.status}`)
-      const colData = await colRes.json()
-      const collections = colData.collections?.items || []
-
-      if (collections.length === 0) {
-        articles = []; totalCount = 0; hasMore = false
-      } else {
-        // Use page as collection index — fetch one collection per chunk
-        const colIndex = page - 1
-        const col = collections[colIndex]
-
-        if (col) {
-          const artRes = await fetch(`${base}/collections/${col.id}/articles?pageSize=100&status=${status}`, {
-            headers: { Authorization: authHeader }
-          })
-          if (!artRes.ok) throw new Error(`HelpScout articles API error ${artRes.status}`)
-          const artData = await artRes.json()
-          articles = (artData.articles?.items || []).map(a => ({
-            id: a.id,
-            title: a.name,
-            body: a.text || '',
-            html_url: a.url,
-            updated_at: a.updatedAt,
-            label_names: [],
-            locale: 'en-us',
-            section_id: col.id,
-            author_id: a.createdBy?.id,
-            draft: a.status !== 'published',
-          }))
-          totalCount = collections.reduce((sum, c) => sum + (c.articleCount || 0), 0)
-          hasMore = colIndex < collections.length - 1
-        } else {
-          articles = []; hasMore = false
-        }
-      }
-    } else {
-      // Zendesk
-      const authHeader = `Basic ${Buffer.from(connector.api_key_encrypted).toString('base64')}`
-      const draftFilter = connector.published_only !== false ? '&draft=false' : ''
-      const zdRes = await fetch(
-        `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles?per_page=${PER_PAGE}&page=${page}${draftFilter}`,
-        { headers: { Authorization: authHeader } }
-      )
-      if (!zdRes.ok) throw new Error(`Zendesk API error ${zdRes.status}`)
-      const zdData = await zdRes.json()
-      articles = zdData.articles || []
-      totalCount = zdData.count || 0
-      hasMore = !!zdData.next_page
-    }
+    // Use platform adapter for article fetching
+    const platformAdapter = await import(`./platforms/${connector.platform || 'zendesk'}.js`)
+    const { articles, totalCount, hasMore } = await platformAdapter.fetchArticlesChunk(connector, page, PER_PAGE)
 
     // Set total on first page
     if (page === 1) {

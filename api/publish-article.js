@@ -1,115 +1,34 @@
 import { createClient } from '@supabase/supabase-js'
-import { requireAuth, sanitizeHtml } from './_auth.js'
+import { requireAuth } from './_auth.js'
+import sanitizeHtml from 'sanitize-html'
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+  if (req.method !== 'POST') return res.status(405).end()
 
   let auth
-  try {
-    auth = await requireAuth(req)
-  } catch (e) {
-    return res.status(e.status || 401).json({ error: e.message })
-  }
+  try { auth = await requireAuth(req) } catch (e) { return res.status(401).json({ error: e.message }) }
 
-  const { connectorId, articleId, html, title, locale = 'en-us' } = req.body
-  if (!connectorId || !articleId || !html) {
-    return res.status(400).json({ error: 'Missing required fields' })
-  }
+  const { connectorId, articleId, title, html } = req.body
+  if (!connectorId || !articleId || !html) return res.status(400).json({ error: 'Missing required fields' })
 
-  if (html.length > 500000) {
-    return res.status(400).json({ error: 'Content too large' })
-  }
+  const { data: connector } = await supabase
+    .from('kb_connectors').select('*')
+    .eq('id', connectorId).eq('user_id', auth.userId).single()
+  if (!connector) return res.status(404).json({ error: 'Connector not found' })
 
   try {
-    const { data: connector } = await supabase
-      .from('kb_connectors').select('*')
-      .eq('id', connectorId).eq('user_id', auth.userId).single()
-    if (!connector) return res.status(404).json({ error: 'Connector not found' })
-
-    const safeHtml = sanitizeHtml(html)
-
-    // HelpScout publish
-    if (connector.platform === 'helpscout') {
-      const authHeader = `Basic ${Buffer.from(`${connector.api_key_encrypted}:X`).toString('base64')}`
-      const updateRes = await fetch(`https://docsapi.helpscout.net/v1/articles/${articleId}`, {
-        method: 'PUT',
-        headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: title, text: safeHtml, status: 'published' }),
-      })
-      if (!updateRes.ok) {
-        const err = await updateRes.text()
-        return res.status(500).json({ error: `HelpScout publish failed: ${updateRes.status} ${err.slice(0,200)}` })
-      }
-      return res.status(200).json({ success: true, method: 'helpscout' })
-    }
-
-    // Zendesk publish
-    const authHeader = `Basic ${Buffer.from(connector.api_key_encrypted).toString('base64')}`
-    const base = `https://${connector.subdomain}.zendesk.com`
-
-    // Step 1: fetch article to get actual locale
-    const articleRes = await fetch(`${base}/api/v2/help_center/articles/${articleId}`, {
-      headers: { Authorization: authHeader }
+    const safeHtml = sanitizeHtml(html, {
+      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'figure', 'figcaption', 'video', 'source']),
+      allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['class', 'style', 'id', 'data-*'], img: ['src', 'alt', 'width', 'height'], a: ['href', 'target', 'rel'], video: ['src', 'controls', 'width', 'height'], source: ['src', 'type'] },
     })
 
-    if (!articleRes.ok) {
-      const txt = await articleRes.text()
-      return res.status(500).json({ error: `Could not fetch article: ${articleRes.status} ${txt.slice(0,200)}` })
-    }
+    const platform = await import(`./platforms/${connector.platform || 'zendesk'}.js`)
+    const result = await platform.publishArticle(connector, articleId, title, safeHtml)
 
-    const articleData = await articleRes.json()
-    const actualLocale = articleData.article?.locale || locale
-    const sourceLocale = articleData.article?.source_locale || actualLocale
-
-    console.log('Article locale:', actualLocale, 'Source locale:', sourceLocale)
-
-    // Step 2: update via translations endpoint using source locale
-    const translationRes = await fetch(
-      `${base}/api/v2/help_center/articles/${articleId}/translations/${sourceLocale}`,
-      {
-        method: 'PUT',
-        headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ translation: { title: title || undefined, body: safeHtml } }),
-      }
-    )
-
-    if (translationRes.ok) {
-      return res.status(200).json({ success: true, method: 'translations', locale: sourceLocale })
-    }
-
-    const translationErr = await translationRes.text()
-    console.log('Translations endpoint failed:', translationRes.status, translationErr)
-
-    // Step 3: try the locale-based article update endpoint
-    const localeRes = await fetch(
-      `${base}/api/v2/help_center/${sourceLocale}/articles/${articleId}`,
-      {
-        method: 'PUT',
-        headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ article: { title: title || undefined, body: safeHtml } }),
-      }
-    )
-
-    if (localeRes.ok) {
-      return res.status(200).json({ success: true, method: 'locale', locale: sourceLocale })
-    }
-
-    const localeErr = await localeRes.text()
-    console.log('Locale endpoint failed:', localeRes.status, localeErr)
-
-    // Return detailed error so we can see what Zendesk is actually saying
-    return res.status(500).json({
-      error: `Zendesk® rejected both endpoints`,
-      translationsStatus: translationRes.status,
-      translationsBody: translationErr.slice(0, 500),
-      localeStatus: localeRes.status,
-      localeBody: localeErr.slice(0, 500),
-      articleLocale: actualLocale,
-      sourceLocale,
-    })
-
+    if (!result.success) return res.status(500).json({ error: result.error })
+    return res.status(200).json({ success: true, method: result.method })
   } catch (err) {
     console.error('publish-article error:', err.message)
     return res.status(500).json({ error: err.message })
