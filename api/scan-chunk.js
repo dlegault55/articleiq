@@ -215,6 +215,8 @@ export default async function handler(req, res) {
     // Use platform adapter for article fetching
     const platformAdapter = await import(`./platforms/${connector.platform || 'zendesk'}.js`)
     const { articles, totalCount, hasMore } = await platformAdapter.fetchArticlesChunk(connector, page, PER_PAGE)
+    console.log(`[scan-chunk] platform=${connector.platform} page=${page} articles=${articles.length} totalCount=${totalCount} hasMore=${hasMore}`)
+    if (articles.length > 0) console.log(`[scan-chunk] first article:`, JSON.stringify({ id: articles[0].id, title: articles[0].title, bodyLen: articles[0].body?.length || 0 }))
 
     // Set total on first page
     if (page === 1) {
@@ -248,6 +250,9 @@ export default async function handler(req, res) {
       .select('zendesk_article_id')
       .eq('scan_job_id', scanJobId)
     const savedIds = new Set((existing || []).map(r => String(r.zendesk_article_id)))
+
+    // Log what we're about to process
+    console.log(`[scan-chunk] processing ${articles.length} articles for job ${scanJobId}`)
 
     // Process articles
     for (const article of articles) {
