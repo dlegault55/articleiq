@@ -494,10 +494,10 @@ export default function LandingPage() {
       <section style={{ padding:'clamp(40px,6vw,80px) clamp(20px,5vw,48px)', textAlign:'center' }}>
         <div style={{ maxWidth:560, margin:'0 auto' }}>
           <h2 style={{ fontSize:36, fontWeight:800, letterSpacing:-1, marginBottom:14, color:'#1A1A18', lineHeight:1.15 }}>
-            Find out what's broken in your KB — free
+            Find out what's actually wrong with your KB
           </h2>
           <p style={{ fontSize:16, color:'#4A4A48', lineHeight:1.7, marginBottom:28 }}>
-            Most teams discover real problems on their first scan. Connect your knowledge base in 2 minutes and get a health score for every article.
+            Most teams are surprised by their first scan. Broken links customers are hitting. Articles too thin to help anyone. Outdated content nobody noticed. Connect in 2 minutes and see exactly what needs fixing — and what needs a human.
           </p>
           <Link to="/login" className="land-btn land-btn-navy" style={{ fontSize:15, padding:'14px 28px', margin:'0 auto' }}>
             Scan your knowledge base free <ArrowRight size={16} />

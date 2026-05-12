@@ -1192,7 +1192,7 @@ function AIDrawer({ article, connector, onClose, userId, globalDismissed = new S
           ) : (improved || editedText) && rewriteTab === 'changes' ? (
             <DiffView original={bodyHtml} revised={editedText || improved} originalTitle={article.title} revisedTitle={editedTitle} />
           ) : (
-            {(() => {
+            (() => {
               const wordCount = article.word_count || 0
               const qualityScore = analysis?.quality?.score
               const isThin = wordCount < 150 || (qualityScore != null && qualityScore < 35)
