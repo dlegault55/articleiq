@@ -64,10 +64,24 @@ export async function fetchArticlesChunk(connector, page) {
   if (!res.ok) throw new Error(`HelpScout articles API error ${res.status}`)
 
   const data = await res.json()
+  const items = data.articles?.items || []
   const totalCount = collections.reduce((sum, c) => sum + (c.articleCount || 0), 0)
 
+  // Fetch full article body for each article (list endpoint returns metadata only)
+  const fullArticles = await Promise.all(items.map(async (a) => {
+    try {
+      const artRes = await fetch(`${BASE}/articles/${a.id}`, { headers: { Authorization: auth } })
+      if (!artRes.ok) return mapArticle(a, col.id)
+      const artData = await artRes.json()
+      const full = artData.article || a
+      return mapArticle(full, col.id)
+    } catch {
+      return mapArticle(a, col.id)
+    }
+  }))
+
   return {
-    articles: (data.articles?.items || []).map(a => mapArticle(a, col.id)),
+    articles: fullArticles,
     totalCount,
     hasMore: colIndex < collections.length - 1,
   }
@@ -92,17 +106,18 @@ export async function publishLabels(connector, articleId, labels) {
 }
 
 function mapArticle(a, collectionId) {
+  const body = a.text || a.body || ''
   return {
     id: a.id,
-    title: a.name,
-    body: a.text || '',
+    title: a.name || a.title || 'Untitled',
+    body,
     html_url: a.url,
-    updated_at: a.updatedAt,
+    updated_at: a.updatedAt || a.updated_at,
     label_names: [],
     locale: 'en-us',
     section_id: collectionId,
-    author_id: a.createdBy?.id,
+    author_id: a.createdBy?.id || a.author_id,
     draft: a.status !== 'published',
-    word_count: a.text ? a.text.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length : 0,
+    word_count: body ? body.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length : 0,
   }
 }
