@@ -262,7 +262,7 @@ export default async function handler(req, res) {
       try { analysis = analyzeArticle(article, checks) }
       catch (e) { analysis = { wordCount: 0, readabilityScore: null, issues: [] } }
 
-      const { data: saved } = await supabase.from('scanned_articles').insert({
+      const { data: saved, error: insertErr } = await supabase.from('scanned_articles').insert({
         scan_job_id:          scanJobId,
         user_id:              userId,
         zendesk_article_id:   article.id,
@@ -278,6 +278,9 @@ export default async function handler(req, res) {
         has_missing_metadata: !article.title?.trim() || !article.section_id,
         broken_links_count:   0,
       }).select().single()
+
+      if (insertErr) console.error(`[scan-chunk] insert error for article ${article.id}:`, insertErr.message)
+      else console.log(`[scan-chunk] saved article ${article.id} → scanned_articles id=${saved?.id}`)
 
       // Broken links check (async — runs after article saved)
       if (checks.links && analysis.checkLinks && saved) {
