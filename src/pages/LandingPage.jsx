@@ -296,34 +296,58 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Works with ── */}
-      <section style={{ padding:'16px clamp(20px,5vw,48px)', borderTop:'1px solid #E8E8E6', borderBottom:'1px solid #E8E8E6', background:'#FAFAF8' }}>
-        <div style={{ maxWidth:960, margin:'0 auto', display:'flex', alignItems:'center', gap:20, flexWrap:'wrap', justifyContent:'center' }}>
-          <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9B9B98', margin:0, flexShrink:0 }}>Supported platforms</p>
-          <div style={{ width:1, height:28, background:'#E8E8E6', flexShrink:0 }} />
+      {/* ── Supported platforms ── */}
+      <section style={{ padding:'clamp(40px,6vw,64px) clamp(20px,5vw,48px)', borderTop:'1px solid #E8E8E6' }}>
+        <div style={{ maxWidth:960, margin:'0 auto', textAlign:'center' }}>
+          <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.12em', color:'#9B9B98', marginBottom:12 }}>Supported platforms</p>
+          <h2 style={{ fontSize:'clamp(22px,3vw,30px)', fontWeight:800, color:'#1A1A18', letterSpacing:-0.5, marginBottom:8 }}>
+            Works with the tools your team already uses
+          </h2>
+          <p style={{ fontSize:15, color:'#6B6B68', marginBottom:40, maxWidth:520, margin:'0 auto 40px' }}>
+            Connect in 2 minutes. No complex setup — just your API key and you're scanning.
+          </p>
 
-          {/* Live platforms */}
-          {[
-            { name:'Zendesk®', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/zendesk.svg', bg:'#03363D', live:true },
-            { name:'HelpScout', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/helpscout.svg', bg:'#1292EE', live:true },
-          ].map(({ name, logo, bg }) => (
-            <div key={name} style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <div style={{ width:28, height:28, borderRadius:7, background:bg, display:'flex', alignItems:'center', justifyContent:'center', padding:5, boxSizing:'border-box' }}>
-                <img src={logo} alt={name} style={{ width:'100%', height:'100%', filter:'brightness(0) invert(1)' }} />
+          {/* Live */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, maxWidth:560, margin:'0 auto 32px' }}>
+            {[
+              { name:'Zendesk®', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/zendesk.svg', bg:'#03363D', desc:'Subdomain + Guide Admin API token' },
+              { name:'HelpScout', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/helpscout.svg', bg:'#1292EE', desc:'API key from your profile settings' },
+            ].map(({ name, logo, bg, desc }) => (
+              <div key={name} style={{ padding:'20px', borderRadius:14, border:'2px solid #E8E8E6', background:'white', display:'flex', flexDirection:'column', alignItems:'center', gap:12, position:'relative' }}>
+                <span style={{ position:'absolute', top:12, right:12, fontSize:9, fontWeight:800, padding:'3px 8px', borderRadius:20, background:'#E8F5E9', color:'#2E7D32', letterSpacing:'0.05em' }}>LIVE</span>
+                <div style={{ width:56, height:56, borderRadius:14, background:bg, display:'flex', alignItems:'center', justifyContent:'center', padding:12, boxSizing:'border-box' }}>
+                  <img src={logo} alt={name} style={{ width:'100%', height:'100%', filter:'brightness(0) invert(1)' }} />
+                </div>
+                <div>
+                  <p style={{ fontSize:15, fontWeight:800, color:'#1A1A18', margin:'0 0 3px' }}>{name}</p>
+                  <p style={{ fontSize:12, color:'#6B6B68', margin:0 }}>{desc}</p>
+                </div>
               </div>
-              <span style={{ fontSize:13, fontWeight:700, color:'#1A1A18' }}>{name}</span>
-              <span style={{ fontSize:9, fontWeight:700, padding:'2px 7px', borderRadius:20, background:'#E8F5E9', color:'#2E7D32' }}>Live</span>
+            ))}
+          </div>
+
+          {/* Coming soon */}
+          <div>
+            <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9B9B98', marginBottom:12 }}>Coming soon</p>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, flexWrap:'wrap' }}>
+              {[
+                { name:'Freshdesk', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/freshdesk.svg', bg:'#25C16F' },
+                { name:'Intercom', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/intercom.svg', bg:'#1F8DED' },
+                { name:'Notion', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/notion.svg', bg:'#1A1A18' },
+                { name:'Confluence', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/confluence.svg', bg:'#0052CC' },
+              ].map(({ name, logo, bg }) => (
+                <div key={name} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 14px', borderRadius:10, border:'1px solid #E8E8E6', background:'#FAFAF8', opacity:0.7 }}>
+                  <div style={{ width:24, height:24, borderRadius:6, background:bg, display:'flex', alignItems:'center', justifyContent:'center', padding:4, boxSizing:'border-box', flexShrink:0 }}>
+                    <img src={logo} alt={name} style={{ width:'100%', height:'100%', filter:'brightness(0) invert(1)' }} />
+                  </div>
+                  <span style={{ fontSize:13, fontWeight:600, color:'#6B6B68' }}>{name}</span>
+                </div>
+              ))}
+              <a href="/contact" style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:10, border:'1px dashed #C8D4F0', background:'white', fontSize:13, fontWeight:600, color:'#1B2D5B', textDecoration:'none' }}>
+                + Request yours
+              </a>
             </div>
-          ))}
-
-          <div style={{ width:1, height:28, background:'#E8E8E6', flexShrink:0 }} />
-          <p style={{ fontSize:11, fontWeight:600, color:'#9B9B98', margin:0, flexShrink:0 }}>Coming soon</p>
-
-          {['Freshdesk', 'Intercom', 'Notion', 'Confluence'].map(name => (
-            <span key={name} style={{ fontSize:12, fontWeight:600, color:'#9B9B98', padding:'3px 10px', borderRadius:20, border:'1px solid #E8E8E6', background:'white' }}>{name}</span>
-          ))}
-
-          <a href="/contact" style={{ fontSize:11, color:'#1B2D5B', fontWeight:600, textDecoration:'none', marginLeft:4 }}>+ Request yours</a>
+          </div>
         </div>
       </section>
 
