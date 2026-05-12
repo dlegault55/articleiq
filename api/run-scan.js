@@ -272,7 +272,7 @@ async function runScanAsync({ scanJobId, userId, connector, preset }) {
     const { data: savedArticle } = await supabase.from('scanned_articles').insert({
       scan_job_id:          scanJobId,
       user_id:              userId,
-      zendesk_article_id:   zdArticle.id,
+      article_id:   zdArticle.id,
       title:                zdArticle.title || 'Untitled',
       url:                  zdArticle.html_url,
       section:              zdArticle.section_id?.toString(),

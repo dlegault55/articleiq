@@ -247,9 +247,9 @@ export default async function handler(req, res) {
     // Get IDs already saved for this scan (resume safety — no duplicates)
     const { data: existing } = await supabase
       .from('scanned_articles')
-      .select('zendesk_article_id')
+      .select('article_id')
       .eq('scan_job_id', scanJobId)
-    const savedIds = new Set((existing || []).map(r => String(r.zendesk_article_id)))
+    const savedIds = new Set((existing || []).map(r => String(r.article_id)))
 
     // Log what we're about to process
     console.log(`[scan-chunk] processing ${articles.length} articles for job ${scanJobId}`)
@@ -266,7 +266,7 @@ export default async function handler(req, res) {
       const { data: saved, error: insertErr } = await supabase.from('scanned_articles').insert({
         scan_job_id:          scanJobId,
         user_id:              userId,
-        zendesk_article_id:   article.id,
+        article_id:   article.id,
         title:                article.title || 'Untitled',
         url:                  article.html_url,
         section:              article.section_id?.toString(),

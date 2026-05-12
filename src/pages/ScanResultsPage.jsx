@@ -528,7 +528,7 @@ function AIDrawer({ article, connector, onClose, userId }) {
     supabase.from('recommendation_feedback')
       .select('rec_text, rec_type')
       .eq('user_id', userId)
-      .eq('article_id', article.zendesk_article_id)
+      .eq('article_id', article.article_id)
       .eq('vote', 'down')
       .then(({ data }) => {
         if (data?.length) {
@@ -548,14 +548,26 @@ function AIDrawer({ article, connector, onClose, userId }) {
     const run = async () => {
       setAnalysing(true); setFetchErr(null)
       try {
-        const authHeader = `Basic ${btoa(connector.api_key_encrypted)}`
-        const res = await fetch(
-          `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${article.zendesk_article_id}`,
-          { headers: { Authorization: authHeader } }
-        )
-        if (!res.ok) throw new Error(`Could not fetch article (${res.status})`)
-        const data = await res.json()
-        const html = data.article?.body || ''
+        let html = ''
+        if (connector.platform === 'helpscout') {
+          const authHeader = `Basic ${btoa(connector.api_key_encrypted + ':X')}`
+          const res = await fetch(
+            `https://docsapi.helpscout.net/v1/articles/${article.article_id}`,
+            { headers: { Authorization: authHeader } }
+          )
+          if (!res.ok) throw new Error(`Could not fetch article (${res.status})`)
+          const data = await res.json()
+          html = data.article?.text || ''
+        } else {
+          const authHeader = `Basic ${btoa(connector.api_key_encrypted)}`
+          const res = await fetch(
+            `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${article.article_id}`,
+            { headers: { Authorization: authHeader } }
+          )
+          if (!res.ok) throw new Error(`Could not fetch article (${res.status})`)
+          const data = await res.json()
+          html = data.article?.body || ''
+        }
         setBodyHtml(html)
         await runAnalysis(html, article.title)
       } catch (e) { setFetchErr(e.message) }
@@ -712,7 +724,7 @@ function AIDrawer({ article, connector, onClose, userId }) {
     try {
       await supabase.from('recommendation_feedback').insert({
         user_id:    userId,
-        article_id: article.zendesk_article_id,
+        article_id: article.article_id,
         rec_type:   type,
         rec_text:   text,
         vote:       'down',
@@ -733,7 +745,7 @@ function AIDrawer({ article, connector, onClose, userId }) {
         method: 'POST',
         body: JSON.stringify({
           connectorId: connector.id,
-          articleId: article.zendesk_article_id,
+          articleId: article.article_id,
           title: editedTitle || article.title,
           html: editedText || improved,
         }),
@@ -1251,7 +1263,7 @@ function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve }) 
     try {
       const res = await apiFetch('/api/publish-labels', {
         method: 'POST',
-        body: JSON.stringify({ connectorId: connector.id, articleId: article.zendesk_article_id, labels: [label] }),
+        body: JSON.stringify({ connectorId: connector.id, articleId: article.article_id, labels: [label] }),
       })
       if (!res.ok) { const e = await res.json(); throw new Error(e.error) }
       setPublished(prev => new Set([...prev, label]))
@@ -1360,10 +1372,10 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
     try {
       // Fetch article body from Zendesk® so AI has full content, not just title
       let articleContent = ''
-      if (connector && article.zendesk_article_id) {
+      if (connector && article.article_id) {
         const authHeader = `Basic ${btoa(connector.api_key_encrypted)}`
         const res = await fetch(
-          `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${article.zendesk_article_id}`,
+          `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${article.article_id}`,
           { headers: { Authorization: authHeader } }
         )
         if (res.ok) {
