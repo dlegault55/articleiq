@@ -736,8 +736,10 @@ function AIDrawer({ article, connector, onClose, userId, globalDismissed = new S
           html: editedText || improved,
         }),
       })
-      const d = await res.json().catch(() => ({ error: `Server error (${res.status})` }))
-      if (!res.ok) throw new Error(d.error || JSON.stringify(d))
+      const text = await res.text()
+      let d = {}
+      try { d = JSON.parse(text) } catch { throw new Error(`Server error (${res.status}): ${text.slice(0,100)}`) }
+      if (!res.ok) throw new Error(d.error || `Publish failed (${res.status})`)
       setPublished(true); setTimeout(() => setPublished(false), 4000)
     } catch (e) { const msg = e.message?.includes('403') || e.message?.includes('rejected')
         ? 'Publishing requires a Guide Admin token. Go to Connectors, remove and reconnect using a Guide Admin email and token.'
@@ -1305,7 +1307,7 @@ function AIDrawer({ article, connector, onClose, userId, globalDismissed = new S
           <button onClick={publish} disabled={publishing || (!improved && !editedText)} className="btn btn-primary btn-sm"
             style={{ background: confirmPub ? 'var(--amber)' : 'var(--navy)' }}>
             {publishing ? <Loader size={11} style={{ animation:'spin 0.7s linear infinite' }} /> : confirmPub ? <AlertTriangle size={11} /> : <ExternalLink size={11} />}
-            {publishing ? 'Publishing...' : confirmPub ? 'Yes, publish' : connector?.platform === 'helpscout' ? 'Publish to HelpScout' : connector?.platform === 'freshdesk' ? 'Publish to Freshdesk' : 'Publish to Zendesk®'}
+            {publishing ? 'Publishing...' : confirmPub ? 'Yes, publish' : `Publish to ${connector?.platform === 'helpscout' ? 'HelpScout' : connector?.platform === 'freshdesk' ? 'Freshdesk' : 'Zendesk®'}`}
           </button>
         </div>
       </div>

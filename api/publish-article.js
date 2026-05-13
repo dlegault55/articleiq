@@ -24,8 +24,10 @@ export default async function handler(req, res) {
       allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['class', 'style', 'id', 'data-*'], img: ['src', 'alt', 'width', 'height'], a: ['href', 'target', 'rel'], video: ['src', 'controls', 'width', 'height'], source: ['src', 'type'] },
     })
 
+    console.log('publish-article: platform=', connector.platform, 'articleId=', articleId)
     const platform = await import(`./platforms/${connector.platform || 'zendesk'}.js`)
     const result = await platform.publishArticle(connector, articleId, title, safeHtml)
+    console.log('publish-article: result=', JSON.stringify(result))
 
     if (!result.success) return res.status(500).json({ error: result.error })
     return res.status(200).json({ success: true, method: result.method })
