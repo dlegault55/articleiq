@@ -1326,6 +1326,7 @@ function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve }) 
   const [labels,       setLabels]       = useState(null)
   const [publishing,   setPublishing]   = useState(null)
   const [published,    setPublished]    = useState(new Set())
+  const [customLabel,  setCustomLabel]  = useState('')
 
   const suggestLabels = async () => {
     setSuggesting(true)
