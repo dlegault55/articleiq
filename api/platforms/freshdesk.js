@@ -3,7 +3,11 @@
 // Auth: HTTP Basic with API key as username, 'X' as password
 
 const authHeader = (apiKey) => `Basic ${Buffer.from(`${apiKey}:X`).toString('base64')}`
-const baseUrl    = (subdomain) => `https://${subdomain}.freshdesk.com`
+const baseUrl    = (subdomain) => {
+  // Strip any accidental full domain entries
+  const clean = subdomain.replace(/https?:\/\//, '').replace(/\.freshdesk\.com.*/, '').trim()
+  return `https://${clean}.freshdesk.com`
+}
 
 async function getCategories(subdomain, apiKey) {
   const res = await fetch(`${baseUrl(subdomain)}/api/v2/solutions/categories`, {

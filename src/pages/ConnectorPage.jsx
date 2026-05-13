@@ -446,8 +446,8 @@ export default function ConnectorPage() {
           <div className="card" style={{ padding: '18px' }}>
             <div style={{ marginBottom: 14 }}>
               <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Subdomain</p>
-              <input type="text" value={form.subdomain || ''} placeholder="yourcompany (from yourcompany.freshdesk.com)"
-                onChange={e => setForm(f => ({ ...f, subdomain: e.target.value.replace(/\.freshdesk\.com$/, '').trim().toLowerCase() }))}
+              <input type="text" value={form.subdomain || ''} placeholder="yourcompany — just this part from yourcompany.freshdesk.com"
+                onChange={e => setForm(f => ({ ...f, subdomain: e.target.value.replace(/https?:\/\//, '').replace(/\.freshdesk\.com.*/, '').trim().toLowerCase() }))}
                 className="input" />
               <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>Just the subdomain — not the full URL</p>
             </div>
