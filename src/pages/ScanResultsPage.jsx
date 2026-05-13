@@ -958,7 +958,12 @@ function AIDrawer({ article, connector, onClose, userId, globalDismissed = new S
                 {/* Quality suggestions */}
                 {analysis.quality?.suggestions?.length > 0 && (
                   <div style={{ marginBottom:14 }}>
-                    <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:8 }}>Writing fixes</p>
+                    <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:4 }}>Writing fixes</p>
+                    {improved && (
+                      <p style={{ fontSize:11, color:'var(--text-3)', marginBottom:8, lineHeight:1.5 }}>
+                        <span style={{ color:'var(--green)', fontWeight:600 }}>Green = applied by AI</span> in the rewrite · <span style={{ color:'var(--amber)', fontWeight:600 }}>Amber = apply manually</span> in the editor
+                      </p>
+                    )}
                     {[...analysis.quality.suggestions.map((s, i) => ({ s, i }))]
                       .filter(({ s, i }) => !dismissedRecs.has(`q-${i}`) && !dismissedRecs.has(`dismissed:quality:${s}`))
                       .sort((a, b) => {
@@ -1036,7 +1041,12 @@ function AIDrawer({ article, connector, onClose, userId, globalDismissed = new S
                 {/* SEO issues */}
                 {analysis.seo?.issues?.length > 0 && (
                   <div>
-                    <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:8 }}>{improved ? 'SEO fixes — check what needs manual action' : 'SEO fixes'}</p>
+                    <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:4 }}>SEO fixes</p>
+                    {improved && (
+                      <p style={{ fontSize:11, color:'var(--text-3)', marginBottom:8, lineHeight:1.5 }}>
+                        <span style={{ color:'var(--green)', fontWeight:600 }}>Green = applied by AI</span> · <span style={{ color:'var(--amber)', fontWeight:600 }}>Amber = needs your attention</span> · <span style={{ color:'var(--red)', fontWeight:600 }}>Red = high priority</span>
+                      </p>
+                    )}
                     {[...analysis.seo.issues.map((item, i) => ({ item, i }))]
                       .filter(({ item, i }) => !dismissedRecs.has(`s-${i}`) && !dismissedRecs.has(`dismissed:seo:${item.issue}`) && shouldShowRec(item.issue + ' ' + item.fix, 'seo'))
                       .sort((a, b) => {
