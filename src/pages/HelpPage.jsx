@@ -80,8 +80,8 @@ export default function HelpPage() {
         <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginBottom: 16, letterSpacing: -0.3, paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>Getting started</h2>
         <div className="card" style={{ overflow: 'hidden' }}>
           {[
-            { num: '01', title: 'Connect your KB', desc: "Go to Connectors in the account menu. Choose Zendesk® or HelpScout and follow the setup steps. ArticleIQ uses read-only access for scanning — we never modify your articles without your say." },
-            { num: '02', title: 'Find your API credentials', desc: "Zendesk®: Admin Center → Apps & Integrations → APIs → API Tokens. HelpScout: Your Profile → API Keys → Generate a key. Paste into the connector form." },
+            { num: '01', title: 'Connect your KB', desc: "Go to Connectors in the account menu. Choose Zendesk®, HelpScout, or Freshdesk and follow the setup steps. ArticleIQ uses read-only access for scanning — we never modify your articles without your say." },
+            { num: '02', title: 'Find your API credentials', desc: "Zendesk®: Admin Center → APIs → API Tokens. HelpScout: Your Profile → API Keys. Freshdesk: Your avatar → Profile Settings → API Key at the bottom. Paste into the connector form." },
             { num: '03', title: 'Run your first scan', desc: "From the Dashboard, select which checks to run and click Start scan. Keep the tab open — the scan runs in your browser." },
             { num: '04', title: 'Review your results', desc: "Your health score appears as soon as the scan completes. Click any article to expand its issues. Use the filter tabs to focus on Critical issues first." },
           ].map(({ num, title, desc }, i, arr) => (
@@ -216,7 +216,10 @@ export default function HelpPage() {
           a={<span>If an article scores below 35/100 or has fewer than 150 words, ArticleIQ will flag it as <strong>needing a human rewrite</strong> rather than running AI on it. The rewrite panel explains exactly what the article is missing — context, steps, expected outcome, escalation path — so you know what to write. A <strong>Clean up formatting only</strong> option is still available if you want AI to fix grammar and structure without adding any new content. This is intentional: AI improvising on thin articles risks publishing inaccurate information.</span>} />
 
         <FAQ q="Which platforms does ArticleIQ support?"
-          a={<span>ArticleIQ currently supports <strong>Zendesk®</strong> and <strong>HelpScout</strong>. Go to Connectors → choose your platform → follow the setup steps. More connectors are in the roadmap — if your platform isn't listed, <a href="/contact" style={{color:"var(--navy)"}}>let us know</a> and we'll prioritise it.</span>} />
+          a={<span>ArticleIQ currently supports <strong>Zendesk®</strong>, <strong>HelpScout</strong>, and <strong>Freshdesk</strong>. Go to Connectors, choose your platform, and follow the setup steps. More connectors are in the roadmap — if your platform is not listed, <a href="/contact" style={{color:"var(--navy)"}}>let us know</a> and we will prioritise it.</span>} />
+
+        <FAQ q="How do I connect Freshdesk?"
+          a={<span>In Freshdesk, click your avatar in the top right → <strong>Profile Settings</strong> → scroll to the bottom to find your <strong>API Key</strong>. Copy it and paste into the Freshdesk connector form along with your subdomain (just the part before .freshdesk.com). Publishing back to Freshdesk works with any API key.</span>} />
 
         <FAQ q="Publish is failing with a 403 or permission error — what do I do?"
           a={<span>Publishing requires your API token to belong to a user with <strong>Guide Admin</strong> role in Zendesk® — not just any admin. Go to <strong>Connectors</strong>, remove your current connector, and reconnect using the email and API token of a Guide Admin user. You can check in Zendesk® under Admin Center → People → find a user with Guide Admin role. After reconnecting, use the <strong>Test connection</strong> button — it will confirm whether Guide Admin is detected.</span>} />

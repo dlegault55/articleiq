@@ -324,13 +324,14 @@ export default function LandingPage() {
                 desc: 'A popular choice for customer-first teams. Connect with a single API key from your HelpScout profile — no subdomain, no complex permissions needed.',
                 setup: 'API key from your profile settings',
               },
-            ].map(({ name, logo, bg, desc, setup }) => (
+            ].map(({ name, logo, bg, letter, desc, setup }) => (
               <div key={name} style={{ padding:'28px', borderRadius:16, border:'1px solid #E8E8E6', background:'white', position:'relative', overflow:'hidden' }}>
-                {/* Live badge */}
                 <span style={{ position:'absolute', top:20, right:20, fontSize:9, fontWeight:800, padding:'3px 10px', borderRadius:20, background:'#E8F5E9', color:'#2E7D32', letterSpacing:'0.07em' }}>● LIVE</span>
-                {/* Logo */}
-                <div style={{ width:52, height:52, borderRadius:13, background:bg, display:'flex', alignItems:'center', justifyContent:'center', padding:11, boxSizing:'border-box', marginBottom:16 }}>
-                  <img src={logo} alt={name} style={{ width:'100%', height:'100%', filter:'brightness(0) invert(1)' }} />
+                <div style={{ width:52, height:52, borderRadius:13, background:bg, display:'flex', alignItems:'center', justifyContent:'center', padding: logo ? 11 : 0, boxSizing:'border-box', marginBottom:16 }}>
+                  {logo
+                    ? <img src={logo} alt={name} style={{ width:'100%', height:'100%', filter:'brightness(0) invert(1)' }} />
+                    : <span style={{ fontSize:22, fontWeight:800, color:'white' }}>{letter || name[0]}</span>
+                  }
                 </div>
                 <p style={{ fontSize:18, fontWeight:800, color:'#1A1A18', margin:'0 0 8px', letterSpacing:-0.3 }}>{name}</p>
                 <p style={{ fontSize:14, color:'#6B6B68', lineHeight:1.7, margin:'0 0 16px' }}>{desc}</p>
