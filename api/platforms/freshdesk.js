@@ -129,11 +129,12 @@ export async function publishArticle(connector, articleId, title, html) {
   const res = await fetch(`${baseUrl(connector.subdomain)}/api/v2/solutions/articles/${articleId}`, {
     method: 'PUT',
     headers: { Authorization: authHeader(connector.api_key_encrypted), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title, description: html, status: 2 }), // status 2 = published
+    body: JSON.stringify({ title, description: html, status: 2 }),
   })
   if (!res.ok) {
-    const err = await res.text()
-    return { success: false, error: `Freshdesk publish failed (${res.status}): ${err.slice(0, 200)}` }
+    let errText = ''
+    try { errText = await res.text() } catch {}
+    return { success: false, error: `Freshdesk publish failed (${res.status})${errText ? ': ' + errText.slice(0, 200) : ''}` }
   }
   return { success: true, method: 'freshdesk' }
 }
