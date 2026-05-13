@@ -1287,7 +1287,9 @@ function AIDrawer({ article, connector, onClose, userId, globalDismissed = new S
         {published && (
           <div style={{ display:'flex', alignItems:'center', gap:7, padding:'8px 12px', background:'var(--green-light)', border:'1px solid var(--green-border)', borderRadius:8, marginBottom:10 }}>
             <CheckCircle size={13} style={{ color:'var(--green)' }} />
-            <p style={{ fontSize:12, fontWeight:600, color:'var(--green)', margin:0 }}>Published to Zendesk® successfully</p>
+            <p style={{ fontSize:12, fontWeight:600, color:'var(--green)', margin:0 }}>
+              Published to {connector?.platform === 'helpscout' ? 'HelpScout' : connector?.platform === 'freshdesk' ? 'Freshdesk' : 'Zendesk®'} successfully
+            </p>
           </div>
         )}
         {error && <p style={{ fontSize:11, color:'var(--red)', marginBottom:8 }}>{error}</p>}
