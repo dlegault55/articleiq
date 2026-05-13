@@ -141,7 +141,11 @@ function ConnectorCard({ connector, onRemove, onRemoveWithHistory }) {
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-              <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{connector.platform === 'helpscout' ? 'HelpScout Docs' : `${connector.subdomain}.zendesk.com`}</p>
+              <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
+                {connector.platform === 'helpscout' ? 'HelpScout Docs'
+                  : connector.platform === 'freshdesk' ? `${connector.subdomain}.freshdesk.com`
+                  : `${connector.subdomain}.zendesk.com`}
+              </p>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)' }} />
             </div>
             <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0 }}>
