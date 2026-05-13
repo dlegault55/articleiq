@@ -565,8 +565,8 @@ function AIDrawer({ article, connector, onClose, userId, globalDismissed = new S
       callAI('seo',     { title, content: html }),
     ])
     let quality = {}, seo = {}
-    try { quality = JSON.parse(qualityRaw.replace(/```json|```/g,'').trim()) } catch {}
-    try { seo     = JSON.parse(seoRaw.replace(/```json|```/g,'').trim())     } catch {}
+    try { quality = JSON.parse(qualityRaw.replace(/```json|```/g,'').replace(/^json\s*\{/,'{').trim()) } catch(e) { console.error('quality parse failed:', e.message, qualityRaw?.slice(0,100)) }
+    try { seo     = JSON.parse(seoRaw.replace(/```json|```/g,'').replace(/^json\s*\{/,'{').trim())     } catch(e) { console.error('seo parse failed:', e.message, seoRaw?.slice(0,100)) }
     setAnalysis({ quality, seo })
     return { quality, seo }
   }
