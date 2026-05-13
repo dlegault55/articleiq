@@ -228,6 +228,7 @@ export default function ConnectorPage() {
   const [loading,       setLoading]       = useState(true)
   const [saving,        setSaving]        = useState(false)
   const [selectedPlat,  setSelectedPlat]  = useState(null)
+  const [showKeys,      setShowKeys]      = useState({})
   const [form,          setForm]          = useState({ published_only: true })
 
   const load = async () => {
@@ -428,9 +429,15 @@ export default function ConnectorPage() {
           <div className="card" style={{ padding: '18px' }}>
             <div style={{ marginBottom: 16 }}>
               <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.07em' }}>API Key</p>
-              <input type="password" value={form.api_key || ''} placeholder="Paste your HelpScout API key"
-                onChange={e => setForm(f => ({ ...f, api_key: e.target.value }))}
-                className="input" />
+              <div style={{ position:'relative' }}>
+                <input type={showKeys.hs_key ? 'text' : 'password'} value={form.api_key || ''} placeholder="Paste your HelpScout API key"
+                  onChange={e => setForm(f => ({ ...f, api_key: e.target.value }))}
+                  className="input" style={{ paddingRight:36 }} />
+                <button type="button" onClick={() => setShowKeys(s => ({ ...s, hs_key: !s.hs_key }))}
+                  style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--text-3)', display:'flex', padding:0 }}>
+                  {showKeys.hs_key ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
               <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>Your API key is encrypted and stored securely. We never share it.</p>
             </div>
             <button onClick={save} disabled={saving} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
@@ -468,9 +475,15 @@ export default function ConnectorPage() {
             </div>
             <div style={{ marginBottom: 16 }}>
               <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.07em' }}>API Key</p>
-              <input type="password" value={form.api_key || ''} placeholder="Paste your Freshdesk API key"
-                onChange={e => setForm(f => ({ ...f, api_key: e.target.value }))}
-                className="input" />
+              <div style={{ position:'relative' }}>
+                <input type={showKeys.fd_key ? 'text' : 'password'} value={form.api_key || ''} placeholder="Paste your Freshdesk API key"
+                  onChange={e => setForm(f => ({ ...f, api_key: e.target.value }))}
+                  className="input" style={{ paddingRight:36 }} />
+                <button type="button" onClick={() => setShowKeys(s => ({ ...s, fd_key: !s.fd_key }))}
+                  style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--text-3)', display:'flex', padding:0 }}>
+                  {showKeys.fd_key ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
             </div>
             <button onClick={save} disabled={saving} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
               {saving ? 'Connecting...' : 'Connect Freshdesk'}
