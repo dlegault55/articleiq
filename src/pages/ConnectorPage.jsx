@@ -312,7 +312,7 @@ export default function ConnectorPage() {
 
       {/* CTA after connecting */}
       {!loading && connectors.length > 0 && (
-        <div style={{ padding:'16px 18px', borderRadius:12, background:'var(--navy)', marginBottom:16, display:'flex', alignItems:'center', justifyContent:'space-between', gap:16 }}>
+        <div style={{ padding:'16px 18px', borderRadius:'var(--radius-lg)', background:'var(--navy)', marginBottom:16, display:'flex', alignItems:'center', justifyContent:'space-between', gap:16 }}>
           <div>
             <p style={{ fontSize:13, fontWeight:700, color:'white', margin:'0 0 3px' }}>Ready to scan your knowledge base</p>
             <p style={{ fontSize:11, color:'rgba(255,255,255,0.55)', margin:0 }}>Go to the dashboard to run your first scan and find issues across your articles.</p>
@@ -329,10 +329,10 @@ export default function ConnectorPage() {
           <p style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-3)', marginBottom: 10 }}>
             {connectors.length > 0 ? 'Add another platform' : 'Choose a platform'}
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
             {PLATFORMS.map(p => (
               <button key={p.id} onClick={() => p.available && setSelectedPlat(p.id)}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 10, border: '1px solid var(--border-md)', background: 'white', cursor: p.available ? 'pointer' : 'default', textAlign: 'left', fontFamily: 'inherit', opacity: p.available ? 1 : 0.5, transition: 'all 0.12s',
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-md)', background: 'white', cursor: p.available ? 'pointer' : 'default', textAlign: 'left', fontFamily: 'inherit', opacity: p.available ? 1 : 0.5, transition: 'all 0.12s', width: '100%', boxSizing: 'border-box',
                   outline: selectedPlat === p.id ? '2px solid var(--navy)' : 'none',
                 }}
                 onMouseEnter={e => p.available && (e.currentTarget.style.borderColor = 'var(--navy-border)')}
@@ -494,7 +494,7 @@ export default function ConnectorPage() {
 
       {/* Coming soon platforms — only show when no platform selected */}
       {!selectedPlat && (
-      <div style={{ marginTop: 24, padding: '14px 16px', borderRadius: 10, background: 'var(--bg)', border: '1px solid var(--border-md)', display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ padding: '14px 16px', borderRadius: 'var(--radius-lg)', background: 'var(--bg)', border: '1px solid var(--border-md)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <Clock size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
         <p style={{ fontSize: 12, color: 'var(--text-3)', margin: 0, lineHeight: 1.6 }}>
           Intercom, Notion, and Confluence connectors are coming soon.{' '}
