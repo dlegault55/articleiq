@@ -13,8 +13,20 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPw,   setShowPw]   = useState(false)
   const [done,     setDone]     = useState(false)
+  const [resetSent, setResetSent] = useState(false)
 
   if (user) return <Navigate to="/dashboard" replace />
+
+  const handleReset = async () => {
+    if (!email) { setError('Enter your email address above first'); return }
+    setLoading('reset'); setError(null)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback`
+    })
+    setLoading(null)
+    if (error) setError(error.message)
+    else setResetSent(true)
+  }
 
   const handleEmail = async (e) => {
     e.preventDefault()
@@ -159,11 +171,24 @@ export default function LoginPage() {
                   Min. 8 characters with at least one uppercase letter and one number.
                 </p>
               )}
-              <button type="submit" disabled={!!loading} className="btn btn-primary" style={{ width:'100%', justifyContent:'center', marginBottom:10, padding:'12px', fontSize:14 }}>
-                {loading === 'email' ? <Loader size={14} style={{ animation:'spin 0.7s linear infinite' }} /> : <Mail size={14} />}
-                {loading === 'email' ? 'Please wait...' : mode === 'signup' ? 'Create account' : 'Sign in'}
-              </button>
-              <button type="button" onClick={() => { setMode(null); setError(null) }}
+              {resetSent ? (
+                <div style={{ padding:'12px', background:'var(--green-light)', border:'1px solid var(--green-border)', borderRadius:8, textAlign:'center', marginBottom:10 }}>
+                  <p style={{ fontSize:13, fontWeight:600, color:'var(--green)', margin:'0 0 2px' }}>Check your email</p>
+                  <p style={{ fontSize:12, color:'var(--text-3)', margin:0 }}>Password reset link sent to {email}</p>
+                </div>
+              ) : (
+                <button type="submit" disabled={!!loading} className="btn btn-primary" style={{ width:'100%', justifyContent:'center', marginBottom:10, padding:'12px', fontSize:14 }}>
+                  {loading === 'email' ? <Loader size={14} style={{ animation:'spin 0.7s linear infinite' }} /> : <Mail size={14} />}
+                  {loading === 'email' ? 'Please wait...' : mode === 'signup' ? 'Create account' : 'Sign in'}
+                </button>
+              )}
+              {mode === 'signin' && !resetSent && (
+                <button type="button" onClick={handleReset} disabled={loading === 'reset'}
+                  style={{ width:'100%', background:'none', border:'none', cursor:'pointer', fontSize:12, color:'var(--navy)', fontFamily:'inherit', marginBottom:6 }}>
+                  {loading === 'reset' ? 'Sending...' : 'Forgot your password?'}
+                </button>
+              )}
+              <button type="button" onClick={() => { setMode(null); setError(null); setResetSent(false) }}
                 style={{ width:'100%', background:'none', border:'none', cursor:'pointer', fontSize:12, color:'var(--text-3)', fontFamily:'inherit' }}>
                 ← Back
               </button>
