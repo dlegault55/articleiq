@@ -299,7 +299,7 @@ export default function ConnectorPage() {
   }
 
   return (
-    <div style={{ maxWidth: 620, margin: '0 auto', padding: 'clamp(16px,4vw,28px) clamp(16px,4vw,24px)' }}>
+    <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(16px,4vw,28px) clamp(16px,4vw,24px)' }}>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', marginBottom: 3, letterSpacing: -0.3 }}>Connectors</h1>
         <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0 }}>Connect your knowledge base platforms to start scanning</p>
