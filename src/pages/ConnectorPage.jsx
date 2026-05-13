@@ -5,119 +5,129 @@ import { useToast } from '@/hooks/useToast'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { supabase } from '@/lib/supabase'
 import { apiFetch } from '@/lib/api'
-import { Plug, Trash2, ExternalLink, Loader, CheckCircle, AlertTriangle, ChevronDown, ChevronUp, Clock } from 'lucide-react'
+import { Plug, Trash2, ExternalLink, Loader, CheckCircle, AlertTriangle, ChevronDown, ChevronUp, Clock, Eye, EyeOff } from 'lucide-react'
 
 const PLATFORMS = [
   {
-    id: 'freshdesk',
-    name: 'Freshdesk',
-    logo: '🟢',
-    available: true,
-    description: 'Connect your Freshdesk Solutions knowledge base',
-    fields: [
-      { key: 'subdomain', label: 'Subdomain', placeholder: 'yourcompany (from yourcompany.freshdesk.com)', hint: 'Just the subdomain part, not the full URL' },
-      { key: 'api_key',   label: 'API Key', placeholder: 'Paste your Freshdesk API key', hint: 'Freshdesk → Profile Settings → Your API Key (bottom of page)', type: 'password' },
-    ],
-    helpUrl: 'https://developers.freshdesk.com/api/',
-    helpLabel: 'How to get your API key →',
-    displayUrl: (c) => `${c.subdomain}.freshdesk.com`,
-    buildCred: (f) => f.api_key,
-    buildSubdomain: (f) => f.subdomain,
-    validate: (f) => !f.subdomain || !f.api_key ? 'Subdomain and API key required' : null,
-  },
-  {
-    id: 'helpscout',
-    name: 'HelpScout',
-    logo: '🔵',
-    available: true,
-    description: 'Connect your HelpScout Docs knowledge base',
-    fields: [
-      { key: 'api_key', label: 'API Key', placeholder: 'Paste your HelpScout API key', hint: 'HelpScout → Your Profile → API Keys → Generate an API key', type: 'password' },
-    ],
-    helpUrl: 'https://developer.helpscout.com/docs-api/',
-    helpLabel: 'How to get your API key →',
-    displayUrl: () => 'HelpScout Docs',
-    buildCred: (f) => f.api_key,
-    buildSubdomain: () => 'helpscout',
-    validate: (f) => !f.api_key ? 'API key required' : null,
-  },
-  {
-    id: 'zendesk',
-    name: 'Zendesk®',
-    logo: '🎫',
+    id: 'zendesk', name: 'Zendesk®', available: true,
     description: 'Scan your Help Center knowledge base',
-    available: true,
     fields: [
       { key: 'subdomain', label: 'Subdomain', placeholder: 'yourcompany', hint: 'The part before .zendesk.com', type: 'text' },
       { key: 'email',     label: 'Admin email', placeholder: 'admin@yourcompany.com', hint: 'Must belong to a user with Guide Admin role', type: 'email' },
       { key: 'api_key',   label: 'API token', placeholder: 'Paste your API token here', hint: 'Admin Center → Apps & Integrations → APIs → Zendesk® API → API Tokens', type: 'password' },
     ],
-    displayUrl: (c) => `${c.subdomain}.zendesk.com`,
-    buildCred: (f) => `${f.email}/token:${f.api_key}`,
+    displayUrl:     (c) => `${c.subdomain}.zendesk.com`,
+    buildCred:      (f) => `${f.email}/token:${f.api_key}`,
     buildSubdomain: (f) => f.subdomain.replace(/\.zendesk\.com$/, '').trim().toLowerCase(),
-    validate: (f) => !f.subdomain || !f.email || !f.api_key ? 'All fields required' : null,
+    validate:       (f) => !f.subdomain || !f.email || !f.api_key ? 'All fields required' : null,
   },
-
-  { id: 'intercom',  name: 'Intercom',   description: 'Scan your Intercom Articles', available: false },
-  { id: 'notion',    name: 'Notion',     description: 'Scan your Notion wiki', available: false },
-  { id: 'confluence',name: 'Confluence', description: 'Scan your Confluence space', available: false },
+  {
+    id: 'helpscout', name: 'HelpScout', available: true,
+    description: 'Connect your HelpScout Docs knowledge base',
+    fields: [
+      { key: 'api_key', label: 'API Key', placeholder: 'Paste your HelpScout API key', hint: 'HelpScout → Your Profile → API Keys → Generate an API key', type: 'password' },
+    ],
+    displayUrl:     () => 'HelpScout Docs',
+    buildCred:      (f) => f.api_key,
+    buildSubdomain: () => 'helpscout',
+    validate:       (f) => !f.api_key ? 'API key required' : null,
+  },
+  {
+    id: 'freshdesk', name: 'Freshdesk', available: true,
+    description: 'Connect your Freshdesk Solutions knowledge base',
+    fields: [
+      { key: 'subdomain', label: 'Subdomain', placeholder: 'yourcompany', hint: 'Just the subdomain — not the full URL', type: 'text' },
+      { key: 'api_key',   label: 'API Key', placeholder: 'Paste your Freshdesk API key', hint: 'Freshdesk → avatar → Profile Settings → API Key at bottom', type: 'password' },
+    ],
+    displayUrl:     (c) => `${c.subdomain}.freshdesk.com`,
+    buildCred:      (f) => f.api_key,
+    buildSubdomain: (f) => f.subdomain.replace(/https?:\/\//, '').replace(/\.freshdesk\.com.*/, '').trim().toLowerCase(),
+    validate:       (f) => !f.subdomain || !f.api_key ? 'Subdomain and API key required' : null,
+  },
+  { id: 'intercom',   name: 'Intercom',   available: false, description: 'Scan your Intercom Articles' },
+  { id: 'notion',     name: 'Notion',     available: false, description: 'Scan your Notion wiki' },
+  { id: 'confluence', name: 'Confluence', available: false, description: 'Scan your Confluence space' },
 ]
 
-
 const PLATFORM_LOGOS = {
-  zendesk:  { logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/zendesk.svg',   bg: '#03363D' },
-  helpscout:{ logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/helpscout.svg', bg: '#1292EE' },
-  freshdesk:{ logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/freshdesk.svg', bg: '#25C16F' },
-  intercom: { logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/intercom.svg',  bg: '#1F8DED' },
-  notion:   { logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/notion.svg',    bg: '#1A1A18' },
+  zendesk:   { logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/zendesk.svg',    bg: '#03363D' },
+  helpscout: { logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/helpscout.svg',  bg: '#1292EE' },
+  freshdesk: { logo: null, bg: '#25C16F', letter: 'f' },
+  intercom:  { logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/intercom.svg',   bg: '#1F8DED' },
+  notion:    { logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/notion.svg',     bg: '#1A1A18' },
   confluence:{ logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/confluence.svg', bg: '#0052CC' },
 }
 
 function PlatformLogo({ platform, size = 32 }) {
   const cfg = PLATFORM_LOGOS[platform] || {}
   return (
-    <div style={{ width:size, height:size, borderRadius: size * 0.25, background: cfg.bg || 'var(--navy-light)', display:'flex', alignItems:'center', justifyContent:'center', padding: size * 0.18, boxSizing:'border-box', flexShrink:0, border: cfg.bg ? 'none' : '1px solid var(--navy-border)' }}>
+    <div style={{ width:size, height:size, borderRadius:size*0.25, background:cfg.bg||'var(--navy-light)', display:'flex', alignItems:'center', justifyContent:'center', padding:cfg.logo ? size*0.18 : 0, boxSizing:'border-box', flexShrink:0 }}>
       {cfg.logo
         ? <img src={cfg.logo} alt={platform} style={{ width:'100%', height:'100%', filter:'brightness(0) invert(1)' }} />
-        : <span style={{ fontSize: size * 0.35, fontWeight:800, color:'white' }}>{(platform||'?')[0].toUpperCase()}</span>
+        : <span style={{ fontSize:size*0.38, fontWeight:800, color:'white', lineHeight:1 }}>{cfg.letter || (platform||'?')[0].toUpperCase()}</span>
       }
     </div>
   )
 }
 
-function TokenGuide() {
-  const [open, setOpen] = useState(false)
+function ConnectorCard({ connector, onRemove, onRemoveWithHistory }) {
+  const [testing, setTesting] = useState(false)
+  const [result,  setResult]  = useState(null)
+  const navigate = useNavigate()
+  const platform = PLATFORMS.find(p => p.id === connector.platform)
+
+  const test = async () => {
+    setTesting(true); setResult(null)
+    try {
+      const res  = await apiFetch('/api/test-connector', { method:'POST', body: JSON.stringify({ connectorId: connector.id }) })
+      const data = await res.json()
+      setResult(res.ok ? { ok:true, articles:data.article_count, canWrite:data.can_write } : { ok:false, msg:data.error })
+    } catch(e) { setResult({ ok:false, msg:e.message }) }
+    finally { setTesting(false) }
+  }
+
   return (
-    <div style={{ borderRadius: 10, border: '1px solid var(--border-md)', overflow: 'hidden', marginBottom: 16 }}>
-      <button onClick={() => setOpen(v => !v)}
-        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--bg)', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>How to get your Zendesk® API token</span>
+    <div style={{ border:'1px solid var(--border-md)', borderRadius:12, background:'white', marginBottom:8, overflow:'hidden' }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, padding:'14px 16px' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:12, minWidth:0 }}>
+          <PlatformLogo platform={connector.platform || 'zendesk'} size={36} />
+          <div style={{ minWidth:0 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+              <p style={{ fontSize:14, fontWeight:700, color:'var(--text)', margin:0 }}>
+                {platform?.displayUrl?.(connector) || `${connector.subdomain}.zendesk.com`}
+              </p>
+              <div style={{ width:6, height:6, borderRadius:'50%', background:'var(--green)', flexShrink:0 }} />
+            </div>
+            <p style={{ fontSize:11, color:'var(--text-3)', margin:'2px 0 0' }}>
+              Connected {connector.created_at ? new Date(connector.created_at).toLocaleDateString() : ''} ·{' '}
+              <span style={{ color:connector.published_only!==false?'var(--green)':'var(--amber)', fontWeight:600 }}>
+                {connector.published_only!==false ? 'Published only' : 'All articles'}
+              </span>
+            </p>
+          </div>
         </div>
-        {open ? <ChevronUp size={14} style={{ color: 'var(--text-3)' }} /> : <ChevronDown size={14} style={{ color: 'var(--text-3)' }} />}
-      </button>
-      {open && (
-        <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--border)' }}>
-          <div style={{ marginTop: 14 }}>
-            {[
-              { step: '01', title: 'Open Admin Center', desc: 'In Zendesk®, click the grid icon (⚙️) in the left sidebar to open Admin Center.' },
-              { step: '02', title: 'Navigate to API settings', desc: 'Go to Apps & Integrations → APIs → Zendesk® API.' },
-              { step: '03', title: 'Enable token access', desc: 'Make sure "Token access" is toggled ON.' },
-              { step: '04', title: 'Create a new token', desc: 'Click "Add API token", give it a name like "ArticleIQ", and copy the token immediately — you won\'t see it again.' },
-              { step: '05', title: 'Use your Guide Admin email', desc: 'The email you enter must belong to a user with Guide Admin role, otherwise publishing improvements back to Zendesk® won\'t work.' },
-            ].map(({ step, title, desc }, i, arr) => (
-              <div key={step} style={{ display: 'flex', gap: 12, paddingBottom: i < arr.length - 1 ? 14 : 0, marginBottom: i < arr.length - 1 ? 14 : 0, borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                <div style={{ width: 28, height: 28, borderRadius: 7, background: 'var(--navy-light)', border: '1px solid var(--navy-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 10, fontWeight: 700, color: 'var(--navy)', fontFamily: 'monospace' }}>{step}</div>
-                <div>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>{title}</p>
-                  <p style={{ fontSize: 12, color: 'var(--text-2)', margin: 0, lineHeight: 1.6 }}>{desc}</p>
-                </div>
-              </div>
-            ))}
-            <a href="https://support.zendesk.com/hc/en-us/articles/4408889192858" target="_blank" rel="noreferrer"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 14, fontSize: 12, color: 'var(--navy)', fontWeight: 600 }}>
-              <ExternalLink size={12} /> Official Zendesk® guide
-            </a>
+        <div style={{ display:'flex', alignItems:'center', gap:6, flexShrink:0 }}>
+          <button onClick={test} disabled={testing} className="btn btn-secondary btn-xs">
+            {testing ? <Loader size={11} style={{ animation:'spin 0.7s linear infinite' }} /> : null}
+            {testing ? 'Testing...' : 'Test connection'}
+          </button>
+          <button onClick={() => navigate('/dashboard')} className="btn btn-primary btn-xs">Run a scan →</button>
+          <button onClick={() => onRemove(connector.id)} className="btn btn-secondary btn-xs">Remove</button>
+          <button onClick={() => onRemoveWithHistory(connector.id)} className="btn btn-ghost btn-xs" style={{ color:'var(--text-3)' }} title="Remove and delete scan history">
+            <Trash2 size={12} />
+          </button>
+        </div>
+      </div>
+      {result && (
+        <div style={{ margin:'0 16px 14px', padding:'10px 12px', borderRadius:8, display:'flex', gap:8, background:result.ok?'var(--green-light)':'var(--red-light)', border:`1px solid ${result.ok?'var(--green-border)':'var(--red-border)'}` }}>
+          {result.ok ? <CheckCircle size={13} style={{ color:'var(--green)', flexShrink:0, marginTop:1 }} /> : <AlertTriangle size={13} style={{ color:'var(--red)', flexShrink:0, marginTop:1 }} />}
+          <div>
+            <p style={{ fontSize:12, fontWeight:600, color:result.ok?'var(--green)':'var(--red)', margin:'0 0 2px' }}>
+              {result.ok ? 'Connection successful' : 'Connection failed'}
+            </p>
+            <p style={{ fontSize:11, color:'var(--text-2)', margin:0 }}>
+              {result.ok ? `${result.articles?.toLocaleString()} articles found · ${result.canWrite ? '✓ Publishing enabled' : '⚠ Not Guide Admin — scanning works but publishing requires a Guide Admin token'}` : result.msg}
+            </p>
           </div>
         </div>
       )}
@@ -125,96 +135,75 @@ function TokenGuide() {
   )
 }
 
-function ConnectorCard({ connector, onRemove, onRemoveWithHistory }) {
-  const [testing,    setTesting]    = useState(false)
-  const [testResult, setTestResult] = useState(null)
-  const navigate = useNavigate()
-
-  const testConnection = async () => {
-    setTesting(true); setTestResult(null)
-    try {
-      const res = await apiFetch('/api/test-connector', {
-        method: 'POST',
-        body: JSON.stringify({ connectorId: connector.id }),
-      })
-      const data = await res.json()
-      setTestResult(res.ok ? { ok: true, articles: data.article_count, canWrite: data.can_write } : { ok: false, message: data.error })
-    } catch (e) {
-      setTestResult({ ok: false, message: e.message })
-    } finally { setTesting(false) }
-  }
-
+function ConnectForm({ platform, form, setForm, showKeys, setShowKeys, onSave, onCancel, saving }) {
   return (
-    <div className="card" style={{ padding: '16px 18px', marginBottom: 10 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 38, height: 38, borderRadius: 9, background: 'var(--navy-light)', border: '1px solid var(--navy-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-<PlatformLogo platform={connector.platform || 'zendesk'} size={32} />
-          </div>
+    <div style={{ border:'1px solid var(--border-md)', borderRadius:12, background:'white', overflow:'hidden', marginBottom:8 }}>
+      {/* Form header */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', borderBottom:'1px solid var(--border-md)', background:'var(--bg)' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <PlatformLogo platform={platform.id} size={32} />
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-              <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
-                {(PLATFORMS.find(p => p.id === connector.platform)?.displayUrl?.(connector)) || `${connector.subdomain}.zendesk.com`}
-              </p>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)' }} />
-            </div>
-            <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0 }}>
-              Connected {connector.created_at ? new Date(connector.created_at).toLocaleDateString() : ''} ·{' '}
-              <span style={{ color: connector.published_only !== false ? 'var(--green)' : 'var(--amber)', fontWeight:600 }}>
-                {connector.published_only !== false ? 'Published only' : 'All articles'}
-              </span>
-            </p>
+            <p style={{ fontSize:14, fontWeight:700, color:'var(--text)', margin:0 }}>Connect {platform.name}</p>
+            <p style={{ fontSize:11, color:'var(--text-3)', margin:0 }}>{platform.description}</p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button onClick={testConnection} disabled={testing} className="btn btn-secondary btn-xs">
-            {testing ? <Loader size={11} style={{ animation: 'spin 0.7s linear infinite' }} /> : null}
-            {testing ? 'Testing...' : 'Test connection'}
-          </button>
-          <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-            <button onClick={() => navigate('/dashboard')} className="btn btn-primary btn-xs">
-              Run a scan →
-            </button>
-            <button onClick={() => onRemove(connector.id)} className="btn btn-secondary btn-xs">
-              Remove
-            </button>
-            <button onClick={() => onRemoveWithHistory(connector.id)} className="btn btn-ghost btn-xs" style={{ color:'var(--text-3)' }} title="Remove and delete all scan history">
-              <Trash2 size={12} />
-            </button>
-          </div>
-        </div>
+        <button onClick={onCancel} className="btn btn-ghost btn-xs" style={{ color:'var(--text-3)' }}>Cancel</button>
       </div>
 
-      {/* Test result */}
-      {testResult && (
-        <div style={{ marginTop: 12, padding: '10px 12px', borderRadius: 8, display: 'flex', alignItems: 'flex-start', gap: 8,
-          background: testResult.ok ? 'var(--green-light)' : 'var(--red-light)',
-          border: `1px solid ${testResult.ok ? 'var(--green-border)' : 'var(--red-border)'}`,
-        }}>
-          {testResult.ok
-            ? <CheckCircle size={13} style={{ color: 'var(--green)', flexShrink: 0, marginTop: 1 }} />
-            : <AlertTriangle size={13} style={{ color: 'var(--red)', flexShrink: 0, marginTop: 1 }} />
-          }
-          <div>
-            {testResult.ok ? (
-              <>
-                <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--green)', margin: '0 0 2px' }}>Connection successful</p>
-                <p style={{ fontSize: 11, color: 'var(--text-2)', margin: 0 }}>
-                  {testResult.articles?.toLocaleString()} articles found ·{' '}
-                  {testResult.canWrite
-                    ? '✓ Guide Admin — publishing enabled'
-                    : '⚠ Not Guide Admin — scanning works but publishing to Zendesk® requires a Guide Admin token'}
-                </p>
-              </>
-            ) : (
-              <>
-                <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--red)', margin: '0 0 2px' }}>Connection failed</p>
-                <p style={{ fontSize: 11, color: 'var(--text-2)', margin: 0 }}>{testResult.message}</p>
-              </>
-            )}
-          </div>
+      <div style={{ padding:'16px' }}>
+        {/* Fields */}
+        <div style={{ display:'flex', flexDirection:'column', gap:12, marginBottom:16 }}>
+          {platform.fields.map(({ key, label, placeholder, hint, type }) => (
+            <div key={key}>
+              <p style={{ fontSize:11, fontWeight:700, color:'var(--text-2)', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em' }}>{label}</p>
+              <div style={{ position:'relative' }}>
+                <input
+                  type={type === 'password' && !showKeys[key] ? 'password' : 'text'}
+                  value={form[key] || ''}
+                  placeholder={placeholder}
+                  onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                  className="input"
+                  style={{ paddingRight: type === 'password' ? 36 : undefined }}
+                />
+                {type === 'password' && (
+                  <button type="button" onClick={() => setShowKeys(s => ({ ...s, [key]: !s[key] }))}
+                    style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--text-3)', display:'flex', padding:0 }}>
+                    {showKeys[key] ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                )}
+              </div>
+              {hint && <p style={{ fontSize:11, color:'var(--text-3)', marginTop:4 }}>{hint}</p>}
+            </div>
+          ))}
         </div>
-      )}
+
+        {/* Published only toggle — shown for all platforms */}
+        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16, padding:'12px 14px', borderRadius:9, border:'1px solid var(--border-md)', background:'var(--bg)', marginBottom:12 }}>
+          <div>
+            <p style={{ fontSize:13, fontWeight:600, color:'var(--text)', marginBottom:2 }}>Published articles only</p>
+            <p style={{ fontSize:11, color:'var(--text-3)', margin:0, lineHeight:1.5 }}>Skip internal and draft articles. Recommended — private articles have auth-protected images that trigger false positives in the broken link checker.</p>
+          </div>
+          <button onClick={() => setForm(f => ({ ...f, published_only: !f.published_only }))}
+            style={{ width:40, height:22, borderRadius:11, border:'none', cursor:'pointer', flexShrink:0, transition:'background 0.2s', position:'relative', marginTop:2, background: form.published_only !== false ? 'var(--navy)' : 'var(--border-md)' }}>
+            <div style={{ position:'absolute', top:2, left: form.published_only !== false ? 20 : 2, width:18, height:18, borderRadius:'50%', background:'white', transition:'left 0.2s', boxShadow:'0 1px 3px rgba(0,0,0,0.15)' }} />
+          </button>
+        </div>
+
+        {/* Zendesk-specific warning */}
+        {platform.id === 'zendesk' && (
+          <div style={{ padding:'10px 12px', borderRadius:8, background:'var(--amber-light)', border:'1px solid var(--amber-border)', display:'flex', gap:8, marginBottom:12 }}>
+            <AlertTriangle size={13} style={{ color:'var(--amber)', flexShrink:0, marginTop:1 }} />
+            <p style={{ fontSize:12, color:'var(--text-2)', margin:0, lineHeight:1.6 }}>
+              For publishing improvements directly to Zendesk®, use the email and token of a <strong>Guide Admin</strong> user. Scanning works with any admin token.
+            </p>
+          </div>
+        )}
+
+        <button onClick={onSave} disabled={saving} className="btn btn-primary" style={{ width:'100%', justifyContent:'center' }}>
+          {saving ? <Loader size={14} style={{ animation:'spin 0.7s linear infinite' }} /> : <Plug size={14} />}
+          {saving ? 'Connecting...' : `Connect ${platform.name}`}
+        </button>
+      </div>
     </div>
   )
 }
@@ -224,12 +213,12 @@ export default function ConnectorPage() {
   const { userId } = useAuth()
   const toast      = useToast()
 
-  const [connectors,    setConnectors]    = useState([])
-  const [loading,       setLoading]       = useState(true)
-  const [saving,        setSaving]        = useState(false)
-  const [selectedPlat,  setSelectedPlat]  = useState(null)
-  const [showKeys,      setShowKeys]      = useState({})
-  const [form,          setForm]          = useState({ published_only: true })
+  const [connectors,   setConnectors]   = useState([])
+  const [loading,      setLoading]      = useState(true)
+  const [saving,       setSaving]       = useState(false)
+  const [selectedPlat, setSelectedPlat] = useState(null)
+  const [showKeys,     setShowKeys]     = useState({})
+  const [form,         setForm]         = useState({ published_only: true })
 
   const load = async () => {
     if (!userId) return
@@ -237,42 +226,35 @@ export default function ConnectorPage() {
     setConnectors(data || [])
     setLoading(false)
   }
-
   useEffect(() => { load() }, [userId])
 
   const save = async () => {
-    const { subdomain, email, api_key } = form
     const platform = selectedPlat || 'zendesk'
-    const platformDef = PLATFORMS.find(p => p.id === platform)
-    const validationError = platformDef?.validate?.(form)
-    if (validationError) { toast.error(validationError); return }
+    const def = PLATFORMS.find(p => p.id === platform)
+    const err = def?.validate?.(form)
+    if (err) { toast.error(err); return }
     setSaving(true)
     try {
-      const platformDef2 = PLATFORMS.find(p => p.id === platform)
-      const cred = platformDef2?.buildCred?.(form) || api_key
       const { error } = await supabase.from('kb_connectors').insert({
         user_id:           userId,
-        subdomain:         platformDef2?.buildSubdomain?.(form) || subdomain,
-        api_key_encrypted: cred,
+        subdomain:         def?.buildSubdomain?.(form) || form.subdomain,
+        api_key_encrypted: def?.buildCred?.(form) || form.api_key,
         is_active:         true,
         published_only:    form.published_only !== false,
         platform,
       })
       if (error) throw new Error(error.message)
-      setForm({})
+      setForm({ published_only: true })
       setSelectedPlat(null)
+      setShowKeys({})
       toast.success('Connector added')
       load()
-    } catch (e) { toast.error(e.message) }
+    } catch(e) { toast.error(e.message) }
     finally { setSaving(false) }
   }
 
   const remove = async (id) => {
-    const ok = await toast.confirm(
-      'Remove this connector?\n\nScan history will be preserved unless you also check "Delete scan history" below.',
-      'Remove connector',
-      'Cancel'
-    )
+    const ok = await toast.confirm('Remove this connector?\n\nScan history will be preserved.', 'Remove connector', 'Cancel')
     if (!ok) return
     await supabase.from('kb_connectors').delete().eq('id', id).eq('user_id', userId)
     toast.success('Connector removed — scan history preserved')
@@ -280,227 +262,91 @@ export default function ConnectorPage() {
   }
 
   const removeWithHistory = async (id) => {
-    const ok = await toast.confirm(
-      'Remove this connector and permanently delete all scan history? This cannot be undone.',
-      'Delete everything',
-      'Cancel'
-    )
+    const ok = await toast.confirm('Remove this connector and permanently delete all scan history? This cannot be undone.', 'Delete everything', 'Cancel')
     if (!ok) return
     const { data: jobs } = await supabase.from('scan_jobs').select('id').eq('connector_id', id)
     if (jobs?.length) {
-      const jobIds = jobs.map(j => j.id)
-      await supabase.from('article_issues').delete().in('scan_job_id', jobIds)
-      await supabase.from('scanned_articles').delete().in('scan_job_id', jobIds)
-      await supabase.from('scan_jobs').delete().in('id', jobIds)
+      const ids = jobs.map(j => j.id)
+      await supabase.from('article_issues').delete().in('scan_job_id', ids)
+      await supabase.from('scanned_articles').delete().in('scan_job_id', ids)
+      await supabase.from('scan_jobs').delete().in('id', ids)
     }
     await supabase.from('kb_connectors').delete().eq('id', id).eq('user_id', userId)
     toast.success('Connector and all scan history deleted')
     load()
   }
 
+  const selectedPlatDef = PLATFORMS.find(p => p.id === selectedPlat)
+
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(16px,4vw,28px) clamp(16px,4vw,24px)' }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', marginBottom: 3, letterSpacing: -0.3 }}>Connectors</h1>
-        <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0 }}>Connect your knowledge base platforms to start scanning</p>
+    <div style={{ maxWidth:720, margin:'0 auto', padding:'clamp(24px,4vw,40px) clamp(16px,4vw,32px)' }}>
+
+      {/* Header */}
+      <div style={{ marginBottom:24 }}>
+        <h1 style={{ fontSize:22, fontWeight:800, color:'var(--text)', marginBottom:4, letterSpacing:-0.4 }}>Connectors</h1>
+        <p style={{ fontSize:13, color:'var(--text-3)', margin:0 }}>Connect your knowledge base to start scanning</p>
       </div>
 
-      {/* Existing connectors */}
+      {/* Connected platforms */}
       {!loading && connectors.map(c => (
         <ConnectorCard key={c.id} connector={c} onRemove={remove} onRemoveWithHistory={removeWithHistory} />
       ))}
 
-      {/* CTA after connecting */}
-      {!loading && connectors.length > 0 && (
-        <div style={{ padding:'16px 18px', borderRadius:'var(--radius-lg)', background:'var(--navy)', marginBottom:16, display:'flex', alignItems:'center', justifyContent:'space-between', gap:16 }}>
+      {/* Run a scan CTA */}
+      {!loading && connectors.length > 0 && !selectedPlat && (
+        <Link to="/dashboard" style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, padding:'14px 16px', borderRadius:12, background:'var(--navy)', marginBottom:24, textDecoration:'none' }}>
           <div>
-            <p style={{ fontSize:13, fontWeight:700, color:'white', margin:'0 0 3px' }}>Ready to scan your knowledge base</p>
-            <p style={{ fontSize:11, color:'rgba(255,255,255,0.55)', margin:0 }}>Go to the dashboard to run your first scan and find issues across your articles.</p>
+            <p style={{ fontSize:13, fontWeight:700, color:'white', margin:'0 0 2px' }}>Ready to scan your knowledge base</p>
+            <p style={{ fontSize:11, color:'rgba(255,255,255,0.5)', margin:0 }}>Go to the dashboard to run your first scan</p>
           </div>
-          <Link to="/dashboard" className="btn btn-sm" style={{ background:'white', color:'var(--navy)', fontWeight:700, flexShrink:0 }}>
-            Run a scan →
-          </Link>
-        </div>
+          <span className="btn btn-sm" style={{ background:'white', color:'var(--navy)', fontWeight:700, flexShrink:0 }}>Run a scan →</span>
+        </Link>
+      )}
+
+      {/* Connect form */}
+      {selectedPlatDef && (
+        <ConnectForm
+          platform={selectedPlatDef}
+          form={form}
+          setForm={setForm}
+          showKeys={showKeys}
+          setShowKeys={setShowKeys}
+          onSave={save}
+          onCancel={() => { setSelectedPlat(null); setForm({ published_only: true }); setShowKeys({}) }}
+          saving={saving}
+        />
       )}
 
       {/* Platform picker */}
       {!selectedPlat && (
-        <>
-          <p style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-3)', marginBottom: 10 }}>
+        <div>
+          <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.09em', color:'var(--text-3)', marginBottom:10 }}>
             {connectors.length > 0 ? 'Add another platform' : 'Choose a platform'}
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:12 }}>
             {PLATFORMS.map(p => (
               <button key={p.id} onClick={() => p.available && setSelectedPlat(p.id)}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-md)', background: 'white', cursor: p.available ? 'pointer' : 'default', textAlign: 'left', fontFamily: 'inherit', opacity: p.available ? 1 : 0.5, transition: 'all 0.12s', width: '100%', boxSizing: 'border-box',
-                  outline: selectedPlat === p.id ? '2px solid var(--navy)' : 'none',
-                }}
-                onMouseEnter={e => p.available && (e.currentTarget.style.borderColor = 'var(--navy-border)')}
-                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-md)'}>
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: p.available ? 'var(--navy-light)' : 'var(--bg)', border: `1px solid ${p.available ? 'var(--navy-border)' : 'var(--border-md)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-<PlatformLogo platform={p.id} size={22} />
+                disabled={!p.available}
+                style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 14px', borderRadius:10, border:'1px solid var(--border-md)', background:'white', cursor:p.available?'pointer':'default', textAlign:'left', fontFamily:'inherit', opacity:p.available?1:0.45, transition:'border-color 0.12s', width:'100%', boxSizing:'border-box' }}
+                onMouseEnter={e => p.available && (e.currentTarget.style.borderColor='var(--navy)')}
+                onMouseLeave={e => e.currentTarget.style.borderColor='var(--border-md)'}>
+                <PlatformLogo platform={p.id} size={32} />
+                <div style={{ flex:1, minWidth:0 }}>
+                  <p style={{ fontSize:13, fontWeight:700, color:'var(--text)', margin:'0 0 1px' }}>{p.name}</p>
+                  <p style={{ fontSize:11, color:'var(--text-3)', margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.description}</p>
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: '0 0 1px' }}>{p.name}</p>
-                  <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.description}</p>
-                </div>
-                {!p.available && (
-                  <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'var(--bg)', color: 'var(--text-3)', border: '1px solid var(--border-md)', flexShrink: 0 }}>Soon</span>
-                )}
+                {!p.available && <span style={{ fontSize:9, fontWeight:700, padding:'2px 6px', borderRadius:4, background:'var(--bg)', color:'var(--text-3)', border:'1px solid var(--border-md)', flexShrink:0 }}>Soon</span>}
               </button>
             ))}
           </div>
-        </>
-      )}
-
-      {/* Zendesk® connection form */}
-      {selectedPlat === 'zendesk' && (
-        <div className="animate-in">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-<PlatformLogo platform='zendesk' size={28} />
-              <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Connect Zendesk®</p>
-            </div>
-            <button onClick={() => { setSelectedPlat(null); setForm({}) }} className="btn btn-ghost btn-xs" style={{ color: 'var(--text-3)' }}>Cancel</button>
-          </div>
-
-          <TokenGuide />
-
-          <div className="card" style={{ padding: '18px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
-              {PLATFORMS.find(p => p.id === 'zendesk').fields.map(({ key, label, placeholder, hint, type }) => (
-                <div key={key}>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</p>
-                  <input type={type} value={form[key] || ''} placeholder={placeholder}
-                    onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                    className="input" />
-                  {hint && <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>{hint}</p>}
-                </div>
-              ))}
-            </div>
-
-            {/* Published only toggle */}
-            <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16, padding:'12px 14px', borderRadius:9, border:'1px solid var(--border-md)', background:'var(--bg)', marginBottom:4 }}>
-              <div>
-                <p style={{ fontSize:13, fontWeight:600, color:'var(--text)', marginBottom:2 }}>Published articles only</p>
-                <p style={{ fontSize:11, color:'var(--text-3)', margin:0, lineHeight:1.5 }}>Skip internal and draft articles. Recommended — private articles have auth-protected images and links that trigger false positives in the broken link checker.</p>
-              </div>
-              <button onClick={() => setForm(f => ({ ...f, published_only: !f.published_only }))}
-                style={{ width:40, height:22, borderRadius:11, border:'none', cursor:'pointer', flexShrink:0, transition:'background 0.2s', position:'relative', marginTop:2,
-                  background: form.published_only !== false ? 'var(--navy)' : 'var(--border-md)' }}>
-                <div style={{ position:'absolute', top:2, left: form.published_only !== false ? 20 : 2, width:18, height:18, borderRadius:'50%', background:'white', transition:'left 0.2s', boxShadow:'0 1px 3px rgba(0,0,0,0.15)' }} />
-              </button>
-            </div>
-
-            {/* Warning about Guide Admin */}
-            <div style={{ padding: '10px 12px', borderRadius: 8, background: 'var(--amber-light)', border: '1px solid var(--amber-border)', display: 'flex', gap: 8, marginBottom: 14 }}>
-              <AlertTriangle size={13} style={{ color: 'var(--amber)', flexShrink: 0, marginTop: 1 }} />
-              <p style={{ fontSize: 12, color: 'var(--text-2)', margin: 0, lineHeight: 1.6 }}>
-                For publishing improvements directly to Zendesk®, use the email and token of a <strong>Guide Admin</strong> user — not just any admin. Scanning works with any admin token.
-              </p>
-            </div>
-
-            <button onClick={save} disabled={saving} className="btn btn-primary">
-              {saving ? <Loader size={14} style={{ animation: 'spin 0.7s linear infinite' }} /> : <Plug size={14} />}
-              {saving ? 'Connecting...' : 'Connect Zendesk®'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* HelpScout connection form */}
-      {selectedPlat === 'helpscout' && (
-        <div className="animate-in">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-<PlatformLogo platform='helpscout' size={28} />
-              <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Connect HelpScout</p>
-            </div>
-            <button onClick={() => { setSelectedPlat(null); setForm({}) }} className="btn btn-ghost btn-xs" style={{ color: 'var(--text-3)' }}>Cancel</button>
-          </div>
-
-          <div style={{ padding: '12px 14px', borderRadius: 8, background: 'var(--navy-light)', border: '1px solid var(--navy-border)', marginBottom: 14 }}>
-            <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--navy)', margin: '0 0 3px' }}>How to get your HelpScout API key</p>
-            <p style={{ fontSize: 11, color: 'var(--text-2)', margin: 0, lineHeight: 1.6 }}>
-              In HelpScout → Your Profile (top right) → Authentication → API Keys → Generate an API Key. Copy and paste it below.
+          <div style={{ display:'flex', alignItems:'center', gap:8, padding:'12px 14px', borderRadius:10, border:'1px solid var(--border-md)', background:'var(--bg)' }}>
+            <Clock size={13} style={{ color:'var(--text-3)', flexShrink:0 }} />
+            <p style={{ fontSize:12, color:'var(--text-3)', margin:0 }}>
+              Intercom, Notion, and Confluence coming soon.{' '}
+              <a href="/contact" style={{ color:'var(--navy)', fontWeight:600 }}>Let us know</a> which you need most.
             </p>
           </div>
-
-          <div className="card" style={{ padding: '18px' }}>
-            <div style={{ marginBottom: 16 }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.07em' }}>API Key</p>
-              <div style={{ position:'relative' }}>
-                <input type={showKeys.hs_key ? 'text' : 'password'} value={form.api_key || ''} placeholder="Paste your HelpScout API key"
-                  onChange={e => setForm(f => ({ ...f, api_key: e.target.value }))}
-                  className="input" style={{ paddingRight:36 }} />
-                <button type="button" onClick={() => setShowKeys(s => ({ ...s, hs_key: !s.hs_key }))}
-                  style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--text-3)', display:'flex', padding:0 }}>
-                  {showKeys.hs_key ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
-              </div>
-              <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>Your API key is encrypted and stored securely. We never share it.</p>
-            </div>
-            <button onClick={save} disabled={saving} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-              {saving ? 'Connecting...' : 'Connect HelpScout'}
-            </button>
-          </div>
         </div>
-      )}
-
-      {/* Freshdesk connection form */}
-      {selectedPlat === 'freshdesk' && (
-        <div className="animate-in">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <PlatformLogo platform="freshdesk" size={28} />
-              <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Connect Freshdesk</p>
-            </div>
-            <button onClick={() => { setSelectedPlat(null); setForm({}) }} className="btn btn-ghost btn-xs" style={{ color: 'var(--text-3)' }}>Cancel</button>
-          </div>
-
-          <div style={{ padding: '12px 14px', borderRadius: 8, background: 'var(--navy-light)', border: '1px solid var(--navy-border)', marginBottom: 14 }}>
-            <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--navy)', margin: '0 0 3px' }}>How to get your Freshdesk API key</p>
-            <p style={{ fontSize: 11, color: 'var(--text-2)', margin: 0, lineHeight: 1.6 }}>
-              In Freshdesk → click your avatar (top right) → Profile Settings → scroll to the bottom → copy your API Key.
-            </p>
-          </div>
-
-          <div className="card" style={{ padding: '18px' }}>
-            <div style={{ marginBottom: 14 }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Subdomain</p>
-              <input type="text" value={form.subdomain || ''} placeholder="yourcompany — just this part from yourcompany.freshdesk.com"
-                onChange={e => setForm(f => ({ ...f, subdomain: e.target.value.replace(/https?:\/\//, '').replace(/\.freshdesk\.com.*/, '').trim().toLowerCase() }))}
-                className="input" />
-              <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>Just the subdomain — not the full URL</p>
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.07em' }}>API Key</p>
-              <div style={{ position:'relative' }}>
-                <input type={showKeys.fd_key ? 'text' : 'password'} value={form.api_key || ''} placeholder="Paste your Freshdesk API key"
-                  onChange={e => setForm(f => ({ ...f, api_key: e.target.value }))}
-                  className="input" style={{ paddingRight:36 }} />
-                <button type="button" onClick={() => setShowKeys(s => ({ ...s, fd_key: !s.fd_key }))}
-                  style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--text-3)', display:'flex', padding:0 }}>
-                  {showKeys.fd_key ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
-              </div>
-            </div>
-            <button onClick={save} disabled={saving} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-              {saving ? 'Connecting...' : 'Connect Freshdesk'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Coming soon platforms — only show when no platform selected */}
-      {!selectedPlat && (
-      <div style={{ padding: '14px 16px', borderRadius: 'var(--radius-lg)', background: 'var(--bg)', border: '1px solid var(--border-md)', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <Clock size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
-        <p style={{ fontSize: 12, color: 'var(--text-3)', margin: 0, lineHeight: 1.6 }}>
-          Intercom, Notion, and Confluence connectors are coming soon.{' '}
-          <a href="/contact" style={{ color: 'var(--navy)', fontWeight: 600 }}>Let us know</a> which platform you need most.
-        </p>
-      </div>
       )}
     </div>
   )
