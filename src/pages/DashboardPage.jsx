@@ -145,6 +145,38 @@ const calcHealth = (scan) => {
   return Math.max(0, Math.min(100, Math.round(100 - penalty * 20)))
 }
 const healthLabel = (s) => s >= 80 ? 'Healthy' : s >= 60 ? 'Needs attention' : 'Critical'
+
+const HEALTH_VIBES = {
+  low: [
+    { icon: '😬', msg: "Well. At least you know now." },
+    { icon: '🫣', msg: "Your customers have seen things. Dark things." },
+    { icon: '💀', msg: "Your KB called. It wants to be put out of its misery." },
+    { icon: '🧯', msg: "This is fine. Everything is fine." },
+    { icon: '😵', msg: "404: Quality not found." },
+  ],
+  mid: [
+    { icon: '🙈', msg: "So close. Your KB can almost see the finish line." },
+    { icon: '📈', msg: "The vibe is improving. Slowly. But improving." },
+    { icon: '🤏', msg: "This close to good. Like, thisss close." },
+    { icon: '🫶', msg: "Rough around the edges, but we believe in you." },
+    { icon: '🚧', msg: "Under construction. But make it a quick renovation." },
+  ],
+  high: [
+    { icon: '🏆', msg: "Your customers are quietly grateful. As they should be." },
+    { icon: '✨', msg: "Spotless. Have you considered a career in KB management?" },
+    { icon: '🎯', msg: "If your KB were a restaurant, it would have Michelin stars." },
+    { icon: '🚀', msg: "Your docs are doing the thing. The good thing." },
+    { icon: '👌', msg: "Immaculate. We're not worthy." },
+  ],
+}
+
+const getHealthVibe = (score, scanId) => {
+  const band = score <= 50 ? 'low' : score <= 79 ? 'mid' : 'high'
+  const list = HEALTH_VIBES[band]
+  // Use scanId to pick a consistent but pseudo-random vibe
+  const idx = scanId ? scanId.charCodeAt(0) % list.length : 0
+  return list[idx]
+}
 const pointsToHealthy = (s) => s >= 80 ? 0 : 80 - s
 
 const SCAN_CHECKS = [
@@ -437,10 +469,11 @@ function DashboardPage() {
             <p style={{ fontSize:10, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(255,255,255,0.4)', marginBottom:6 }}>
               Knowledge base health · {formatDistanceToNow(new Date(lastScan.created_at), { addSuffix:true })}
             </p>
-            <div style={{ display:'flex', alignItems:'flex-end', gap:16, marginBottom:14 }}>
-              <div className='health-score' style={{ fontSize:76, fontWeight:800, color:'white', lineHeight:1, letterSpacing:-3 }}>{lastH}</div>
-              <div style={{ paddingBottom:10 }}>
-                <div style={{ fontSize:15, fontWeight:700, color:'rgba(255,255,255,0.85)', marginBottom:4 }}>{healthLabel(lastH)}</div>
+            <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', gap:16, marginBottom:14 }}>
+              <div style={{ display:'flex', alignItems:'flex-end', gap:16 }}>
+                <div className='health-score' style={{ fontSize:76, fontWeight:800, color:'white', lineHeight:1, letterSpacing:-3 }}>{lastH}</div>
+                <div style={{ paddingBottom:10 }}>
+                  <div style={{ fontSize:15, fontWeight:700, color:'rgba(255,255,255,0.85)', marginBottom:4 }}>{healthLabel(lastH)}</div>
                 {trend !== null && (
                   <div style={{ display:'inline-flex', alignItems:'center', gap:4, fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.6)' }}>
                     {trend > 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
@@ -448,6 +481,17 @@ function DashboardPage() {
                   </div>
                 )}
               </div>
+              </div>
+              {/* Fun vibe sticker */}
+              {(() => {
+                const vibe = getHealthVibe(lastH, lastScan?.id)
+                return (
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6, padding:'14px 18px', borderRadius:14, background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.1)', flexShrink:0, maxWidth:180, textAlign:'center' }}>
+                    <span style={{ fontSize:32, lineHeight:1 }}>{vibe.icon}</span>
+                    <p style={{ fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.7)', margin:0, lineHeight:1.5 }}>{vibe.msg}</p>
+                  </div>
+                )
+              })()}
             </div>
             <div style={{ display:'flex', gap:6, flexWrap:'wrap', alignItems:'center' }}>
               {counts.critical > 0 && <div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(192,57,43,0.35)', color:'#FFAAAA', fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:4 }}><AlertOctagon size={10}/> {counts.critical} critical</div>}
