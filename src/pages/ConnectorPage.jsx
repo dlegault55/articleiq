@@ -20,6 +20,10 @@ const PLATFORMS = [
     ],
     helpUrl: 'https://developers.freshdesk.com/api/',
     helpLabel: 'How to get your API key →',
+    displayUrl: (c) => `${c.subdomain}.freshdesk.com`,
+    buildCred: (f) => f.api_key,
+    buildSubdomain: (f) => f.subdomain,
+    validate: (f) => !f.subdomain || !f.api_key ? 'Subdomain and API key required' : null,
   },
   {
     id: 'helpscout',
@@ -32,6 +36,10 @@ const PLATFORMS = [
     ],
     helpUrl: 'https://developer.helpscout.com/docs-api/',
     helpLabel: 'How to get your API key →',
+    displayUrl: () => 'HelpScout Docs',
+    buildCred: (f) => f.api_key,
+    buildSubdomain: () => 'helpscout',
+    validate: (f) => !f.api_key ? 'API key required' : null,
   },
   {
     id: 'zendesk',
@@ -44,6 +52,10 @@ const PLATFORMS = [
       { key: 'email',     label: 'Admin email', placeholder: 'admin@yourcompany.com', hint: 'Must belong to a user with Guide Admin role', type: 'email' },
       { key: 'api_key',   label: 'API token', placeholder: 'Paste your API token here', hint: 'Admin Center → Apps & Integrations → APIs → Zendesk® API → API Tokens', type: 'password' },
     ],
+    displayUrl: (c) => `${c.subdomain}.zendesk.com`,
+    buildCred: (f) => `${f.email}/token:${f.api_key}`,
+    buildSubdomain: (f) => f.subdomain.replace(/\.zendesk\.com$/, '').trim().toLowerCase(),
+    validate: (f) => !f.subdomain || !f.email || !f.api_key ? 'All fields required' : null,
   },
 
   { id: 'intercom',  name: 'Intercom',   description: 'Scan your Intercom Articles', available: false },
@@ -142,9 +154,7 @@ function ConnectorCard({ connector, onRemove, onRemoveWithHistory }) {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
               <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
-                {connector.platform === 'helpscout' ? 'HelpScout Docs'
-                  : connector.platform === 'freshdesk' ? `${connector.subdomain}.freshdesk.com`
-                  : `${connector.subdomain}.zendesk.com`}
+                {(PLATFORMS.find(p => p.id === connector.platform)?.displayUrl?.(connector)) || `${connector.subdomain}.zendesk.com`}
               </p>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)' }} />
             </div>
@@ -232,15 +242,16 @@ export default function ConnectorPage() {
   const save = async () => {
     const { subdomain, email, api_key } = form
     const platform = selectedPlat || 'zendesk'
-    if (platform === 'zendesk' && (!subdomain || !email || !api_key)) { toast.error('All fields required'); return }
-    if (platform === 'helpscout' && !api_key) { toast.error('API key required'); return }
-    if (platform === 'freshdesk' && (!subdomain || !api_key)) { toast.error('Subdomain and API key required'); return }
+    const platformDef = PLATFORMS.find(p => p.id === platform)
+    const validationError = platformDef?.validate?.(form)
+    if (validationError) { toast.error(validationError); return }
     setSaving(true)
     try {
-      const cred = platform === 'helpscout' ? api_key : platform === 'freshdesk' ? api_key : `${email}/token:${api_key}`
+      const platformDef2 = PLATFORMS.find(p => p.id === platform)
+      const cred = platformDef2?.buildCred?.(form) || api_key
       const { error } = await supabase.from('kb_connectors').insert({
         user_id:           userId,
-        subdomain:         platform === 'helpscout' ? 'helpscout' : subdomain.replace(/\.zendesk\.com$/, '').replace(/\.freshdesk\.com$/, '').trim().toLowerCase(),
+        subdomain:         platformDef2?.buildSubdomain?.(form) || subdomain,
         api_key_encrypted: cred,
         is_active:         true,
         published_only:    form.published_only !== false,
