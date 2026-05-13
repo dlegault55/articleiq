@@ -1376,10 +1376,16 @@ function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve }) 
               )}
               {labels?.length > 0 && (
                 <div>
+                  {/* Why labels matter */}
+                  <div style={{ padding:'8px 10px', borderRadius:7, background:'var(--navy-light)', border:'1px solid var(--navy-border)', marginBottom:10 }}>
+                    <p style={{ fontSize:11, color:'var(--navy)', margin:0, lineHeight:1.6 }}>
+                      <strong>Why labels matter:</strong> Labels power search filtering and help customers find articles faster. Untagged articles get buried — especially in large KBs with multiple products.
+                    </p>
+                  </div>
                   <p style={{ fontSize:10, fontWeight:700, color:'var(--text-3)', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' }}>
-                    {connector ? 'Click to publish to Zendesk®' : 'Click to copy'}
+                    {connector ? `Click to publish to ${connector.platform === 'helpscout' ? 'HelpScout' : connector.platform === 'freshdesk' ? 'Freshdesk' : 'Zendesk®'}` : 'Suggested labels'}
                   </p>
-                  <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
+                  <div style={{ display:'flex', gap:5, flexWrap:'wrap', marginBottom:8 }}>
                     {labels.map(label => {
                       const isPublished = published.has(label)
                       const isLoading   = publishing === label
@@ -1397,8 +1403,26 @@ function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve }) 
                       )
                     })}
                   </div>
-                  <p style={{ fontSize:10, color:'var(--text-3)', marginTop:5 }}>
-                    {connector ? 'Labels added immediately — existing labels preserved' : 'Add labels in Zendesk®'}
+                  {/* Custom label input */}
+                  {connector && (
+                    <div style={{ display:'flex', gap:6, alignItems:'center', marginBottom:6 }}>
+                      <input
+                        value={customLabel}
+                        onChange={e => setCustomLabel(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter' && customLabel.trim()) { publishLabel(customLabel.trim()); setCustomLabel('') } }}
+                        placeholder="Add a custom label..."
+                        style={{ flex:1, padding:'4px 10px', borderRadius:6, border:'1px solid var(--border-md)', fontSize:11, fontFamily:'inherit', outline:'none' }}
+                      />
+                      <button
+                        onClick={() => { if (customLabel.trim()) { publishLabel(customLabel.trim()); setCustomLabel('') } }}
+                        disabled={!customLabel.trim()}
+                        style={{ padding:'4px 10px', borderRadius:6, border:'1px solid var(--navy-border)', background:'var(--navy-light)', color:'var(--navy)', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit', flexShrink:0 }}>
+                        Add
+                      </button>
+                    </div>
+                  )}
+                  <p style={{ fontSize:10, color:'var(--text-3)', marginTop:4 }}>
+                    {connector ? 'Labels added immediately — existing labels preserved' : 'Connect your KB to publish labels'}
                   </p>
                 </div>
               )}
