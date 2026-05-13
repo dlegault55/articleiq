@@ -9,6 +9,19 @@ import { Plug, Trash2, ExternalLink, Loader, CheckCircle, AlertTriangle, Chevron
 
 const PLATFORMS = [
   {
+    id: 'freshdesk',
+    name: 'Freshdesk',
+    logo: '🟢',
+    available: true,
+    description: 'Connect your Freshdesk Solutions knowledge base',
+    fields: [
+      { key: 'subdomain', label: 'Subdomain', placeholder: 'yourcompany (from yourcompany.freshdesk.com)', hint: 'Just the subdomain part, not the full URL' },
+      { key: 'api_key',   label: 'API Key', placeholder: 'Paste your Freshdesk API key', hint: 'Freshdesk → Profile Settings → Your API Key (bottom of page)', type: 'password' },
+    ],
+    helpUrl: 'https://developers.freshdesk.com/api/',
+    helpLabel: 'How to get your API key →',
+  },
+  {
     id: 'helpscout',
     name: 'HelpScout',
     logo: '🔵',
@@ -32,7 +45,7 @@ const PLATFORMS = [
       { key: 'api_key',   label: 'API token', placeholder: 'Paste your API token here', hint: 'Admin Center → Apps & Integrations → APIs → Zendesk® API → API Tokens', type: 'password' },
     ],
   },
-  { id: 'freshdesk', name: 'Freshdesk',  description: 'Scan your Freshdesk Solution articles', available: false },
+
   { id: 'intercom',  name: 'Intercom',   description: 'Scan your Intercom Articles', available: false },
   { id: 'notion',    name: 'Notion',     description: 'Scan your Notion wiki', available: false },
   { id: 'confluence',name: 'Confluence', description: 'Scan your Confluence space', available: false },
@@ -217,12 +230,13 @@ export default function ConnectorPage() {
     const platform = selectedPlat || 'zendesk'
     if (platform === 'zendesk' && (!subdomain || !email || !api_key)) { toast.error('All fields required'); return }
     if (platform === 'helpscout' && !api_key) { toast.error('API key required'); return }
+    if (platform === 'freshdesk' && (!subdomain || !api_key)) { toast.error('Subdomain and API key required'); return }
     setSaving(true)
     try {
-      const cred = platform === 'helpscout' ? api_key : `${email}/token:${api_key}`
+      const cred = platform === 'helpscout' ? api_key : platform === 'freshdesk' ? api_key : `${email}/token:${api_key}`
       const { error } = await supabase.from('kb_connectors').insert({
         user_id:           userId,
-        subdomain:         platform === 'helpscout' ? 'helpscout' : subdomain.replace(/\.zendesk\.com$/, '').trim().toLowerCase(),
+        subdomain:         platform === 'helpscout' ? 'helpscout' : subdomain.replace(/\.zendesk\.com$/, '').replace(/\.freshdesk\.com$/, '').trim().toLowerCase(),
         api_key_encrypted: cred,
         is_active:         true,
         published_only:    form.published_only !== false,
@@ -411,12 +425,51 @@ export default function ConnectorPage() {
         </div>
       )}
 
+      {/* Freshdesk connection form */}
+      {selectedPlat === 'freshdesk' && (
+        <div className="animate-in">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <PlatformLogo platform="freshdesk" size={28} />
+              <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Connect Freshdesk</p>
+            </div>
+            <button onClick={() => { setSelectedPlat(null); setForm({}) }} className="btn btn-ghost btn-xs" style={{ color: 'var(--text-3)' }}>Cancel</button>
+          </div>
+
+          <div style={{ padding: '12px 14px', borderRadius: 8, background: 'var(--navy-light)', border: '1px solid var(--navy-border)', marginBottom: 14 }}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--navy)', margin: '0 0 3px' }}>How to get your Freshdesk API key</p>
+            <p style={{ fontSize: 11, color: 'var(--text-2)', margin: 0, lineHeight: 1.6 }}>
+              In Freshdesk → click your avatar (top right) → Profile Settings → scroll to the bottom → copy your API Key.
+            </p>
+          </div>
+
+          <div className="card" style={{ padding: '18px' }}>
+            <div style={{ marginBottom: 14 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Subdomain</p>
+              <input type="text" value={form.subdomain || ''} placeholder="yourcompany (from yourcompany.freshdesk.com)"
+                onChange={e => setForm(f => ({ ...f, subdomain: e.target.value.replace(/\.freshdesk\.com$/, '').trim().toLowerCase() }))}
+                className="input" />
+              <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>Just the subdomain — not the full URL</p>
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.07em' }}>API Key</p>
+              <input type="password" value={form.api_key || ''} placeholder="Paste your Freshdesk API key"
+                onChange={e => setForm(f => ({ ...f, api_key: e.target.value }))}
+                className="input" />
+            </div>
+            <button onClick={save} disabled={saving} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+              {saving ? 'Connecting...' : 'Connect Freshdesk'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Coming soon platforms — only show when no platform selected */}
       {!selectedPlat && (
       <div style={{ marginTop: 24, padding: '14px 16px', borderRadius: 10, background: 'var(--bg)', border: '1px solid var(--border-md)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <Clock size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
         <p style={{ fontSize: 12, color: 'var(--text-3)', margin: 0, lineHeight: 1.6 }}>
-          Freshdesk, Intercom, Notion, and Confluence connectors are coming soon.{' '}
+          Intercom, Notion, and Confluence connectors are coming soon.{' '}
           <a href="/contact" style={{ color: 'var(--navy)', fontWeight: 600 }}>Let us know</a> which platform you need most.
         </p>
       </div>
