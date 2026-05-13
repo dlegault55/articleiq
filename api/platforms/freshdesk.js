@@ -147,3 +147,12 @@ export async function publishLabels(connector, articleId, labels) {
   if (!res.ok) return { added: [], existing: [] }
   return { added: labels, existing: [] }
 }
+
+export async function fetchArticleBody(connector, articleId) {
+  const res = await fetch(`${baseUrl(connector.subdomain)}/api/v2/solutions/articles/${articleId}`, {
+    headers: { Authorization: authHeader(connector.api_key_encrypted), 'Content-Type': 'application/json' }
+  })
+  if (!res.ok) throw new Error(`Freshdesk API error ${res.status}`)
+  const data = await res.json()
+  return data.description || ''
+}

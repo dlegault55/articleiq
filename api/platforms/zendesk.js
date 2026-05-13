@@ -118,3 +118,13 @@ export async function publishLabels(connector, articleId, labels) {
   ))
   return { added: toAdd, existing: existingNames }
 }
+
+export async function fetchArticleBody(connector, articleId) {
+  const auth = authHeader(connector.api_key_encrypted)
+  const res = await fetch(`${baseUrl(connector.subdomain)}/api/v2/help_center/articles/${articleId}`, {
+    headers: { Authorization: auth }
+  })
+  if (!res.ok) throw new Error(`Zendesk API error ${res.status}`)
+  const data = await res.json()
+  return data.article?.body || ''
+}

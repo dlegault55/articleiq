@@ -540,26 +540,17 @@ function AIDrawer({ article, connector, onClose, userId, globalDismissed = new S
     const run = async () => {
       setAnalysing(true); setFetchErr(null)
       try {
-        let html = ''
-        if (connector.platform === 'helpscout') {
-          const authHeader = `Basic ${btoa(connector.api_key_encrypted + ':X')}`
-          const res = await fetch(
-            `https://docsapi.helpscout.net/v1/articles/${article.article_id}`,
-            { headers: { Authorization: authHeader } }
-          )
-          if (!res.ok) throw new Error(`Could not fetch article (${res.status})`)
-          const data = await res.json()
-          html = data.article?.text || ''
-        } else {
-          const authHeader = `Basic ${btoa(connector.api_key_encrypted)}`
-          const res = await fetch(
-            `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${article.article_id}`,
-            { headers: { Authorization: authHeader } }
-          )
-          if (!res.ok) throw new Error(`Could not fetch article (${res.status})`)
-          const data = await res.json()
-          html = data.article?.body || ''
+        // Fetch via server proxy — avoids CORS issues with all platforms
+        const res = await apiFetch('/api/fetch-article', {
+          method: 'POST',
+          body: JSON.stringify({ connectorId: connector.id, articleId: article.article_id }),
+        })
+        if (!res.ok) {
+          const e = await res.json()
+          throw new Error(e.error || `Could not fetch article (${res.status})`)
         }
+        const data = await res.json()
+        const html = data.html || ''
         setBodyHtml(html)
         await runAnalysis(html, article.title)
       } catch (e) { setFetchErr(e.message) }
@@ -1453,17 +1444,15 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
   const runInlineAI = async (action) => {
     setAiLoading(action); setAiResult(null)
     try {
-      // Fetch article body from Zendesk® so AI has full content, not just title
       let articleContent = ''
       if (connector && article.article_id) {
-        const authHeader = `Basic ${btoa(connector.api_key_encrypted)}`
-        const res = await fetch(
-          `https://${connector.subdomain}.zendesk.com/api/v2/help_center/articles/${article.article_id}`,
-          { headers: { Authorization: authHeader } }
-        )
+        const res = await apiFetch('/api/fetch-article', {
+          method: 'POST',
+          body: JSON.stringify({ connectorId: connector.id, articleId: article.article_id }),
+        })
         if (res.ok) {
           const data = await res.json()
-          articleContent = data.article?.body || ''
+          articleContent = data.html || ''
         }
       }
       const raw = await callAI(action, { title: article.title, content: articleContent })

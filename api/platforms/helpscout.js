@@ -121,3 +121,11 @@ function mapArticle(a, collectionId) {
     word_count: body ? body.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length : 0,
   }
 }
+
+export async function fetchArticleBody(connector, articleId) {
+  const auth = authHeader(connector.api_key_encrypted)
+  const res = await fetch(`${BASE}/articles/${articleId}`, { headers: { Authorization: auth } })
+  if (!res.ok) throw new Error(`HelpScout API error ${res.status}`)
+  const data = await res.json()
+  return data.article?.text || ''
+}
