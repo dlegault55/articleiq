@@ -1046,10 +1046,6 @@ function AIDrawer({ article, connector, onClose, userId, globalDismissed = new S
                     </div>
                   )
                 })()}
-                          background: isAddressed ? 'var(--green-light)' : showUnaddressed ? impactBg : 'white',
-                          border: `1px solid ${isAddressed ? 'var(--green-border)' : showUnaddressed ? impactBorder : 'var(--border-md)'}`,
-                        }}>
-                          {/* Badge row */}
                 {/* All done state */}
                 {analysis && (() => {
                   const qualityRecs = analysis.quality?.suggestions?.length || 0
