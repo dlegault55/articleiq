@@ -948,166 +948,108 @@ function AIDrawer({ article, connector, onClose, userId, globalDismissed = new S
                   </div>
                 )}
 
-                {/* Quality suggestions */}
-                {analysis.quality?.suggestions?.length > 0 && (
-                  <div style={{ marginBottom:14 }}>
-                    <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:4 }}>Writing fixes</p>
-                    {improved && (
-                      <p style={{ fontSize:11, color:'var(--text-3)', marginBottom:8, lineHeight:1.5 }}>
-                        <span style={{ color:'var(--green)', fontWeight:600 }}>Green = applied by AI</span> in the rewrite · <span style={{ color:'var(--amber)', fontWeight:600 }}>Amber = apply manually</span> in the editor
+                {/* ── Recommendations — clean unified list ── */}
+                {(() => {
+                  // Build a unified sorted list: quality suggestions + SEO issues + SEO title
+                  const items = []
+                  let counter = 0
+
+                  // Quality suggestions
+                  ;(analysis.quality?.suggestions || []).forEach((s, i) => {
+                    if (dismissedRecs.has(`q-${i}`) || dismissedRecs.has(`dismissed:quality:${s}`)) return
+                    if (!shouldShowRec(s, 'quality')) return
+                    items.push({ id:`q-${i}`, type:'quality', text:s, impact:'medium', isAddressed: addressedRecs.has(`q-${i}`) && !overrideRecs.has(`q-${i}`), num: ++counter })
+                  })
+
+                  // SEO title
+                  if (analysis.seo?.title_suggestion && recPrefs.seoTitle !== false) {
+                    const isAddressed = addressedRecs.has('title')
+                    if (!isAddressed) items.push({ id:'title', type:'seo_title', text:`SEO title: "${analysis.seo.title_suggestion}"`, subtext:'Copy this into the title field above', impact:'medium', isAddressed: false, num: ++counter })
+                  }
+
+                  // SEO issues
+                  ;(analysis.seo?.issues || []).forEach((item, i) => {
+                    if (dismissedRecs.has(`s-${i}`) || dismissedRecs.has(`dismissed:seo:${item.issue}`)) return
+                    if (!shouldShowRec(item.issue + ' ' + item.fix, 'seo')) return
+                    items.push({ id:`s-${i}`, type:'seo', text:item.issue, subtext:item.fix, impact:item.impact||'medium', isAddressed: addressedRecs.has(`s-${i}`) && !overrideRecs.has(`s-${i}`), num: ++counter })
+                  })
+
+                  // Sort: unaddressed first, then by impact
+                  const impactOrder = { high:0, medium:1, low:2 }
+                  items.sort((a, b) => {
+                    if (a.isAddressed !== b.isAddressed) return a.isAddressed ? 1 : -1
+                    return (impactOrder[a.impact]||1) - (impactOrder[b.impact]||1)
+                  })
+
+                  if (items.length === 0) return null
+
+                  const unaddressed = items.filter(x => !x.isAddressed)
+                  const addressed   = items.filter(x => x.isAddressed)
+
+                  const leftBorder = (impact) => impact === 'high' ? 'var(--red)' : impact === 'low' ? 'var(--green)' : 'var(--border-strong)'
+
+                  return (
+                    <div>
+                      <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', marginBottom:10 }}>
+                        {improved ? `${unaddressed.length} still need attention` : `${items.length} recommendations`}
                       </p>
-                    )}
-                    {[...analysis.quality.suggestions.map((s, i) => ({ s, i }))]
-                      .filter(({ s, i }) => !dismissedRecs.has(`q-${i}`) && !dismissedRecs.has(`dismissed:quality:${s}`))
-                      .sort((a, b) => {
-                        const aAddressed = addressedRecs.has(`q-${a.i}`)
-                        const bAddressed = addressedRecs.has(`q-${b.i}`)
-                        if (aAddressed && !bAddressed) return 1
-                        if (!aAddressed && bAddressed) return -1
-                        return 0
-                      })
-                      .map(({ s, i }) => {
-                      const isAddressed    = addressedRecs.has(`q-${i}`) && !overrideRecs.has(`q-${i}`)
-                      const showUnaddressed = improved && !isAddressed
-                      return (
-                        <div key={i} style={{ display:'flex', gap:6, marginBottom:5, padding:'6px 8px', borderRadius:6, transition:'all 0.3s',
-                          background: isAddressed ? 'var(--green-light)' : showUnaddressed ? 'var(--amber-light)' : 'white',
-                          border: `1px solid ${isAddressed ? 'var(--green-border)' : showUnaddressed ? 'var(--amber-border)' : 'var(--border-md)'}`,
-                        }}>
-                          {isAddressed
-                            ? <CheckCircle size={11} style={{ color:'var(--green)', flexShrink:0, marginTop:1 }} />
-                            : showUnaddressed
-                              ? <span style={{ fontSize:10, flexShrink:0, marginTop:1 }}>✋</span>
-                              : <span style={{ color:'var(--navy)', flexShrink:0, fontWeight:700, fontSize:12 }}>→</span>
-                          }
-                          <div style={{ flex:1, minWidth:0 }}>
-                            <span style={{ fontSize:11, color: isAddressed ? 'var(--green)' : showUnaddressed ? 'var(--amber)' : 'var(--text-2)', lineHeight:1.5, textDecoration: isAddressed ? 'line-through' : 'none' }}>{s}</span>
-                            {showUnaddressed && <p style={{ fontSize:9, color:'var(--amber)', margin:'2px 0 0', fontWeight:700 }}>Apply this manually in the editor</p>}
-                            {isAddressed && (
-                              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:2 }}>
-                                <p style={{ fontSize:9, color:'var(--green)', margin:0 }}>Applied by AI in the rewrite</p>
-                                <button onClick={() => setOverrideRecs(prev => new Set([...prev, `q-${i}`]))}
-                                  style={{ fontSize:9, color:'var(--text-3)', background:'none', border:'1px solid var(--border-md)', cursor:'pointer', padding:'1px 6px', borderRadius:3, fontFamily:'inherit', fontWeight:600 }}
-                                  onMouseEnter={e => { e.currentTarget.style.color='var(--red)'; e.currentTarget.style.borderColor='var(--red-border)'; e.currentTarget.style.background='var(--red-light)' }}
-                                  onMouseLeave={e => { e.currentTarget.style.color='var(--text-3)'; e.currentTarget.style.borderColor='var(--border-md)'; e.currentTarget.style.background='none' }}>
-                                  Not relevant
-                                </button>
-                              </div>
-                            )}
+
+                      {/* Unaddressed items */}
+                      {unaddressed.map((item, idx) => (
+                        <div key={item.id} style={{ display:'flex', gap:10, marginBottom:6, padding:'9px 10px', borderRadius:7, background:'white', border:'1px solid var(--border-md)', borderLeft:`3px solid ${leftBorder(item.impact)}`, transition:'opacity 0.2s' }}>
+                          {/* Number badge */}
+                          <div style={{ width:18, height:18, borderRadius:'50%', background:'var(--bg)', border:'1px solid var(--border-md)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:1 }}>
+                            <span style={{ fontSize:9, fontWeight:800, color:'var(--text-3)' }}>{idx+1}</span>
                           </div>
-                          {!isAddressed && (
-                            <button onClick={() => dismissRec(`q-${i}`, s, 'quality')} title="Dismiss — not relevant to this article"
-                              style={{ flexShrink:0, background:'none', border:'1px solid var(--border-md)', cursor:'pointer', padding:'2px 7px', borderRadius:4, color:'var(--text-3)', fontSize:10, lineHeight:1.4, fontFamily:'inherit', fontWeight:600 }}
-                              onMouseEnter={e => { e.currentTarget.style.color='var(--red)'; e.currentTarget.style.borderColor='var(--red-border)'; e.currentTarget.style.background='var(--red-light)' }}
-                              onMouseLeave={e => { e.currentTarget.style.color='var(--text-3)'; e.currentTarget.style.borderColor='var(--border-md)'; e.currentTarget.style.background='none' }}>
-                              Not relevant
-                            </button>
-                          )}
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <p style={{ fontSize:12, fontWeight:600, color:'var(--text)', margin:'0 0 2px', lineHeight:1.4 }}>{item.text}</p>
+                            {item.subtext && <p style={{ fontSize:11, color:'var(--text-3)', margin:0, lineHeight:1.5 }}>{item.subtext}</p>}
+                            {improved && <p style={{ fontSize:10, color:'var(--text-3)', margin:'3px 0 0', fontStyle:'italic' }}>Apply manually in the editor</p>}
+                          </div>
+                          {/* Dismiss — icon only, appears on hover */}
+                          <button onClick={() => {
+                            if (item.type === 'quality') dismissRec(item.id, item.text, 'quality')
+                            else if (item.type === 'seo') dismissRec(item.id, item.text, 'seo')
+                          }}
+                            title="Not relevant"
+                            style={{ flexShrink:0, background:'none', border:'none', cursor:'pointer', color:'var(--border-strong)', fontSize:14, lineHeight:1, padding:'2px 4px', fontFamily:'inherit', opacity:0.4 }}
+                            onMouseEnter={e => e.currentTarget.style.opacity='1'}
+                            onMouseLeave={e => e.currentTarget.style.opacity='0.4'}>
+                            ×
+                          </button>
                         </div>
-                      )
-                    })}
-                  </div>
-                )}
+                      ))}
 
-                <div style={{ height:1, background:'var(--border-md)', margin:'0 0 12px' }} />
-
-                {/* SEO title */}
-                {analysis.seo?.title_suggestion && (
-                  <div style={{ marginBottom:12 }}>
-                    <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:6 }}>Suggested SEO title</p>
-                    <div style={{ padding:'7px 9px', borderRadius:6,
-                      background: addressedRecs.has('title') ? 'var(--green-light)' : 'var(--navy-light)',
-                      border: `1px solid ${addressedRecs.has('title') ? 'var(--green-border)' : 'var(--navy-border)'}`,
-                    }}>
-                      <div style={{ display:'flex', alignItems:'center', gap:5, marginBottom:2 }}>
-                        {addressedRecs.has('title') && <CheckCircle size={10} style={{ color:'var(--green)' }} />}
-                        <p style={{ fontSize:11, fontWeight:600, margin:0, lineHeight:1.4,
-                          color: addressedRecs.has('title') ? 'var(--green)' : 'var(--navy)',
-                          textDecoration: addressedRecs.has('title') ? 'line-through' : 'none',
-                        }}>{analysis.seo.title_suggestion}</p>
-                      </div>
-                      {!addressedRecs.has('title') && <p style={{ fontSize:9, color:'var(--navy)', opacity:0.55, margin:0 }}>Copy into the title field above if you want to use it</p>}
+                      {/* Addressed items — collapsed */}
+                      {addressed.length > 0 && (
+                        <div style={{ marginTop:8 }}>
+                          <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--green)', marginBottom:6 }}>
+                            ✓ {addressed.length} applied by AI
+                          </p>
+                          {addressed.map(item => (
+                            <div key={item.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'5px 10px', borderRadius:6, marginBottom:4, background:'var(--green-light)', border:'1px solid var(--green-border)', opacity:0.7 }}>
+                              <CheckCircle size={11} style={{ color:'var(--green)', flexShrink:0 }} />
+                              <p style={{ fontSize:11, color:'var(--green)', margin:0, textDecoration:'line-through', flex:1 }}>{item.text}</p>
+                              <button onClick={() => {
+                                if (item.type === 'quality') setOverrideRecs(prev => new Set([...prev, item.id]))
+                                else setOverrideRecs(prev => new Set([...prev, item.id]))
+                              }}
+                                style={{ fontSize:9, color:'var(--text-3)', background:'none', border:'none', cursor:'pointer', padding:'1px 4px', fontFamily:'inherit', flexShrink:0, opacity:0.6 }}
+                                onMouseEnter={e => e.currentTarget.style.opacity='1'}
+                                onMouseLeave={e => e.currentTarget.style.opacity='0.6'}>
+                                not fixed
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
-
-                {/* SEO issues */}
-                {analysis.seo?.issues?.length > 0 && (
-                  <div>
-                    <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--text-3)', marginBottom:4 }}>SEO fixes</p>
-                    {improved && (
-                      <p style={{ fontSize:11, color:'var(--text-3)', marginBottom:8, lineHeight:1.5 }}>
-                        <span style={{ color:'var(--green)', fontWeight:600 }}>Green = applied by AI</span> · <span style={{ color:'var(--amber)', fontWeight:600 }}>Amber = needs your attention</span> · <span style={{ color:'var(--red)', fontWeight:600 }}>Red = high priority</span>
-                      </p>
-                    )}
-                    {[...analysis.seo.issues.map((item, i) => ({ item, i }))]
-                      .filter(({ item, i }) => !dismissedRecs.has(`s-${i}`) && !dismissedRecs.has(`dismissed:seo:${item.issue}`) && shouldShowRec(item.issue + ' ' + item.fix, 'seo'))
-                      .sort((a, b) => {
-                        const aAddressed = addressedRecs.has(`s-${a.i}`)
-                        const bAddressed = addressedRecs.has(`s-${b.i}`)
-                        if (aAddressed && !bAddressed) return 1
-                        if (!aAddressed && bAddressed) return -1
-                        // Among unaddressed, high impact first
-                        const impactOrder = { high:0, medium:1, low:2 }
-                        return (impactOrder[a.item.impact]||2) - (impactOrder[b.item.impact]||2)
-                      })
-                      .map(({ item, i }) => {
-                      const isAddressed    = addressedRecs.has(`s-${i}`) && !overrideRecs.has(`s-${i}`)
-                      const showUnaddressed = improved && !isAddressed
-                      const impactBg     = item.impact==='high' ? '#FEF2F2' : item.impact==='medium' ? '#FFFBEB' : '#EFF6FF'
-                      const impactBorder = item.impact==='high' ? '#FECACA' : item.impact==='medium' ? '#FDE68A' : '#BFDBFE'
-                      return (
-                        <div key={i} style={{ marginBottom:7, padding:'8px 10px', borderRadius:6, transition:'all 0.3s',
+                  )
+                })()}
                           background: isAddressed ? 'var(--green-light)' : showUnaddressed ? impactBg : 'white',
                           border: `1px solid ${isAddressed ? 'var(--green-border)' : showUnaddressed ? impactBorder : 'var(--border-md)'}`,
                         }}>
                           {/* Badge row */}
-                          <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
-                            {isAddressed
-                              ? <CheckCircle size={11} style={{ color:'var(--green)', flexShrink:0 }} />
-                              : <span style={{ fontSize:9, fontWeight:700, padding:'2px 6px', borderRadius:4, textTransform:'uppercase', flexShrink:0,
-                                  background: item.impact==='high' ? '#FEE2E2' : item.impact==='medium' ? '#FEF3C7' : 'var(--blue-light)',
-                                  color: item.impact==='high' ? '#B91C1C' : item.impact==='medium' ? '#92400E' : 'var(--blue)',
-                                  border: `1px solid ${item.impact==='high' ? '#FECACA' : item.impact==='medium' ? '#FDE68A' : 'var(--blue-light)'}`,
-                                }}>{item.impact}</span>
-                            }
-                          </div>
-                          {/* Title */}
-                          <p style={{ fontSize:12, fontWeight:700, margin:'0 0 4px',
-                            color: isAddressed ? 'var(--green)' : showUnaddressed ? 'var(--amber)' : 'var(--text)',
-                            textDecoration: isAddressed ? 'line-through' : 'none',
-                            lineHeight: 1.4,
-                          }}>{item.issue}</p>
-                          {isAddressed
-                            ? <p style={{ fontSize:9, color:'var(--green)', margin:'0 0 6px' }}>Applied by AI in the rewrite</p>
-                            : <p style={{ fontSize:11, color: showUnaddressed
-                                ? item.impact==='high' ? '#B91C1C' : item.impact==='medium' ? '#92400E' : '#1E40AF'
-                                : 'var(--text-3)',
-                              margin:'0 0 6px', lineHeight:1.5 }}>{item.fix}</p>
-                          }
-                          {/* Not relevant / override — always at bottom */}
-                          <div style={{ display:'flex', gap:6 }}>
-                            <button onClick={() => dismissRec(`s-${i}`, item.issue, 'seo')}
-                              style={{ fontSize:10, color:'var(--text-3)', background:'none', border:'1px solid var(--border-md)', cursor:'pointer', padding:'2px 8px', borderRadius:4, fontFamily:'inherit', fontWeight:600 }}
-                              onMouseEnter={e => { e.currentTarget.style.color='var(--red)'; e.currentTarget.style.borderColor='var(--red-border)'; e.currentTarget.style.background='var(--red-light)' }}
-                              onMouseLeave={e => { e.currentTarget.style.color='var(--text-3)'; e.currentTarget.style.borderColor='var(--border-md)'; e.currentTarget.style.background='none' }}>
-                              Not relevant
-                            </button>
-                            {isAddressed && (
-                              <button onClick={() => setOverrideRecs(prev => new Set([...prev, `s-${i}`]))}
-                                style={{ fontSize:10, color:'var(--text-3)', background:'none', border:'1px solid var(--border-md)', cursor:'pointer', padding:'2px 8px', borderRadius:4, fontFamily:'inherit', fontWeight:600 }}
-                                onMouseEnter={e => { e.currentTarget.style.color='var(--amber)'; e.currentTarget.style.borderColor='var(--amber-border)'; e.currentTarget.style.background='var(--amber-light)' }}
-                                onMouseLeave={e => { e.currentTarget.style.color='var(--text-3)'; e.currentTarget.style.borderColor='var(--border-md)'; e.currentTarget.style.background='none' }}>
-                                Not fixed
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-
                 {/* All done state */}
                 {analysis && (() => {
                   const qualityRecs = analysis.quality?.suggestions?.length || 0
