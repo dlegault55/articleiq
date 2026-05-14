@@ -1011,11 +1011,11 @@ function AIDrawer({ article, connector, onClose, userId, globalDismissed = new S
                             if (item.type === 'quality') dismissRec(item.id, item.text, 'quality')
                             else if (item.type === 'seo') dismissRec(item.id, item.text, 'seo')
                           }}
-                            title="Not relevant"
-                            style={{ flexShrink:0, background:'none', border:'none', cursor:'pointer', color:'var(--border-strong)', fontSize:14, lineHeight:1, padding:'2px 4px', fontFamily:'inherit', opacity:0.4 }}
-                            onMouseEnter={e => e.currentTarget.style.opacity='1'}
-                            onMouseLeave={e => e.currentTarget.style.opacity='0.4'}>
-                            ×
+                            title="Mark as completed"
+                            style={{ flexShrink:0, background:'none', border:'1px solid var(--border-md)', borderRadius:5, cursor:'pointer', color:'var(--text-3)', fontSize:10, fontWeight:700, lineHeight:1, padding:'3px 7px', fontFamily:'inherit' }}
+                            onMouseEnter={e => { e.currentTarget.style.background='var(--green-light)'; e.currentTarget.style.borderColor='var(--green-border)'; e.currentTarget.style.color='var(--green)' }}
+                            onMouseLeave={e => { e.currentTarget.style.background='none'; e.currentTarget.style.borderColor='var(--border-md)'; e.currentTarget.style.color='var(--text-3)' }}>
+                            Done
                           </button>
                         </div>
                       ))}
