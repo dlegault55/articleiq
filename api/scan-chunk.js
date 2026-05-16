@@ -338,26 +338,32 @@ export default async function handler(req, res) {
             })
             if (ltRes.ok) {
               const ltData = await ltRes.json()
-              const spellIssues = (ltData.matches || [])
-                .filter(m => m.rule?.issueType === 'misspelling' || m.rule?.category?.id === 'TYPOS')
-                .filter(m => {
-                  const word = plainText.slice(m.offset, m.offset + m.length).toLowerCase()
-                  return !ignoredLower.includes(word)
-                })
-                .slice(0, 20)
-                .map(m => ({
-                  scan_job_id: scanJobId,
-                  article_id:  saved.id,
-                  user_id:     userId,
-                  severity:    'info',
-                  issue_type:  'spelling',
-                  description: `Possible spelling error: "${plainText.slice(m.offset, m.offset + m.length)}"${m.replacements?.length ? ` — did you mean ${m.replacements.slice(0,2).map(r=>r.value).join(' or ')}?` : ''}`,
-                  metadata:    {
-                    word:        plainText.slice(m.offset, m.offset + m.length),
+              // Deduplicate by word — group occurrences
+              const wordMap = {}
+              for (const m of (ltData.matches || [])) {
+                if (m.rule?.issueType !== 'misspelling' && m.rule?.category?.id !== 'TYPOS') continue
+                const word = plainText.slice(m.offset, m.offset + m.length).toLowerCase()
+                if (ignoredLower.includes(word)) continue
+                if (!wordMap[word]) {
+                  wordMap[word] = {
+                    word,
                     suggestions: m.replacements.slice(0,3).map(r => r.value),
-                    context:     m.context?.text || '',
-                  },
-                }))
+                    context: m.context?.text || '',
+                    count: 1,
+                  }
+                } else {
+                  wordMap[word].count++
+                }
+              }
+              const spellIssues = Object.values(wordMap).slice(0, 15).map(({ word, suggestions, context, count }) => ({
+                scan_job_id: scanJobId,
+                article_id:  saved.id,
+                user_id:     userId,
+                severity:    'info',
+                issue_type:  'spelling',
+                description: count > 1 ? `Found ${count} times in this article` : 'Found in this article',
+                metadata:    { word, suggestions, context, count },
+              }))
               if (spellIssues.length > 0) {
                 await supabase.from('article_issues').insert(spellIssues)
               }

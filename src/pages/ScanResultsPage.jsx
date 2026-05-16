@@ -1301,22 +1301,16 @@ function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve, us
           <Icon size={14} style={{ color: resolved ? 'var(--text-3)' : s.color }} />
         </div>
         <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
-            <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color: resolved ? 'var(--text-3)' : s.color }}>{s.label}</span>
-            <span style={{ fontSize:13, fontWeight:700, color: resolved ? 'var(--text-3)' : 'var(--text)', textTransform:'capitalize' }}>{issue.issue_type.replace(/_/g,' ')}</span>
-          </div>
-          <p style={{ fontSize:12, color:'var(--text-2)', margin:0, lineHeight:1.65 }}>{issue.description}</p>
-
-          {issue.issue_type === 'spelling' && issue.metadata?.word && (
-            <div style={{ marginTop:6 }}>
-              {issue.metadata.suggestions?.length > 0 && (
-                <div style={{ display:'flex', gap:6, flexWrap:'wrap', alignItems:'center', marginBottom:6 }}>
-                  <span style={{ fontSize:11, color:'var(--text-3)' }}>Did you mean:</span>
-                  {issue.metadata.suggestions.map(sg => (
-                    <span key={sg} style={{ fontSize:11, fontWeight:700, color:'var(--navy)', padding:'1px 8px', borderRadius:10, background:'var(--navy-light)', border:'1px solid var(--navy-border)' }}>{sg}</span>
-                  ))}
-                </div>
-              )}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:6, marginBottom:3 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+              <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color: resolved ? 'var(--text-3)' : s.color }}>{s.label}</span>
+              <span style={{ fontSize:13, fontWeight:700, color: resolved ? 'var(--text-3)' : 'var(--text)' }}>
+                {issue.issue_type === 'spelling' && issue.metadata?.word
+                  ? <><span style={{ fontFamily:'monospace', background:'var(--blue-light)', padding:'1px 6px', borderRadius:4, color:'var(--blue)' }}>{issue.metadata.word}</span>{issue.metadata.count > 1 ? <span style={{ fontSize:11, color:'var(--text-3)', fontFamily:'inherit', fontWeight:500 }}> · {issue.metadata.count}×</span> : null}</>
+                  : issue.issue_type.replace(/_/g,' ')}
+              </span>
+            </div>
+            {issue.issue_type === 'spelling' && issue.metadata?.word && !resolved && (
               <button onClick={async () => {
                 if (!userId) return
                 const word = issue.metadata.word.toLowerCase()
@@ -1329,10 +1323,30 @@ function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve, us
                 }
                 onResolve()
               }}
-                className="btn btn-secondary btn-xs">
-                Ignore word
+                className="btn btn-ghost btn-xs" style={{ color:'var(--text-3)', flexShrink:0 }}>
+                Ignore always
               </button>
+            )}
+          </div>
+
+          {issue.issue_type === 'spelling' && issue.metadata?.word ? (
+            <div>
+              {issue.metadata.context && (
+                <p style={{ fontSize:12, color:'var(--text-3)', margin:'0 0 6px', lineHeight:1.6, fontStyle:'italic', borderLeft:'2px solid var(--border-md)', paddingLeft:8 }}>
+                  {issue.metadata.context.replace(issue.metadata.word, `"${issue.metadata.word}"`)}
+                </p>
+              )}
+              {issue.metadata.suggestions?.length > 0 && (
+                <div style={{ display:'flex', gap:5, flexWrap:'wrap', alignItems:'center' }}>
+                  <span style={{ fontSize:11, color:'var(--text-3)' }}>Did you mean:</span>
+                  {issue.metadata.suggestions.map(sg => (
+                    <span key={sg} style={{ fontSize:11, fontWeight:700, color:'var(--navy)', padding:'1px 8px', borderRadius:10, background:'var(--navy-light)', border:'1px solid var(--navy-border)' }}>{sg}</span>
+                  ))}
+                </div>
+              )}
             </div>
+          ) : (
+            <p style={{ fontSize:12, color:'var(--text-2)', margin:0, lineHeight:1.65 }}>{issue.description}</p>
           )}
           {issue.issue_type === 'missing_labels' && !resolved && (
             <div style={{ marginTop:10 }}>
