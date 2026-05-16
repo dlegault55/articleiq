@@ -259,24 +259,35 @@ export default function SettingsPage() {
               <div />
             </Row>
             <div style={{ padding:'0 18px 16px' }}>
-              {spellPrefs.ignored.length > 0 && (
-                <div style={{ display:'flex', gap:5, flexWrap:'wrap', marginBottom:10 }}>
-                  {spellPrefs.ignored.map(word => (
-                    <div key={word}
-                      style={{ display:'flex', alignItems:'center', gap:3, padding:'4px 6px 4px 10px', borderRadius:6, background:'var(--bg)', border:'1px solid var(--border-md)', transition:'border-color 0.15s' }}
-                      onMouseEnter={e => e.currentTarget.style.borderColor='var(--navy-border)'}
-                      onMouseLeave={e => e.currentTarget.style.borderColor='var(--border-md)'}>
-                      <span style={{ fontSize:11, fontWeight:600, color:'var(--text-2)', fontFamily:'monospace' }}>{word}</span>
-                      <button onClick={() => removeIgnoreWord(word)}
-                        style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-3)', fontSize:13, lineHeight:1, padding:'0 2px', fontFamily:'inherit', display:'flex', alignItems:'center' }}
-                        onMouseEnter={e => e.currentTarget.style.color='var(--red)'}
-                        onMouseLeave={e => e.currentTarget.style.color='var(--text-3)'}>
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {spellPrefs.ignored.length > 0 && (() => {
+                const TAG_COLORS = [
+                  { bg:'#EEF2FF', border:'#C7D2FE', text:'#4338CA' },
+                  { bg:'#F0FDF4', border:'#BBF7D0', text:'#15803D' },
+                  { bg:'#FFF7ED', border:'#FED7AA', text:'#C2410C' },
+                  { bg:'#F0F9FF', border:'#BAE6FD', text:'#0369A1' },
+                  { bg:'#FDF4FF', border:'#E9D5FF', text:'#7E22CE' },
+                  { bg:'#FFFBEB', border:'#FDE68A', text:'#B45309' },
+                ]
+                return (
+                  <div style={{ display:'flex', gap:5, flexWrap:'wrap', marginBottom:10 }}>
+                    {spellPrefs.ignored.map((word, idx) => {
+                      const c = TAG_COLORS[idx % TAG_COLORS.length]
+                      return (
+                        <div key={word}
+                          style={{ display:'flex', alignItems:'center', gap:3, padding:'4px 6px 4px 10px', borderRadius:6, background:c.bg, border:`1px solid ${c.border}` }}>
+                          <span style={{ fontSize:11, fontWeight:700, color:c.text, fontFamily:'monospace', letterSpacing:'0.02em' }}>{word}</span>
+                          <button onClick={() => removeIgnoreWord(word)}
+                            style={{ background:'none', border:'none', cursor:'pointer', color:c.text, fontSize:13, lineHeight:1, padding:'0 2px', fontFamily:'inherit', display:'flex', alignItems:'center', opacity:0.5 }}
+                            onMouseEnter={e => e.currentTarget.style.opacity='1'}
+                            onMouseLeave={e => e.currentTarget.style.opacity='0.5'}>
+                            ×
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
               <div style={{ display:'flex', gap:6, maxWidth:360 }}>
                 <input
                   value={newIgnoreWord}
