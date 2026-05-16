@@ -1942,7 +1942,11 @@ export default function ScanResultsPage() {
               {scan.scanned_articles||0} of {scan.total_articles||'?'} articles · keep this tab open
             </p>
             <div style={{ height:3, background:'rgba(255,255,255,0.12)', borderRadius:100, overflow:'hidden' }}>
-              <div style={{ height:'100%', width:`${Math.max(pct,1)}%`, background: isStalled ? '#FFD93D' : 'rgba(255,255,255,0.7)', borderRadius:100, transition:'width 0.4s ease' }} />
+              {scan.total_articles ? (
+                <div style={{ height:'100%', width:`${Math.max(pct,2)}%`, background: isStalled ? '#FFD93D' : 'rgba(255,255,255,0.7)', borderRadius:100, transition:'width 0.6s ease' }} />
+              ) : (
+                <div style={{ height:'100%', width:'30%', background:'rgba(255,255,255,0.6)', borderRadius:100, animation:'progress-indeterminate 1.2s ease-in-out infinite' }} />
+              )}
             </div>
           </div>
         </div>
