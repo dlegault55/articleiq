@@ -1444,6 +1444,7 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
   const activeIssues = issues.filter(i => !resolvedIssues.has(i.id))
   const critical     = activeIssues.filter(i => i.severity === 'critical')
   const warning      = activeIssues.filter(i => i.severity === 'warning')
+  const spelling     = activeIssues.filter(i => i.issue_type === 'spelling')
   const clean        = issues.length === 0
   const allResolved  = issues.length > 0 && issues.every(i => resolvedIssues.has(i.id))
 
@@ -1452,7 +1453,12 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
   const SEVERITY = {
     critical: { color:'var(--red)',   label:'Critical' },
     warning:  { color:'var(--amber)', label:'Warning'  },
-    info:     { color:'var(--blue)',  label:'Info'     },
+    info:     { color:'var(--blue)',  label:'Low'      },
+  }
+
+  const getSeverity = (issue) => {
+    if (issue.issue_type === 'spelling') return { color:'var(--blue)', label:'Spelling' }
+    return SEVERITY[issue.severity] || SEVERITY.info
   }
 
   const runInlineAI = async (action) => {
@@ -1507,6 +1513,7 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
           <div style={{ display:'flex', alignItems:'center', gap:6, flexShrink:0 }}>
             {critical.length > 0 && <span className="badge badge-critical"><AlertOctagon size={9} />{critical.length} critical</span>}
             {warning.length  > 0 && <span className="badge badge-warning"><AlertTriangle size={9} />{warning.length} warning{warning.length !== 1 ? 's' : ''}</span>}
+            {spelling.length > 0 && <span style={{ display:'inline-flex', alignItems:'center', gap:3, padding:'2px 8px', borderRadius:100, fontSize:10, fontWeight:700, background:'var(--blue-light)', color:'var(--blue)', border:'1px solid var(--blue-border)' }}><Type size={9} />{spelling.length} spelling</span>}
             {(clean || allResolved) && <span className="badge badge-success"><CheckCircle size={9} />{allResolved ? 'All resolved' : 'Clean'}</span>}
             {open ? <ChevronUp size={13} style={{ color:'var(--text-3)' }} /> : <ChevronDown size={13} style={{ color:'var(--text-3)' }} />}
           </div>
@@ -1538,7 +1545,7 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
               <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                 {[...issues.filter(i=>i.severity==='critical'), ...issues.filter(i=>i.severity==='warning'), ...issues.filter(i=>i.severity==='info')].map(issue => {
                   const Icon     = ISSUE_ICONS[issue.issue_type] || Info
-                  const s        = SEVERITY[issue.severity] || SEVERITY.info
+                  const s        = getSeverity(issue)
                   const resolved = resolvedIssues.has(issue.id)
                   return (
                     <IssueCard key={issue.id} issue={issue} Icon={Icon} s={s} resolved={resolved}
