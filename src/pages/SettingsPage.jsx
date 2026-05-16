@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/useToast'
 import { supabase, signOut } from '@/lib/supabase'
 import { Loader, AlertOctagon, Trash2, CheckCircle } from 'lucide-react'
 
-const DEFAULT_SCAN = { outdated:true, wordCount:true, readability:false, labels:true, duplicates:true, links:true }
+const DEFAULT_SCAN = { outdated:true, wordCount:true, readability:false, labels:true, duplicates:true, links:true, spelling:true }
 
 const DEFAULT_SPELL_IGNORED = [
   'API', 'APIs', 'SaaS', 'URL', 'URLs', 'UI', 'UX', 'SSO', 'MFA', 'OAuth',
@@ -44,6 +44,7 @@ const SCAN_CHECKS  = [
   { key:'labels',      label:'Missing labels',       desc:'No tags assigned' },
   { key:'duplicates',  label:'Duplicate detection',  desc:'Similar articles' },
   { key:'links',       label:'Broken links',         desc:'Dead hyperlinks' },
+  { key:'spelling',    label:'Spell check',          desc:'Flag misspelled words using LanguageTool' },
 ]
 
 function Section({ title, desc, children }) {

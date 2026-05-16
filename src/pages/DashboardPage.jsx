@@ -186,13 +186,14 @@ const SCAN_CHECKS = [
   { key: 'labels',      label: 'Missing labels',      desc: 'No tags assigned' },
   { key: 'duplicates',  label: 'Duplicate detection', desc: 'Similar article titles (85%+ match)' },
   { key: 'links',       label: 'Broken links',        desc: 'Dead hyperlinks' },
+  { key: 'spelling',    label: 'Spell check',         desc: 'Flag misspelled words' },
 ]
 const AI_CHECKS = [
   { key: 'ai_grammar',  label: 'Improve Article', desc: 'Grammar + rewrite in one pass' },
   { key: 'ai_quality',  label: 'Quality Score',   desc: 'Rate clarity and completeness' },
   { key: 'ai_labels',   label: 'Label Suggestions',desc: 'Suggest tags from content' },
 ]
-const DEFAULT_CHECKS = { outdated:true, wordCount:true, readability:false, labels:true, duplicates:true, links:true }
+const DEFAULT_CHECKS = { outdated:true, wordCount:true, readability:false, labels:true, duplicates:true, links:true, spelling:true }
 
 function DashboardPage() {
   const { userId, profile, refreshProfile } = useAuth()
