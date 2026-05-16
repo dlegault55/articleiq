@@ -1370,14 +1370,14 @@ function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve }) 
                       const isPublished = published.has(label)
                       const isLoading   = publishing === label
                       return (
-                        <button key={label} onClick={() => publishLabel(label)} disabled={isLoading || isPublished}
-                          style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 10px', borderRadius:100, fontSize:11, fontWeight:600, cursor: isPublished ? 'default' : 'pointer', fontFamily:'inherit', transition:'all 0.15s',
-                            background: isPublished ? 'var(--green-light)' : '#FFF7ED',
-                            border: `1px solid ${isPublished ? 'var(--green-border)' : '#FED7AA'}`,
-                            color: isPublished ? 'var(--green)' : '#C2410C',
+                        <button key={label} disabled={isLoading || isPublished}
+                          style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 10px', borderRadius:100, fontSize:11, fontWeight:600, cursor:'default', fontFamily:'inherit', transition:'all 0.15s',
+                            background: isPublished ? '#F5F3FF' : '#FFF7ED',
+                            border: `1px solid ${isPublished ? '#C4B5FD' : '#FED7AA'}`,
+                            color: isPublished ? '#6D28D9' : '#C2410C',
                           }}>
                           {isLoading && <Loader size={9} style={{ animation:'spin 0.7s linear infinite' }} />}
-                          {isPublished ? <CheckCircle size={9} /> : <span style={{ fontSize:8, fontWeight:800, opacity:0.6 }}>custom</span>}
+                          {isPublished ? <CheckCircle size={9} /> : <span style={{ fontSize:8, fontWeight:800, opacity:0.7 }}>adding...</span>}
                           {label}
                         </button>
                       )
@@ -1389,12 +1389,12 @@ function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve }) 
                       <input
                         value={customLabel}
                         onChange={e => setCustomLabel(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter' && customLabel.trim()) { const w = customLabel.trim(); if (!customLabels.includes(w) && !labels?.includes(w)) setCustomLabels(prev => [...prev, w]); publishLabel(w); setCustomLabel('') } }}
+                        onKeyDown={e => { if (e.key === 'Enter' && customLabel.trim()) { const w = customLabel.trim(); if (!customLabels.includes(w) && !labels?.includes(w)) { setCustomLabels(prev => [...prev, w]); publishLabel(w); } setCustomLabel('') } }}
                         placeholder="Add a custom label..."
                         style={{ flex:1, padding:'4px 10px', borderRadius:6, border:'1px solid var(--border-md)', fontSize:11, fontFamily:'inherit', outline:'none' }}
                       />
                       <button
-                        onClick={() => { if (customLabel.trim()) { const w = customLabel.trim(); if (!customLabels.includes(w) && !labels?.includes(w)) setCustomLabels(prev => [...prev, w]); publishLabel(w); setCustomLabel('') } }}
+                        onClick={() => { if (customLabel.trim()) { const w = customLabel.trim(); if (!customLabels.includes(w) && !labels?.includes(w)) { setCustomLabels(prev => [...prev, w]); publishLabel(w); } setCustomLabel('') } }}
                         disabled={!customLabel.trim()}
                         style={{ padding:'4px 10px', borderRadius:6, border:'1px solid var(--navy-border)', background:'var(--navy-light)', color:'var(--navy)', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit', flexShrink:0 }}>
                         Add
