@@ -8,10 +8,18 @@ import { Loader, AlertOctagon, Trash2, CheckCircle } from 'lucide-react'
 
 const DEFAULT_SCAN = { outdated:true, wordCount:true, readability:false, labels:true, duplicates:true, links:true }
 
+const DEFAULT_SPELL_IGNORED = [
+  'API', 'APIs', 'SaaS', 'URL', 'URLs', 'UI', 'UX', 'SSO', 'MFA', 'OAuth',
+  'JSON', 'CSV', 'SDK', 'CLI', 'CRM', 'FAQ', 'FAQs', 'SLA', 'VPN', 'DNS',
+  'SSL', 'TLS', 'GDPR', 'HTTP', 'HTTPS', 'XML', 'webhook', 'webhooks',
+  'signup', 'login', 'dropdown', 'checkbox', 'tooltip', 'backend', 'frontend',
+  'KB', 'KBs', 'IP', 'CTA', 'WYSIWYG', 'metadata', 'username', 'timestamp',
+]
+
 const DEFAULT_SPELL = {
   enabled:  true,
-  language: 'en-US',   // en-US | en-CA | en-GB
-  ignored:  [],        // user's custom ignore list
+  language: 'en-US',
+  ignored:  DEFAULT_SPELL_IGNORED,
 }
 
 const DEFAULT_REC_PREFS = {
@@ -252,14 +260,17 @@ export default function SettingsPage() {
             </Row>
             <div style={{ padding:'0 18px 16px' }}>
               {spellPrefs.ignored.length > 0 && (
-                <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:10 }}>
+                <div style={{ display:'flex', gap:5, flexWrap:'wrap', marginBottom:10 }}>
                   {spellPrefs.ignored.map(word => (
-                    <div key={word} style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 8px 3px 10px', borderRadius:20, background:'var(--navy-light)', border:'1px solid var(--navy-border)' }}>
-                      <span style={{ fontSize:12, fontWeight:600, color:'var(--navy)' }}>{word}</span>
+                    <div key={word}
+                      style={{ display:'flex', alignItems:'center', gap:3, padding:'4px 6px 4px 10px', borderRadius:6, background:'var(--bg)', border:'1px solid var(--border-md)', transition:'border-color 0.15s' }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor='var(--navy-border)'}
+                      onMouseLeave={e => e.currentTarget.style.borderColor='var(--border-md)'}>
+                      <span style={{ fontSize:11, fontWeight:600, color:'var(--text-2)', fontFamily:'monospace' }}>{word}</span>
                       <button onClick={() => removeIgnoreWord(word)}
-                        style={{ background:'none', border:'none', cursor:'pointer', color:'var(--navy)', fontSize:14, lineHeight:1, padding:'0 0 0 2px', opacity:0.6, fontFamily:'inherit' }}
-                        onMouseEnter={e => e.currentTarget.style.opacity='1'}
-                        onMouseLeave={e => e.currentTarget.style.opacity='0.6'}>
+                        style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-3)', fontSize:13, lineHeight:1, padding:'0 2px', fontFamily:'inherit', display:'flex', alignItems:'center' }}
+                        onMouseEnter={e => e.currentTarget.style.color='var(--red)'}
+                        onMouseLeave={e => e.currentTarget.style.color='var(--text-3)'}>
                         ×
                       </button>
                     </div>
