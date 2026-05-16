@@ -145,6 +145,7 @@ export default function LandingPage() {
               { icon:Zap,          title:'Thin content',        desc:'Articles under 150 words rarely answer real questions. Flagged as a warning — some short articles are intentional (notices, redirects).', badge:'Warning', badgeColor:'#D97706', badgeBg:'#FEF9EC' },
               { icon:Tag,          title:'Missing labels',      desc:'Untagged articles are hard to find in search. We flag them and use AI to suggest the right labels — publish with one click.', badge:'Warning', badgeColor:'#D97706', badgeBg:'#FEF9EC' },
               { icon:AlertTriangle,title:'Duplicate detection', desc:'Similar article titles flagged for review. Duplicate content confuses customers and splits search traffic. Mark intentional pairs to suppress.', badge:'Warning', badgeColor:'#D97706', badgeBg:'#FEF9EC' },
+              { icon:Type,         title:'Spell check',       desc:'Every article checked for spelling errors with suggested corrections. Supports US, Canadian, and UK English. Add acronyms to your ignore list so they never get flagged.', badge:'Warning', badgeColor:'#D97706', badgeBg:'#FEF9EC' },
             ].map(({ icon: Icon, title, desc, badge, badgeColor, badgeBg }) => (
               <div key={title} style={{ padding:'18px', borderRadius:10, border:'1px solid #E8E8E6', background:'#FAFAF8' }}>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
@@ -388,6 +389,7 @@ export default function LandingPage() {
               { title:'Live broken link detection', desc:'Every hyperlink and image in every article is checked with a real HTTP request. Dead links flagged as critical. Your customers never hit a dead end.', icon:Link2 },
               { title:'Health trend over time', desc:'Track your KB health score across scans and see whether things are getting better or worse. Know exactly where to focus next.', icon:TrendingUp },
               { title:'Publishes directly back', desc:'The AI-improved article goes straight back to Zendesk® or HelpScout with one click. No copy-pasting, no reformatting, no tab switching.', icon:Globe },
+              { title:'Spell check with ignore list', desc:'Every article checked for spelling errors using LanguageTool. US, Canadian, and UK English supported. Add product names and acronyms to your ignore list once — never flagged again.', icon:Type },
               { title:'Honest about what AI can\'t do', desc:'Thin or low-quality articles get flagged for human rewriting — not padded with AI-generated content that could be wrong. We tell you exactly what\'s missing.', icon:AlertTriangle },
               { title:'Critical issues surface first', desc:'Severity-ordered results — broken things before imperfect things. Filters, badges, and per-article scores so your team knows exactly what to fix first.', icon:BarChart2 },
               { title:'Label suggestions with one click', desc:'AI reads the article and suggests the right labels. Publish them directly to your KB — your existing labels are always preserved.', icon:Tag },

@@ -146,6 +146,10 @@ export default function HelpPage() {
               desc: 'Grades A–F based on title length and keyword clarity, heading structure, content depth, and first paragraph strength. Suggests an improved title if the current one underperforms. Runs automatically alongside Quality Score.',
             },
             {
+              title: 'Spell check',
+              desc: 'Every article is checked for spelling errors using LanguageTool. Flags misspelled words with suggested corrections. Supports English US, Canadian, and UK spelling variants. Add acronyms and product names to your ignore list in Settings so they never get flagged again.',
+            },
+            {
               title: 'Improve Article',
               desc: 'Generates a targeted rewrite informed by the specific quality and SEO findings — not a generic grammar pass. Detects the article type (troubleshooting, how-to, FAQ, release note) and applies the correct structure. All images, links, code blocks, and tables are preserved exactly. For thin or low-scoring articles, ArticleIQ will tell you the article needs a human rewrite rather than attempting to improve content it cannot safely expand.',
             },
@@ -212,6 +216,9 @@ export default function HelpPage() {
           a="No. ArticleIQ is fully read-only. We never write to your knowledge base unless you explicitly click Publish in the AI drawer. Nothing is changed automatically." />
         <FAQ q="Why does the scan need the tab to stay open?"
           a="Scans run in your browser rather than on a server. Keep the tab active while scanning — you'll get an email when it's done." />
+        <FAQ q="How does spell check work?"
+          a={<span>During every scan, ArticleIQ checks each article for spelling errors using <strong>LanguageTool</strong> — a professional spelling and grammar engine. Misspelled words are flagged as warnings with suggested corrections and sentence context. You can choose between <strong>English (US)</strong>, <strong>English (Canada)</strong>, and <strong>English (UK)</strong> spelling variants in Settings. Add acronyms, product names, and technical terms to your <strong>ignored words list</strong> in Settings so they are never flagged again — even across future scans.</span>} />
+
         <FAQ q="What happens if an article is too short or low quality for AI to improve?"
           a={<span>If an article scores below 35/100 or has fewer than 150 words, ArticleIQ will flag it as <strong>needing a human rewrite</strong> rather than running AI on it. The rewrite panel explains exactly what the article is missing — context, steps, expected outcome, escalation path — so you know what to write. A <strong>Clean up formatting only</strong> option is still available if you want AI to fix grammar and structure without adding any new content. This is intentional: AI improvising on thin articles risks publishing inaccurate information.</span>} />
 
