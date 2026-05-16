@@ -109,7 +109,7 @@ const checkBrokenLinks = async (html) => {
 // preset field is now a comma-separated list of check keys
 // e.g. "outdated,wordCount,readability,labels"
 const parseChecks = (preset) => {
-  if (!preset) return { outdated: true, wordCount: true, readability: true, labels: true }
+  if (!preset) return { outdated: true, wordCount: true, readability: true, labels: true, spelling: true }
   const keys = preset.split(',').map(k => k.trim())
   return {
     outdated:    keys.includes('outdated'),
@@ -118,6 +118,7 @@ const parseChecks = (preset) => {
     labels:      keys.includes('labels'),
     duplicates:  keys.includes('duplicates'),
     links:       keys.includes('links'),
+    spelling:    keys.includes('spelling'),
   }
 }
 
@@ -331,11 +332,14 @@ export default async function handler(req, res) {
               language: spellPrefs.language || 'en-US',
               disabledRules: 'WHITESPACE_RULE,EN_QUOTES,DASH_RULE,WORD_CONTAINS_UNDERSCORE,UPPERCASE_SENTENCE_START',
             })
+            const ltController = new AbortController()
+            const ltTimeout = setTimeout(() => ltController.abort(), 5000)
             const ltRes = await fetch('https://api.languagetool.org/v2/check', {
               method: 'POST',
               headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
               body: params.toString(),
-            })
+              signal: ltController.signal,
+            }).finally(() => clearTimeout(ltTimeout))
             if (ltRes.ok) {
               const ltData = await ltRes.json()
               // Deduplicate by word — group occurrences
