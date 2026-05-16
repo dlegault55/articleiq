@@ -417,13 +417,13 @@ export default async function handler(req, res) {
     return res.status(200).json({ done: false, hasMore: true, nextPage: page + 1, scannedSoFar, totalCount })
 
   } catch (err) {
-    console.error('scan-chunk error:', err.message)
+    console.error('scan-chunk error:', err.message, err.stack)
     await supabase.from('scan_jobs').update({
       status: 'failed',
       error_message: err.message,
       completed_at: new Date().toISOString(),
     }).eq('id', scanJobId).catch(() => {})
-    return res.status(500).json({ error: err.message })
+    return res.status(500).json({ error: err.message, stack: err.stack?.split('\n').slice(0,3).join(' | ') })
   }
 }
 
