@@ -349,7 +349,7 @@ export default async function handler(req, res) {
                   scan_job_id: scanJobId,
                   article_id:  saved.id,
                   user_id:     userId,
-                  severity:    'warning',
+                  severity:    'info',
                   issue_type:  'spelling',
                   description: `Possible spelling error: "${plainText.slice(m.offset, m.offset + m.length)}"${m.replacements?.length ? ` — did you mean ${m.replacements.slice(0,2).map(r=>r.value).join(' or ')}?` : ''}`,
                   metadata:    {

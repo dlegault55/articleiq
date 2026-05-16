@@ -22,7 +22,7 @@ function HealthChart({ scans }) {
 
   const calcH = (s) => {
     if (!s?.scanned_articles) return null
-    const p = ((s.critical_count||0)*3 + (s.warning_count||0) + (s.info_count||0)*0.2) / s.scanned_articles
+    const p = ((s.critical_count||0)*3 + (s.warning_count||0) + (s.info_count||0)*0.1) / s.scanned_articles
     return Math.max(0, Math.min(100, Math.round(100 - p * 20)))
   }
 
@@ -141,7 +141,7 @@ function HealthChart({ scans }) {
 
 const calcHealth = (scan) => {
   if (!scan?.scanned_articles) return null
-  const penalty = ((scan.critical_count||0)*3 + (scan.warning_count||0) + (scan.info_count||0)*0.2) / scan.scanned_articles
+  const penalty = ((scan.critical_count||0)*3 + (scan.warning_count||0) + (scan.info_count||0)*0.1) / scan.scanned_articles
   return Math.max(0, Math.min(100, Math.round(100 - penalty * 20)))
 }
 const healthLabel = (s) => s >= 80 ? 'Healthy' : s >= 60 ? 'Needs attention' : 'Critical'
