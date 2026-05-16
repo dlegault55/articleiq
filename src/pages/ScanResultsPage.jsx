@@ -1515,12 +1515,6 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
               <span style={{ fontSize:14, fontWeight:500, color:'var(--text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                 {article.title}
               </span>
-              {article.url && (
-                <a href={article.url} target="_blank" rel="noreferrer"
-                  style={{ color:'var(--text-3)', display:'flex', flexShrink:0 }}>
-                  <ExternalLink size={12} />
-                </a>
-              )}
             </div>
             <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
               <span style={{ fontSize:11, color:'var(--text-3)' }}>{article.word_count||0} words</span>
@@ -1535,6 +1529,18 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
             {open ? <ChevronUp size={13} style={{ color:'var(--text-3)' }} /> : <ChevronDown size={13} style={{ color:'var(--text-3)' }} />}
           </div>
         </div>
+
+        {/* Open in platform — always visible, stops row toggle */}
+        {article.url && (
+          <a href={article.url} target="_blank" rel="noreferrer"
+            onClick={e => e.stopPropagation()}
+            style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 10px', borderRadius:7, border:'1px solid var(--border-md)', background:'white', color:'var(--text-2)', fontSize:11, fontWeight:600, textDecoration:'none', flexShrink:0, whiteSpace:'nowrap' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor='var(--navy-border)'; e.currentTarget.style.color='var(--navy)'; e.currentTarget.style.background='var(--navy-light)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor='var(--border-md)'; e.currentTarget.style.color='var(--text-2)'; e.currentTarget.style.background='white' }}>
+            <ExternalLink size={12} />
+            Edit
+          </a>
+        )}
       </div>
 
       {/* Expanded */}
