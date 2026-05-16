@@ -25,7 +25,7 @@ async function getFolders(subdomain, apiKey, categoryId) {
   return await res.json()
 }
 
-function mapArticle(a, folderId) {
+function mapArticle(a, folderId, subdomain) {
   const body = a.description || a.description_text || ''
   return {
     id:          String(a.id),
