@@ -31,7 +31,7 @@ function mapArticle(a, folderId) {
     id:          String(a.id),
     title:       a.title || 'Untitled',
     body,
-    html_url:    a.url || '',
+    html_url:    a.url || a.article_url || (a.id ? `https://${connector?.subdomain || 'app'}.freshdesk.com/support/solutions/articles/${a.id}` : '') || '',
     updated_at:  a.updated_at,
     label_names: a.tags || [],
     locale:      'en',
@@ -83,7 +83,7 @@ export async function fetchArticles(connector) {
         if (!res.ok) break
         const articles = await res.json()
         const filtered = publishedOnly ? articles.filter(a => a.status === 2) : articles
-        all = [...all, ...filtered.map(a => mapArticle(a, folder.id))]
+        all = [...all, ...filtered.map(a => mapArticle(a, folder.id, connector.subdomain))]
         hasMore = articles.length === 30
         page++
       }
@@ -119,7 +119,7 @@ export async function fetchArticlesChunk(connector, page, perPage = 50) {
   const totalCount = allFolders.reduce((sum, f) => sum + (f.articles_count || 0), 0)
 
   return {
-    articles: filtered.map(a => mapArticle(a, folder.id)),
+    articles: filtered.map(a => mapArticle(a, folder.id, connector.subdomain)),
     totalCount,
     hasMore: folderIndex < allFolders.length - 1,
   }
