@@ -1913,83 +1913,99 @@ export default function ScanResultsPage() {
         )
       })()}
 
-      {/* Combined hero — handles active scan and completed */}
-      <div style={{ borderRadius:'var(--radius-xl)', background:'var(--navy)', padding:'22px 26px', marginBottom:16, position:'relative', overflow:'hidden' }} className="animate-in">
-        <div style={{ position:'absolute', top:-50, right:-50, width:200, height:200, borderRadius:'50%', background:'rgba(255,255,255,0.04)' }} />
-        <div style={{ position:'relative' }}>
-          {/* Label row */}
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
-            <p style={{ fontSize:11, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(255,255,255,0.4)', margin:0 }}>
-              Scan Report · {format(new Date(scan.created_at), 'MMM d, yyyy')} · {scan.preset ? `${scan.preset.split(',').length} checks` : ''}
+      {/* Active scan — keep navy, it needs urgency */}
+      {isActive && (
+        <div style={{ borderRadius:'var(--radius-xl)', background:'var(--navy)', padding:'22px 26px', marginBottom:16, position:'relative', overflow:'hidden' }} className="animate-in">
+          <div style={{ position:'absolute', top:-50, right:-50, width:200, height:200, borderRadius:'50%', background:'rgba(255,255,255,0.04)' }} />
+          <div style={{ position:'relative' }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                {isStalled
+                  ? <span style={{ fontSize:15, fontWeight:700, color:'#FFD980' }}>Scan paused</span>
+                  : <><div className="pulse-dot" style={{ width:8, height:8, borderRadius:'50%', background:'white', opacity:0.8 }} /><span style={{ fontSize:15, fontWeight:700, color:'white' }}>Scanning your knowledge base</span></>
+                }
+              </div>
+              <div style={{ display:'flex', gap:8 }}>
+                {isStalled && <button onClick={() => resumeScan(scan)} className="btn btn-sm" style={{ background:'#FFD93D', color:'#1A1A18', fontWeight:700 }}>Resume</button>}
+                <button onClick={async () => {
+                  await supabase.from('scan_jobs').update({ status:'failed', error_message:'Cancelled', completed_at:new Date().toISOString() }).eq('id', scanId)
+                  setScan(s => ({ ...s, status:'failed' }))
+                }} className="btn btn-ghost btn-sm" style={{ color:'rgba(255,255,255,0.5)', fontSize:11 }}>Stop</button>
+              </div>
+            </div>
+            <div style={{ fontSize:64, fontWeight:800, color:'rgba(255,255,255,0.35)', lineHeight:1, letterSpacing:-3, marginBottom:6 }}>{pct}%</div>
+            <p style={{ fontSize:12, color:'rgba(255,255,255,0.4)', margin:'0 0 12px' }}>
+              {scan.scanned_articles||0} of {scan.total_articles||'?'} articles · keep this tab open
             </p>
-            {isActive && (
-              <button onClick={async () => {
-                await supabase.from('scan_jobs').update({ status:'failed', error_message:'Cancelled', completed_at:new Date().toISOString() }).eq('id', scanId)
-                setScan(s => ({ ...s, status:'failed' }))
-              }} className="btn btn-ghost btn-sm" style={{ color:'rgba(255,255,255,0.5)', fontSize:11 }}>Stop</button>
-            )}
+            <div style={{ height:3, background:'rgba(255,255,255,0.12)', borderRadius:100, overflow:'hidden' }}>
+              <div style={{ height:'100%', width:`${Math.max(pct,1)}%`, background: isStalled ? '#FFD93D' : 'rgba(255,255,255,0.7)', borderRadius:100, transition:'width 0.4s ease' }} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Completed scan — clean white header, distinct from dashboard */}
+      {!isActive && score !== null && (
+        <div style={{ borderRadius:'var(--radius-xl)', background:'white', border:'1px solid var(--border-md)', padding:'20px 24px', marginBottom:16, display:'flex', alignItems:'center', gap:20 }} className="animate-in">
+
+          {/* Score circle */}
+          <div style={{ position:'relative', flexShrink:0, width:80, height:80 }}>
+            <svg width="80" height="80" style={{ transform:'rotate(-90deg)' }}>
+              <circle cx="40" cy="40" r="34" fill="none" stroke="var(--border-md)" strokeWidth="5" />
+              <circle cx="40" cy="40" r="34" fill="none"
+                stroke={score >= 80 ? 'var(--green)' : score >= 60 ? 'var(--amber)' : 'var(--red)'}
+                strokeWidth="5" strokeLinecap="round"
+                strokeDasharray={`${2 * Math.PI * 34}`}
+                strokeDashoffset={`${2 * Math.PI * 34 * (1 - score / 100)}`}
+                style={{ transition:'stroke-dashoffset 0.8s ease' }}
+              />
+            </svg>
+            <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
+              <span style={{ fontSize:22, fontWeight:800, color:'var(--text)', letterSpacing:-1, lineHeight:1 }}>{score}</span>
+              <span style={{ fontSize:9, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.05em' }}>score</span>
+            </div>
           </div>
 
-          {/* Score + status */}
-          <div style={{ display:'flex', alignItems:'flex-end', gap:16, marginBottom:14 }}>
-            <div style={{ fontSize:72, fontWeight:800, color: isActive ? 'rgba(255,255,255,0.4)' : 'white', lineHeight:1, letterSpacing:-3 }}>
-              {isActive ? `${pct}%` : (score ?? '—')}
+          {/* Info */}
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ display:'flex', alignItems:'baseline', gap:8, marginBottom:4 }}>
+              <span style={{ fontSize:18, fontWeight:800, color:'var(--text)', letterSpacing:-0.5 }}>{healthLabel(score)}</span>
+              <span style={{ fontSize:12, color:'var(--text-3)' }}>· {formatDistanceToNow(new Date(scan.created_at), { addSuffix:true })}</span>
             </div>
-            <div style={{ paddingBottom:10 }}>
-              {isActive ? (
-                <div>
-                  <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
-                    {isStalled
-                      ? <span style={{ fontSize:15, fontWeight:700, color:'#FFD980' }}>Scan paused</span>
-                      : <><div className="pulse-dot" style={{ width:8, height:8, borderRadius:'50%', background:'white', opacity:0.7 }} /><span style={{ fontSize:15, fontWeight:700, color:'white' }}>Scan in progress</span></>
-                    }
-                  </div>
-                  <p style={{ fontSize:12, color:'rgba(255,255,255,0.5)', margin:0 }}>
-                    {scan.scanned_articles||0} of {scan.total_articles||'?'} articles · keep this tab open
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <div style={{ fontSize:15, fontWeight:700, color:'rgba(255,255,255,0.85)', marginBottom:3 }}>{score ? healthLabel(score) : '—'}</div>
-                  <div style={{ fontSize:12, color:'rgba(255,255,255,0.4)' }}>{formatDistanceToNow(new Date(scan.created_at), { addSuffix:true })}</div>
-                </div>
+            <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+              {issues.filter(i=>i.severity==='critical').length > 0 && (
+                <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 10px', borderRadius:100, background:'#FEF2F2', color:'var(--red)', fontSize:11, fontWeight:700, border:'1px solid #FECACA' }}>
+                  <AlertOctagon size={10}/> {issues.filter(i=>i.severity==='critical').length} critical
+                </span>
+              )}
+              {issues.filter(i=>i.severity==='warning').length > 0 && (
+                <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 10px', borderRadius:100, background:'#FFFBEB', color:'var(--amber)', fontSize:11, fontWeight:700, border:'1px solid #FDE68A' }}>
+                  <AlertTriangle size={10}/> {issues.filter(i=>i.severity==='warning').length} warnings
+                </span>
+              )}
+              {issues.filter(i=>i.issue_type==='spelling').length > 0 && (
+                <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 10px', borderRadius:100, background:'var(--blue-light)', color:'var(--blue)', fontSize:11, fontWeight:700, border:'1px solid var(--blue-border)' }}>
+                  <Type size={10}/> {issues.filter(i=>i.issue_type==='spelling').length} spelling
+                </span>
+              )}
+              <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 10px', borderRadius:100, background:'var(--bg)', color:'var(--text-3)', fontSize:11, fontWeight:600, border:'1px solid var(--border-md)' }}>
+                {articles.length} articles · {scan.preset ? scan.preset.split(',').length : 0} checks
+              </span>
+              {score < 80 && (
+                <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 10px', borderRadius:100, background:'var(--navy-light)', color:'var(--navy)', fontSize:11, fontWeight:600, border:'1px solid var(--navy-border)' }}>
+                  <Target size={10}/> {80 - score} pts to Healthy
+                </span>
               )}
             </div>
-            {isStalled && (
-              <button onClick={() => resumeScan(scan)} className="btn btn-sm" style={{ background:'#FFD93D', color:'#1A1A18', fontWeight:700, marginBottom:8 }}>Resume scan</button>
-            )}
           </div>
 
-          {/* Pills */}
-          <div style={{ display:'flex', gap:6, flexWrap:'wrap', alignItems:'center' }}>
-            {issues.filter(i=>i.severity==='critical').length > 0 && (
-              <div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(192,57,43,0.35)', color:'#FFAAAA', fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:4 }}>
-                <AlertOctagon size={10}/> {issues.filter(i=>i.severity==='critical').length} critical
-              </div>
-            )}
-            {issues.filter(i=>i.severity==='warning').length > 0 && (
-              <div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(255,200,80,0.18)', color:'#FFD980', fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:4 }}>
-                <AlertTriangle size={10}/> {issues.filter(i=>i.severity==='warning').length} warnings
-              </div>
-            )}
-            <div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(255,255,255,0.1)', color:'rgba(255,255,255,0.65)', fontSize:11 }}>
-              {articles.length || scan.scanned_articles || 0} articles
-            </div>
-            {score !== null && score < 80 && !isActive && (
-              <div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(255,255,255,0.1)', color:'rgba(255,255,255,0.55)', fontSize:11, display:'flex', alignItems:'center', gap:4 }}>
-                <Target size={10}/> {80-score} points to Healthy
-              </div>
-            )}
+          {/* Scan date + connector */}
+          <div style={{ textAlign:'right', flexShrink:0 }}>
+            <p style={{ fontSize:12, fontWeight:700, color:'var(--text)', margin:'0 0 2px' }}>{format(new Date(scan.created_at), 'MMM d, yyyy')}</p>
+            <p style={{ fontSize:11, color:'var(--text-3)', margin:0 }}>{connector?.platform === 'helpscout' ? 'HelpScout' : connector?.platform === 'freshdesk' ? 'Freshdesk' : 'Zendesk®'}</p>
           </div>
-
-          {/* Progress bar — only when active */}
-          {isActive && (
-            <div style={{ marginTop:14, height:3, background:'rgba(255,255,255,0.15)', borderRadius:100, overflow:'hidden' }}>
-              <div style={{ height:'100%', width:`${Math.max(pct,1)}%`, background: isStalled ? '#FFD93D' : 'rgba(255,255,255,0.6)', borderRadius:100, transition:'width 0.4s ease' }} />
-            </div>
-          )}
         </div>
-      </div>
+      )}
 
       {/* Filters + sort */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:12, flexWrap:'wrap' }}>
