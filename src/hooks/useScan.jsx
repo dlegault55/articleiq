@@ -62,7 +62,15 @@ export const ScanProvider = ({ children }) => {
           }),
         })
 
-        if (!res.ok) { console.error('Chunk HTTP error:', res.status); break }
+        if (!res.ok) {
+          console.error('Chunk HTTP error:', res.status)
+          if (res.status >= 500) {
+            // Server error — wait and retry rather than killing the scan
+            await new Promise(r => setTimeout(r, 3000))
+            continue
+          }
+          break
+        }
         const data = await res.json()
         if (data.cancelled || data.done || !data.hasMore) break
         page = data.nextPage || page + 1
