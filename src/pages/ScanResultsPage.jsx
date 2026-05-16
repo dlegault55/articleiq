@@ -1218,7 +1218,7 @@ function AIDrawer({ article, connector, onClose, userId, globalDismissed = new S
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 12px', background:'var(--amber-light)', border:'1px solid var(--amber-border)', borderRadius:8, marginBottom:10 }}>
             <div style={{ display:'flex', alignItems:'center', gap:7 }}>
               <AlertTriangle size={12} style={{ color:'var(--amber)' }} />
-              <p style={{ fontSize:12, fontWeight:600, color:'var(--text)', margin:0 }}>This will overwrite the article in Zendesk®. Are you sure?</p>
+              <p style={{ fontSize:12, fontWeight:600, color:'var(--text)', margin:0 }}>This will overwrite the article in {connector?.platform === 'helpscout' ? 'HelpScout' : connector?.platform === 'freshdesk' ? 'Freshdesk' : 'Zendesk®'}. Are you sure?</p>
             </div>
             <button onClick={() => setConfirmPub(false)} className="btn btn-ghost btn-sm">Cancel</button>
           </div>
