@@ -384,6 +384,14 @@ export default async function handler(req, res) {
       last_activity: new Date().toISOString(),
     }).eq('id', scanJobId)
 
+    // Deduct scan credit on last chunk completion — only charge for successful scans
+    if (!hasMore) {
+      const { data: profile } = await supabase.from('profiles').select('plan, scans_remaining').eq('id', userId).single()
+      if (profile?.plan === 'pack' && (profile?.scans_remaining || 0) > 0) {
+        await supabase.rpc('decrement_scans_remaining', { user_id_input: userId })
+      }
+    }
+
     // Final chunk — count from DB and complete
     if (!hasMore) {
       const { data: counts } = await supabase

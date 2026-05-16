@@ -310,11 +310,7 @@ function DashboardPage() {
         .insert({ user_id: userId, connector_id: connector.id, status: 'pending', preset: Object.entries(checks || DEFAULT_CHECKS).filter(([,v])=>v).map(([k])=>k).join(',') })
         .select().single()
       if (jobErr) throw new Error(jobErr.message)
-      // Deduct scan credit for pack users using DB decrement (atomic, avoids stale state)
-      if (profile?.plan === 'pack') {
-        await supabase.rpc('decrement_scans_remaining', { user_id_input: userId })
-        refreshProfile()
-      }
+      // Credit deducted on scan completion (in scan-chunk) to avoid charging for failed scans
       reloadScans()
       navigate(`/scanner/results/${job.id}`)
     } catch (e) { setError(e.message); setStarting(false) }
