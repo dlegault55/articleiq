@@ -503,6 +503,11 @@ function DashboardPage() {
                 style={{ padding:'4px 12px', borderRadius:100, background:'rgba(255,255,255,0.12)', color:'white', fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:4, marginLeft:'auto', textDecoration:'none' }}>
                 View report <ArrowRight size={11} />
               </Link>
+              <button onClick={startScan} disabled={starting}
+                style={{ padding:'4px 14px', borderRadius:100, background:'white', color:'var(--navy)', fontSize:11, fontWeight:800, border:'none', cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:5, flexShrink:0 }}>
+                {starting ? <Loader size={11} style={{ animation:'spin 0.7s linear infinite' }} /> : <Scan size={11} />}
+                {starting ? 'Starting...' : 'New scan'}
+              </button>
             </div>
           </div>
         </div>
@@ -630,12 +635,15 @@ function DashboardPage() {
           </div>
 
           {error && <p style={{ fontSize:12, color:'var(--red)', marginBottom:12 }}>{error}</p>}
-          <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-            <button onClick={startScan} disabled={starting} className="btn btn-primary">
-              {starting ? <Loader size={15} style={{ animation:'spin 0.7s linear infinite' }} /> : <Scan size={15} />}
-              {starting ? 'Starting...' : 'Start scan →'}
+          <div style={{ display:'flex', alignItems:'center', gap:12, marginTop:4 }}>
+            <button onClick={startScan} disabled={starting}
+              style={{ display:'flex', alignItems:'center', gap:8, padding:'12px 24px', borderRadius:10, background:'var(--navy)', color:'white', border:'none', cursor:'pointer', fontFamily:'inherit', fontSize:15, fontWeight:800, letterSpacing:-0.3, boxShadow:'0 4px 14px rgba(27,45,91,0.25)', transition:'transform 0.1s, box-shadow 0.1s' }}
+              onMouseEnter={e => { e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 6px 18px rgba(27,45,91,0.3)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 4px 14px rgba(27,45,91,0.25)' }}>
+              {starting ? <Loader size={16} style={{ animation:'spin 0.7s linear infinite' }} /> : <Scan size={16} />}
+              {starting ? 'Starting scan...' : 'Start scan'}
             </button>
-            <p style={{ fontSize:11, color:'var(--text-3)', margin:0 }}>Keep this tab open while scanning</p>
+            <p style={{ fontSize:12, color:'var(--text-3)', margin:0 }}>Keep this tab open while scanning</p>
           </div>
         </div>
       )}
