@@ -255,6 +255,10 @@ export default async function handler(req, res) {
     console.log(`[scan-chunk] processing ${articles.length} articles for job ${scanJobId}`)
     console.log(`[scan-chunk] savedIds already:`, [...savedIds])
     console.log(`[scan-chunk] article IDs to process:`, articles.map(a => String(a.id)))
+    // Load user's spell preferences
+    const { data: userProfile } = await supabase.from('profiles').select('spell_preferences').eq('id', userId).single()
+    const spellPrefs = userProfile?.spell_preferences || { enabled: true, language: 'en-US', ignored: [] }
+
     // Process articles
     for (const article of articles) {
       if (savedIds.has(String(article.id))) continue // already saved, skip

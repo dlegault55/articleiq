@@ -33,6 +33,7 @@ const ISSUE_ICONS = {
   duplicate_content: CheckSquare,
   missing_title:     FileText,
   empty_body:        FileText,
+  spelling:          Type,
 }
 
 const calcHealth = (articles, issues) => {
@@ -1305,6 +1306,29 @@ function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve }) 
           </div>
           <p style={{ fontSize:12, color:'var(--text-2)', margin:0, lineHeight:1.65 }}>{issue.description}</p>
 
+          {issue.issue_type === 'spelling' && issue.metadata?.word && (
+            <div style={{ marginTop:6, display:'flex', gap:6, flexWrap:'wrap', alignItems:'center' }}>
+              {issue.metadata.suggestions?.length > 0 && (
+                <>
+                  <span style={{ fontSize:11, color:'var(--text-3)' }}>Did you mean:</span>
+                  {issue.metadata.suggestions.map(s => (
+                    <span key={s} style={{ fontSize:11, fontWeight:700, color:'var(--navy)', padding:'1px 8px', borderRadius:10, background:'var(--navy-light)', border:'1px solid var(--navy-border)' }}>{s}</span>
+                  ))}
+                </>
+              )}
+              <button onClick={async () => {
+                const word = issue.metadata.word.toLowerCase()
+                const { data: p } = await supabase.from('profiles').select('spell_preferences').eq('id', userId).single()
+                const prefs = p?.spell_preferences || {}
+                const ignored = [...(prefs.ignored || []), word]
+                await supabase.from('profiles').update({ spell_preferences: { ...prefs, ignored } }).eq('id', userId)
+                onResolve(issue.id)
+              }}
+                style={{ fontSize:11, color:'var(--text-3)', background:'none', border:'1px solid var(--border-md)', cursor:'pointer', padding:'2px 8px', borderRadius:4, fontFamily:'inherit', marginLeft:'auto' }}>
+                Ignore word
+              </button>
+            </div>
+          )}
           {issue.issue_type === 'missing_labels' && !resolved && (
             <div style={{ marginTop:10 }}>
               {!labels && (

@@ -8,6 +8,12 @@ import { Loader, AlertOctagon, Trash2, CheckCircle } from 'lucide-react'
 
 const DEFAULT_SCAN = { outdated:true, wordCount:true, readability:false, labels:true, duplicates:true, links:true }
 
+const DEFAULT_SPELL = {
+  enabled:  true,
+  language: 'en-US',   // en-US | en-CA | en-GB
+  ignored:  [],        // user's custom ignore list
+}
+
 const DEFAULT_REC_PREFS = {
   internalLinks:   true,   // "Add internal links" suggestions
   seoTitle:        true,   // SEO title suggestions
@@ -76,6 +82,8 @@ export default function SettingsPage() {
   const [emailNotifs,    setEmailNotifs]    = useState(true)
   const [scanDefaults,   setScanDefaults]   = useState(DEFAULT_SCAN)
   const [recPrefs,       setRecPrefs]       = useState(DEFAULT_REC_PREFS)
+  const [spellPrefs,     setSpellPrefs]     = useState(DEFAULT_SPELL)
+  const [newIgnoreWord,  setNewIgnoreWord]  = useState('')
   const [saving,         setSaving]         = useState(null)
   const [deleting,       setDeleting]       = useState(false)
   const [confirmDelete,  setConfirmDelete]  = useState(false)
@@ -86,6 +94,7 @@ export default function SettingsPage() {
     const saved = profile.scan_defaults || DEFAULT_SCAN
     setScanDefaults({ ...saved, links: true, duplicates: true })
     setRecPrefs({ ...DEFAULT_REC_PREFS, ...(profile.rec_preferences || {}) })
+    setSpellPrefs({ ...DEFAULT_SPELL, ...(profile.spell_preferences || {}) })
   }, [profile])
 
   const save = async (field, value) => {
@@ -99,6 +108,24 @@ export default function SettingsPage() {
   }
 
   const toggleEmail = async (val) => { setEmailNotifs(val); await save('email_notifications', val) }
+
+  const saveSpellPrefs = async (updated) => {
+    setSpellPrefs(updated)
+    await save('spell_preferences', updated)
+  }
+
+  const addIgnoreWord = async () => {
+    const word = newIgnoreWord.trim().toLowerCase()
+    if (!word || spellPrefs.ignored.includes(word)) { setNewIgnoreWord(''); return }
+    const updated = { ...spellPrefs, ignored: [...spellPrefs.ignored, word] }
+    setNewIgnoreWord('')
+    await saveSpellPrefs(updated)
+  }
+
+  const removeIgnoreWord = async (word) => {
+    const updated = { ...spellPrefs, ignored: spellPrefs.ignored.filter(w => w !== word) }
+    await saveSpellPrefs(updated)
+  }
 
   const toggleRecPref = async (key, val) => {
     const updated = { ...recPrefs, [key]: val }
@@ -198,6 +225,64 @@ export default function SettingsPage() {
             </Row>
           ))}
         </div>
+      </Section>
+
+      <Section title="Spell check" desc="Check article spelling during scans. Powered by LanguageTool.">
+        <Row label="Enable spell check" desc="Flag misspelled words during scans as warnings">
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            {saving==='spell_preferences' && <Loader size={12} style={{ color:'var(--navy)', animation:'spin 0.7s linear infinite' }} />}
+            <Toggle value={spellPrefs.enabled} onChange={val => saveSpellPrefs({ ...spellPrefs, enabled: val })} />
+          </div>
+        </Row>
+
+        {spellPrefs.enabled && (
+          <>
+            <Row label="Language" desc="Affects spelling rules — US, Canadian, and British English have different conventions">
+              <select value={spellPrefs.language}
+                onChange={e => saveSpellPrefs({ ...spellPrefs, language: e.target.value })}
+                style={{ fontSize:12, padding:'5px 8px', borderRadius:6, border:'1px solid var(--border-md)', fontFamily:'inherit', color:'var(--text)', background:'white', cursor:'pointer' }}>
+                <option value="en-US">English (US)</option>
+                <option value="en-CA">English (Canada)</option>
+                <option value="en-GB">English (UK)</option>
+              </select>
+            </Row>
+
+            <Row label="Ignored words" desc="Acronyms, product names, and technical terms that should never be flagged">
+              <div />
+            </Row>
+            <div style={{ padding:'0 0 12px' }}>
+              <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:8 }}>
+                {spellPrefs.ignored.length === 0 && (
+                  <p style={{ fontSize:12, color:'var(--text-3)', margin:0, fontStyle:'italic' }}>No ignored words yet — add acronyms and product names below</p>
+                )}
+                {spellPrefs.ignored.map(word => (
+                  <div key={word} style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 8px 3px 10px', borderRadius:20, background:'var(--navy-light)', border:'1px solid var(--navy-border)' }}>
+                    <span style={{ fontSize:12, fontWeight:600, color:'var(--navy)' }}>{word}</span>
+                    <button onClick={() => removeIgnoreWord(word)}
+                      style={{ background:'none', border:'none', cursor:'pointer', color:'var(--navy)', fontSize:14, lineHeight:1, padding:'0 0 0 2px', opacity:0.6, fontFamily:'inherit' }}
+                      onMouseEnter={e => e.currentTarget.style.opacity='1'}
+                      onMouseLeave={e => e.currentTarget.style.opacity='0.6'}>
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display:'flex', gap:6 }}>
+                <input
+                  value={newIgnoreWord}
+                  onChange={e => setNewIgnoreWord(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && addIgnoreWord()}
+                  placeholder="Add word or acronym..."
+                  style={{ flex:1, padding:'6px 10px', borderRadius:6, border:'1px solid var(--border-md)', fontSize:12, fontFamily:'inherit' }}
+                />
+                <button onClick={addIgnoreWord} disabled={!newIgnoreWord.trim()}
+                  style={{ padding:'6px 12px', borderRadius:6, border:'1px solid var(--navy-border)', background:'var(--navy-light)', color:'var(--navy)', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>
+                  Add
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </Section>
 
       <Section title="Session">
