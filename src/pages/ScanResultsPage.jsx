@@ -1437,7 +1437,7 @@ const AI_ACTIONS = [
   },
 ]
 
-function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolvedIssues, onResolveIssue, onUpgrade, open, onToggle }) {
+function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolvedIssues, onResolveIssue, onUpgrade, open, onToggle, userId }) {
   const [aiResult, setAiResult] = useState(null)
   const [aiLoading, setAiLoading] = useState(null)
 
@@ -2051,6 +2051,7 @@ export default function ScanResultsPage() {
             issues={issues.filter(i=>i.article_id===a.id)}
             isPaid={isPaid}
             connector={connector}
+            userId={userId}
             onOpenDrawer={(action) => setDrawer({ article: a, action })}
             resolvedIssues={resolvedIssues}
             onResolveIssue={resolveIssue}
