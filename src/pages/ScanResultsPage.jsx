@@ -1260,7 +1260,7 @@ function AIDrawer({ article, connector, onClose, userId, globalDismissed = new S
 // ─── AI Panel ──────────────────────────────────────────────────
 
 // ─── Issue card ───────────────────────────────────────────────
-function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve }) {
+function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve, userId }) {
   const [suggesting,   setSuggesting]   = useState(false)
   const [labels,       setLabels]       = useState(null)
   const [publishing,   setPublishing]   = useState(null)
@@ -1308,24 +1308,28 @@ function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve }) 
           <p style={{ fontSize:12, color:'var(--text-2)', margin:0, lineHeight:1.65 }}>{issue.description}</p>
 
           {issue.issue_type === 'spelling' && issue.metadata?.word && (
-            <div style={{ marginTop:6, display:'flex', gap:6, flexWrap:'wrap', alignItems:'center' }}>
+            <div style={{ marginTop:6 }}>
               {issue.metadata.suggestions?.length > 0 && (
-                <>
+                <div style={{ display:'flex', gap:6, flexWrap:'wrap', alignItems:'center', marginBottom:6 }}>
                   <span style={{ fontSize:11, color:'var(--text-3)' }}>Did you mean:</span>
-                  {issue.metadata.suggestions.map(s => (
-                    <span key={s} style={{ fontSize:11, fontWeight:700, color:'var(--navy)', padding:'1px 8px', borderRadius:10, background:'var(--navy-light)', border:'1px solid var(--navy-border)' }}>{s}</span>
+                  {issue.metadata.suggestions.map(sg => (
+                    <span key={sg} style={{ fontSize:11, fontWeight:700, color:'var(--navy)', padding:'1px 8px', borderRadius:10, background:'var(--navy-light)', border:'1px solid var(--navy-border)' }}>{sg}</span>
                   ))}
-                </>
+                </div>
               )}
               <button onClick={async () => {
+                if (!userId) return
                 const word = issue.metadata.word.toLowerCase()
                 const { data: p } = await supabase.from('profiles').select('spell_preferences').eq('id', userId).single()
-                const prefs = p?.spell_preferences || {}
-                const ignored = [...(prefs.ignored || []), word]
-                await supabase.from('profiles').update({ spell_preferences: { ...prefs, ignored } }).eq('id', userId)
-                onResolve(issue.id)
+                const prefs = p?.spell_preferences || { enabled:true, language:'en-US', ignored:[] }
+                const already = (prefs.ignored || []).map(w => w.toLowerCase())
+                if (!already.includes(word)) {
+                  const updated = { ...prefs, ignored: [...(prefs.ignored || []), word] }
+                  await supabase.from('profiles').update({ spell_preferences: updated }).eq('id', userId)
+                }
+                onResolve()
               }}
-                style={{ fontSize:11, color:'var(--text-3)', background:'none', border:'1px solid var(--border-md)', cursor:'pointer', padding:'2px 8px', borderRadius:4, fontFamily:'inherit', marginLeft:'auto' }}>
+                className="btn btn-secondary btn-xs">
                 Ignore word
               </button>
             </div>
@@ -1538,7 +1542,7 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
                   const resolved = resolvedIssues.has(issue.id)
                   return (
                     <IssueCard key={issue.id} issue={issue} Icon={Icon} s={s} resolved={resolved}
-                      article={article} connector={connector}
+                      article={article} connector={connector} userId={userId}
                       onResolve={() => onResolveIssue(issue.id, !resolved)} />
                   )
                 })}
