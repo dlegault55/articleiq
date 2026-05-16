@@ -1430,11 +1430,14 @@ function IssueCard({ issue, Icon, s, resolved, article, connector, onResolve, us
             </div>
           )}
         </div>
-        <button onClick={onResolve} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 10px', borderRadius:6, border:'1px solid var(--border-md)', cursor:'pointer', fontSize:11, fontWeight:600, flexShrink:0, whiteSpace:'nowrap', fontFamily:'inherit',
-          background: resolved ? 'var(--green-light)' : 'white',
-          color: resolved ? 'var(--green)' : 'var(--text-3)',
-        }}>
-          {resolved ? <><CheckCircle size={11}/> Reviewed</> : <><Square size={11}/> Mark resolved</>}
+        <button onClick={onResolve} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 12px', borderRadius:6, border:`1px solid ${resolved ? 'var(--green-border)' : 'var(--border-md)'}`, cursor:'pointer', fontSize:11, fontWeight:700, flexShrink:0, whiteSpace:'nowrap', fontFamily:'inherit',
+          background: resolved ? 'var(--green-light)' : 'var(--bg)',
+          color: resolved ? 'var(--green)' : 'var(--text-2)',
+          alignSelf:'flex-start',
+        }}
+          onMouseEnter={e => { if (!resolved) { e.currentTarget.style.borderColor='var(--green-border)'; e.currentTarget.style.color='var(--green)'; e.currentTarget.style.background='var(--green-light)' }}}
+          onMouseLeave={e => { if (!resolved) { e.currentTarget.style.borderColor='var(--border-md)'; e.currentTarget.style.color='var(--text-2)'; e.currentTarget.style.background='var(--bg)' }}}>
+          {resolved ? <><CheckCircle size={11}/> Done</> : <><CheckCircle size={11}/> Mark done</>}
         </button>
       </div>
     </div>
@@ -1536,27 +1539,45 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
 
       {/* Expanded */}
       {open && (
-        <div style={{ background:'var(--bg)', border:'1px solid var(--border-md)', borderTop:'none', margin:'0 12px 10px', borderRadius:'0 0 10px 10px', boxShadow:'0 1px 4px rgba(0,0,0,0.04)' }}>
+        <div style={{ borderTop:'1px solid var(--border)', background:'var(--bg)' }}>
 
-          {/* Article link — prominent */}
-          {article.url && (
-            <div style={{ padding:'12px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-              <div>
-                <p style={{ fontSize:12, fontWeight:600, color:'var(--text-3)', marginBottom:2, textTransform:'uppercase', letterSpacing:'0.06em' }}>Article</p>
-                <p style={{ fontSize:12, fontWeight:500, color:'var(--text-2)', margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:400 }}>{article.title}</p>
+          {/* AI action — top, most important */}
+          <div style={{ padding:'12px 20px', borderBottom:'1px solid var(--border)' }}>
+            {!isPaid ? (
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, padding:'10px 14px', borderRadius:10, background:'var(--navy)' }}>
+                <div>
+                  <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
+                    <Zap size={12} style={{ color:'#FFD93D' }} />
+                    <p style={{ fontSize:12, fontWeight:700, color:'white', margin:0 }}>Unlock AI improvements</p>
+                  </div>
+                  <p style={{ fontSize:11, color:'rgba(255,255,255,0.55)', margin:0 }}>Quality score, SEO grade A–F, AI rewrite, direct publish</p>
+                </div>
+                <button onClick={onUpgrade} className="btn btn-sm" style={{ background:'#FFD93D', color:'#1A1A18', fontWeight:700, flexShrink:0 }}>Upgrade →</button>
               </div>
-              <a href={article.url} target="_blank" rel="noreferrer"
-                className="btn btn-secondary btn-sm" style={{ flexShrink:0 }}>
-                <ExternalLink size={13} /> {connector?.platform === 'helpscout' ? 'Open in HelpScout' : 'Open in Zendesk®'}
-              </a>
-            </div>
-          )}
+            ) : (
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, padding:'10px 14px', borderRadius:10, background:'linear-gradient(135deg, #1B2D5B 0%, #243d7a 100%)', position:'relative', overflow:'hidden' }}>
+                <div style={{ position:'absolute', top:8, right:12, fontSize:18, opacity:0.2, pointerEvents:'none' }}>✦</div>
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                  <div style={{ width:30, height:30, borderRadius:8, background:'rgba(255,255,255,0.12)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <Wand2 size={14} color="white" />
+                  </div>
+                  <div>
+                    <p style={{ fontSize:13, fontWeight:800, color:'white', margin:'0 0 1px', letterSpacing:-0.2 }}>Analyse & Improve</p>
+                    <p style={{ fontSize:11, color:'rgba(255,255,255,0.5)', margin:0 }}>Quality score · SEO grade · AI rewrite · direct publish</p>
+                  </div>
+                </div>
+                <button onClick={() => onOpenDrawer('improve')}
+                  style={{ padding:'8px 18px', borderRadius:8, background:'white', border:'none', cursor:'pointer', fontSize:13, fontWeight:700, color:'var(--navy)', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6, flexShrink:0 }}>
+                  <Wand2 size={13} /> Open
+                </button>
+              </div>
+            )}
+          </div>
 
-          {/* Issues */}
+          {/* Issues list */}
           {issues.length > 0 && (
-            <div style={{ padding:'12px 18px', borderBottom:'1px solid var(--border-md)' }}>
-              <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', marginBottom:10 }}>Issues found</p>
-              <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            <div style={{ padding:'14px 20px' }}>
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
                 {[...issues.filter(i=>i.severity==='critical'), ...issues.filter(i=>i.severity==='warning'), ...issues.filter(i=>i.severity==='info')].map(issue => {
                   const Icon     = ISSUE_ICONS[issue.issue_type] || Info
                   const s        = getSeverity(issue)
@@ -1573,66 +1594,24 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
 
           {/* Clean */}
           {issues.length === 0 && (
-            <div style={{ padding:'11px 14px', borderRadius:8, background:'var(--green-light)', border:'1px solid var(--green-border)', display:'flex', alignItems:'center', gap:8, margin:'0 0 4px' }}>
+            <div style={{ padding:'14px 20px', display:'flex', alignItems:'center', gap:8 }}>
               <CheckCircle size={13} style={{ color:'var(--green)', flexShrink:0 }} />
               <p style={{ fontSize:12, fontWeight:600, color:'var(--green)', margin:0 }}>No issues found — this article looks good.</p>
             </div>
           )}
 
-          {/* AI section */}
-          <div style={{ padding:'14px 16px', margin:'0 12px 12px', borderRadius:10,
-            background: !isPaid ? 'var(--navy)' : 'transparent',
-            border: !isPaid ? 'none' : 'none',
-          }}>
-            {!isPaid ? (
-              // Upsell state — navy card with clear CTA
-              <div>
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
-                  <div>
-                    <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
-                      <Zap size={13} style={{ color:'#FFD93D' }} />
-                      <p style={{ fontSize:13, fontWeight:700, color:'white', margin:0 }}>Fix with ArticleIQ</p>
-                    </div>
-                    <p style={{ fontSize:11, color:'rgba(255,255,255,0.6)', margin:0 }}>
-                      AI rewrite, Quality Score, and SEO grade — all in one flow
-                    </p>
-                  </div>
-                  <button onClick={onUpgrade} className="btn btn-sm" style={{ background:'#FFD93D', color:'#1A1A18', fontWeight:700, flexShrink:0 }}>
-                    Upgrade →
-                  </button>
-                </div>
-                <div style={{ display:'flex', gap:8 }}>
-                  {AI_ACTIONS.map(({ icon: Icon, label }) => (
-                    <div key={label} style={{ flex:1, padding:'8px 10px', borderRadius:7, background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.12)', opacity:0.7 }}>
-                      <Icon size={12} style={{ color:'rgba(255,255,255,0.6)', marginBottom:3 }} />
-                      <p style={{ fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.7)', margin:0 }}>{label}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              // Paid state — prominent action card
-              <div>
-                <div style={{ borderRadius:12, overflow:'hidden', border:'1px solid var(--navy-border)', background:'linear-gradient(135deg, #1B2D5B 0%, #243d7a 100%)', padding:'14px 16px', position:'relative' }}>
-                  {/* Sparkle decoration */}
-                  <div style={{ position:'absolute', top:10, right:14, fontSize:16, opacity:0.4, pointerEvents:'none' }}>✦</div>
-                  <div style={{ position:'absolute', top:24, right:28, fontSize:9, opacity:0.25, pointerEvents:'none' }}>✦</div>
-                  <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
-                    <div style={{ width:28, height:28, borderRadius:7, background:'rgba(255,255,255,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                      <Wand2 size={14} color="white" />
-                    </div>
-                    <div>
-                      <p style={{ fontSize:13, fontWeight:800, color:'white', margin:0, letterSpacing:-0.2 }}>Analyse & Improve</p>
-                      <p style={{ fontSize:10, color:'rgba(255,255,255,0.55)', margin:0 }}>Quality score, SEO grade, AI rewrite — all in one flow</p>
-                    </div>
-                  </div>
-                  <button onClick={() => onOpenDrawer('improve')} style={{ width:'100%', padding:'9px', borderRadius:8, background:'white', border:'none', cursor:'pointer', fontSize:13, fontWeight:700, color:'var(--navy)', fontFamily:'inherit', display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
-                    <Wand2 size={13} /> Open AI editor
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Footer — open in platform */}
+          {article.url && (
+            <div style={{ padding:'10px 20px', borderTop:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'flex-end' }}>
+              <a href={article.url} target="_blank" rel="noreferrer"
+                style={{ display:'flex', alignItems:'center', gap:5, fontSize:12, color:'var(--text-3)', textDecoration:'none', fontWeight:500 }}
+                onMouseEnter={e => e.currentTarget.style.color='var(--navy)'}
+                onMouseLeave={e => e.currentTarget.style.color='var(--text-3)'}>
+                <ExternalLink size={12} />
+                Open in {connector?.platform === 'helpscout' ? 'HelpScout' : connector?.platform === 'freshdesk' ? 'Freshdesk' : 'Zendesk®'}
+              </a>
+            </div>
+          )}
         </div>
       )}
     </div>
