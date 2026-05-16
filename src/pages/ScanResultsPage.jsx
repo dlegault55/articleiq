@@ -1526,9 +1526,15 @@ function ArticleRow({ article, issues, isPaid, connector, onOpenDrawer, resolved
             {warning.length  > 0 && <span className="badge badge-warning"><AlertTriangle size={9} />{warning.length} warning{warning.length !== 1 ? 's' : ''}</span>}
             {spelling.length > 0 && <span style={{ display:'inline-flex', alignItems:'center', gap:3, padding:'2px 8px', borderRadius:100, fontSize:10, fontWeight:700, background:'var(--blue-light)', color:'var(--blue)', border:'1px solid var(--blue-border)' }}><Type size={9} />{spelling.length} spelling</span>}
             {(clean || allResolved) && <span className="badge badge-success"><CheckCircle size={9} />{allResolved ? 'All resolved' : 'Clean'}</span>}
-            {open ? <ChevronUp size={13} style={{ color:'var(--text-3)' }} /> : <ChevronDown size={13} style={{ color:'var(--text-3)' }} />}
+            {/* Expand indicator — more pronounced */}
+            <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 8px', borderRadius:6, background: open ? 'var(--navy-light)' : 'var(--bg)', border:'1px solid var(--border-md)', marginLeft:4 }}>
+              {open ? <ChevronUp size={13} style={{ color:'var(--navy)' }} /> : <ChevronDown size={13} style={{ color:'var(--text-3)' }} />}
+            </div>
           </div>
         </div>
+
+        {/* Divider */}
+        <div style={{ width:1, height:28, background:'var(--border-md)', flexShrink:0 }} />
 
         {/* Open in platform — always visible, stops row toggle */}
         {article.url && (
