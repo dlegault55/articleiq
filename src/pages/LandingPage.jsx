@@ -308,7 +308,7 @@ export default function LandingPage() {
           </p>
 
           {/* Live platforms — big cards */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:20 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:16, marginBottom:20 }}>
             {[
               {
                 name: 'Zendesk®',
@@ -323,6 +323,14 @@ export default function LandingPage() {
                 bg: '#1292EE',
                 desc: 'A popular choice for customer-first teams. Connect with a single API key from your HelpScout profile — no subdomain, no complex permissions needed.',
                 setup: 'API key from your profile settings',
+              },
+              {
+                name: 'Freshdesk',
+                logo: null,
+                letter: 'f',
+                bg: '#25C16F',
+                desc: 'Connect your Freshdesk Solutions knowledge base. Scans all categories and folders — just your subdomain and API key from your profile settings.',
+                setup: 'Subdomain + API key from profile',
               },
             ].map(({ name, logo, bg, letter, desc, setup }) => (
               <div key={name} style={{ padding:'28px', borderRadius:16, border:'1px solid #E8E8E6', background:'white', position:'relative', overflow:'hidden' }}>
@@ -348,7 +356,6 @@ export default function LandingPage() {
             <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9B9B98', margin:0, flexShrink:0 }}>Coming soon</p>
             <div style={{ display:'flex', gap:10, flexWrap:'wrap', flex:1 }}>
               {[
-                { name:'Freshdesk', logo:null, bg:'#25C16F', letter:'f' },
                 { name:'Intercom', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/intercom.svg', bg:'#1F8DED' },
                 { name:'Notion', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/notion.svg', bg:'#1A1A18' },
                 { name:'Confluence', logo:'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/confluence.svg', bg:'#0052CC' },
