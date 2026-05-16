@@ -319,6 +319,52 @@ export default async function handler(req, res) {
           }))
         )
       }
+
+      // Spell check — call LanguageTool directly
+      if (spellEnabled && spellPrefs.enabled !== false && saved?.id && article.body) {
+        try {
+          const plainText = article.body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+          if (plainText.length >= 10) {
+            const ignoredLower = (spellPrefs.ignored || []).map(w => w.toLowerCase())
+            const params = new URLSearchParams({
+              text: plainText,
+              language: spellPrefs.language || 'en-US',
+              disabledRules: 'WHITESPACE_RULE,EN_QUOTES,DASH_RULE,WORD_CONTAINS_UNDERSCORE,UPPERCASE_SENTENCE_START',
+            })
+            const ltRes = await fetch('https://api.languagetool.org/v2/check', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: params.toString(),
+            })
+            if (ltRes.ok) {
+              const ltData = await ltRes.json()
+              const spellIssues = (ltData.matches || [])
+                .filter(m => m.rule?.issueType === 'misspelling' || m.rule?.category?.id === 'TYPOS')
+                .filter(m => {
+                  const word = plainText.slice(m.offset, m.offset + m.length).toLowerCase()
+                  return !ignoredLower.includes(word)
+                })
+                .slice(0, 20)
+                .map(m => ({
+                  scan_job_id: scanJobId,
+                  article_id:  saved.id,
+                  user_id:     userId,
+                  severity:    'warning',
+                  issue_type:  'spelling',
+                  description: `Possible spelling error: "${plainText.slice(m.offset, m.offset + m.length)}"${m.replacements?.length ? ` — did you mean ${m.replacements.slice(0,2).map(r=>r.value).join(' or ')}?` : ''}`,
+                  metadata:    {
+                    word:        plainText.slice(m.offset, m.offset + m.length),
+                    suggestions: m.replacements.slice(0,3).map(r => r.value),
+                    context:     m.context?.text || '',
+                  },
+                }))
+              if (spellIssues.length > 0) {
+                await supabase.from('article_issues').insert(spellIssues)
+              }
+            }
+          }
+        } catch(e) { console.log('spell check error:', e.message) }
+      }
     }
 
     // Update progress count
