@@ -1725,7 +1725,11 @@ export default function ScanResultsPage() {
       if (running) {
         intervalRef.current = setInterval(async () => {
           const still = await fetchAll()
-          if (!still) clearInterval(intervalRef.current)
+          if (!still) {
+            clearInterval(intervalRef.current)
+            // Fetch one more time to ensure completed data is loaded
+            await fetchAll()
+          }
         }, 3000)
       }
     }
@@ -2044,8 +2048,8 @@ export default function ScanResultsPage() {
                 <p style={{ fontSize:13, color:'var(--text-3)' }}>Articles will appear here as the scan runs — keep this tab open.</p>
               </>
             ) : articles.length === 0 ? (
-              // Scan done but truly no articles returned
-              <>
+              // Scan done but articles not loaded yet — fetch them
+              <>{(() => { fetchAll(); return null })()}
                 <Loader size={24} style={{ color:'var(--text-3)', marginBottom:12 }} />
                 <p style={{ fontSize:14, fontWeight:600, color:'var(--text)', marginBottom:4 }}>Loading results...</p>
                 <p style={{ fontSize:13, color:'var(--text-3)' }}>Fetching scan data — this should only take a moment.</p>
