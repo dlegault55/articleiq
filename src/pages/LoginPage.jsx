@@ -13,7 +13,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPw,   setShowPw]   = useState(false)
   const [done,     setDone]     = useState(false)
-  const [resetSent, setResetSent] = useState(false)
+  const [resetSent,  setResetSent]  = useState(false)
+  const [firstName,  setFirstName]  = useState('')
+  const [lastName,   setLastName]   = useState('')
+  const [orgSize,    setOrgSize]    = useState('')
+  const [optScans,   setOptScans]   = useState(true)
+  const [optMarketing, setOptMarketing] = useState(false)
 
   if (user) return <Navigate to="/dashboard" replace />
 
@@ -34,11 +39,26 @@ export default function LoginPage() {
     setLoading('email'); setError(null)
     try {
       if (mode === 'signup') {
-        const { error } = await supabase.auth.signUp({
+        if (!firstName.trim()) throw new Error('Please enter your first name')
+        const { error, data } = await supabase.auth.signUp({
           email, password,
-          options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            data: { first_name: firstName.trim(), last_name: lastName.trim(), org_size: orgSize, opt_scans: optScans, opt_marketing: optMarketing }
+          }
         })
         if (error) throw error
+        // Save to profiles
+        if (data?.user?.id) {
+          await supabase.from('profiles').upsert({
+            id: data.user.id,
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+            org_size: orgSize,
+            opt_scans: optScans,
+            opt_marketing: optMarketing,
+          })
+        }
         setDone(true)
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -156,6 +176,16 @@ export default function LoginPage() {
             </div>
           ) : (
             <form onSubmit={handleEmail}>
+              {mode === 'signup' && (
+                <>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
+                    <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)}
+                      placeholder="First name" className="input" />
+                    <input type="text" value={lastName} onChange={e => setLastName(e.target.value)}
+                      placeholder="Last name" className="input" />
+                  </div>
+                </>
+              )}
               <input type="email" value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="Email address" className="input" style={{ marginBottom:8 }} />
               <div style={{ position:'relative', marginBottom:8 }}>
@@ -167,9 +197,36 @@ export default function LoginPage() {
                 </button>
               </div>
               {mode === 'signup' && (
-                <p style={{ fontSize:11, color:'var(--text-3)', margin:'0 0 12px', lineHeight:1.5 }}>
-                  Min. 8 characters with at least one uppercase letter and one number.
-                </p>
+                <>
+                  <p style={{ fontSize:11, color:'var(--text-3)', margin:'0 0 8px', lineHeight:1.5 }}>
+                    Min. 8 characters with at least one uppercase letter and one number.
+                  </p>
+                  <select value={orgSize} onChange={e => setOrgSize(e.target.value)}
+                    className="input" style={{ marginBottom:12, color: orgSize ? 'var(--text)' : 'var(--text-3)' }}>
+                    <option value="">Team size (optional)</option>
+                    <option value="1">Just me</option>
+                    <option value="2-10">2-10 people</option>
+                    <option value="11-50">11-50 people</option>
+                    <option value="51-200">51-200 people</option>
+                    <option value="200+">200+ people</option>
+                  </select>
+                  <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:12, padding:'12px', background:'var(--bg)', borderRadius:8, border:'1px solid var(--border-md)' }}>
+                    <label style={{ display:'flex', alignItems:'flex-start', gap:8, cursor:'pointer' }}>
+                      <input type="checkbox" checked={optScans} onChange={e => setOptScans(e.target.checked)}
+                        style={{ marginTop:2, accentColor:'var(--navy)', flexShrink:0 }} />
+                      <span style={{ fontSize:12, color:'var(--text-2)', lineHeight:1.5 }}>
+                        <strong>Scan notifications</strong> — email me when a scan completes and when new issues are found
+                      </span>
+                    </label>
+                    <label style={{ display:'flex', alignItems:'flex-start', gap:8, cursor:'pointer' }}>
+                      <input type="checkbox" checked={optMarketing} onChange={e => setOptMarketing(e.target.checked)}
+                        style={{ marginTop:2, accentColor:'var(--navy)', flexShrink:0 }} />
+                      <span style={{ fontSize:12, color:'var(--text-2)', lineHeight:1.5 }}>
+                        <strong>Product updates</strong> — new features, tips, and occasional news from ArticleIQ
+                      </span>
+                    </label>
+                  </div>
+                </>
               )}
               {resetSent ? (
                 <div style={{ padding:'12px', background:'var(--green-light)', border:'1px solid var(--green-border)', borderRadius:8, textAlign:'center', marginBottom:10 }}>
