@@ -250,33 +250,32 @@ export default function SettingsPage() {
             <Row label="Ignored words" desc="Acronyms, product names, and technical terms that should never be flagged">
               <div />
             </Row>
-            <div style={{ padding:'0 0 12px' }}>
-              <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:8 }}>
-                {spellPrefs.ignored.length === 0 && (
-                  <p style={{ fontSize:12, color:'var(--text-3)', margin:0, fontStyle:'italic' }}>No ignored words yet — add acronyms and product names below</p>
-                )}
-                {spellPrefs.ignored.map(word => (
-                  <div key={word} style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 8px 3px 10px', borderRadius:20, background:'var(--navy-light)', border:'1px solid var(--navy-border)' }}>
-                    <span style={{ fontSize:12, fontWeight:600, color:'var(--navy)' }}>{word}</span>
-                    <button onClick={() => removeIgnoreWord(word)}
-                      style={{ background:'none', border:'none', cursor:'pointer', color:'var(--navy)', fontSize:14, lineHeight:1, padding:'0 0 0 2px', opacity:0.6, fontFamily:'inherit' }}
-                      onMouseEnter={e => e.currentTarget.style.opacity='1'}
-                      onMouseLeave={e => e.currentTarget.style.opacity='0.6'}>
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display:'flex', gap:6 }}>
+            <div style={{ padding:'0 18px 16px' }}>
+              {spellPrefs.ignored.length > 0 && (
+                <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:10 }}>
+                  {spellPrefs.ignored.map(word => (
+                    <div key={word} style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 8px 3px 10px', borderRadius:20, background:'var(--navy-light)', border:'1px solid var(--navy-border)' }}>
+                      <span style={{ fontSize:12, fontWeight:600, color:'var(--navy)' }}>{word}</span>
+                      <button onClick={() => removeIgnoreWord(word)}
+                        style={{ background:'none', border:'none', cursor:'pointer', color:'var(--navy)', fontSize:14, lineHeight:1, padding:'0 0 0 2px', opacity:0.6, fontFamily:'inherit' }}
+                        onMouseEnter={e => e.currentTarget.style.opacity='1'}
+                        onMouseLeave={e => e.currentTarget.style.opacity='0.6'}>
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={{ display:'flex', gap:6, maxWidth:360 }}>
                 <input
                   value={newIgnoreWord}
                   onChange={e => setNewIgnoreWord(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && addIgnoreWord()}
-                  placeholder="Add word or acronym..."
+                  placeholder={spellPrefs.ignored.length === 0 ? 'e.g. SaaS, API, Zendesk...' : 'Add another word...'}
                   style={{ flex:1, padding:'6px 10px', borderRadius:6, border:'1px solid var(--border-md)', fontSize:12, fontFamily:'inherit' }}
                 />
                 <button onClick={addIgnoreWord} disabled={!newIgnoreWord.trim()}
-                  style={{ padding:'6px 12px', borderRadius:6, border:'1px solid var(--navy-border)', background:'var(--navy-light)', color:'var(--navy)', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>
+                  style={{ padding:'6px 14px', borderRadius:6, border:'1px solid var(--navy-border)', background:'var(--navy-light)', color:'var(--navy)', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit', flexShrink:0 }}>
                   Add
                 </button>
               </div>
