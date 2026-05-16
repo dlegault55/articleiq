@@ -422,7 +422,7 @@ export default async function handler(req, res) {
       status: 'failed',
       error_message: err.message,
       completed_at: new Date().toISOString(),
-    }).eq('id', scanJobId).catch(() => {})
+    }).eq('id', scanJobId)
     return res.status(500).json({ error: err.message, stack: err.stack?.split('\n').slice(0,3).join(' | ') })
   }
 }

@@ -31,7 +31,7 @@ function mapArticle(a, folderId, subdomain) {
     id:          String(a.id),
     title:       a.title || 'Untitled',
     body,
-    html_url:    a.url || a.article_url || (a.id ? `https://${connector?.subdomain || 'app'}.freshdesk.com/support/solutions/articles/${a.id}` : '') || '',
+    html_url:    a.url || a.article_url || (a.id && subdomain ? `https://${subdomain}.freshdesk.com/support/solutions/articles/${a.id}` : '') || '',
     updated_at:  a.updated_at,
     label_names: a.tags || [],
     locale:      'en',
